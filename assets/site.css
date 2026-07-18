@@ -1,0 +1,232 @@
+/* Shared styles for Sitp GPT expansion pages (pricing, case studies, tools, SEO hub, tutorials, etc.)
+   This file only affects NEW pages added to the site. It does not touch sitpgpt.html's original inline <style>. */
+
+:root {
+  --spg-black: #000;
+  --spg-accent: #ff5a5f;
+  --spg-accent-dark: #e14448;
+  --spg-bg: #f8f9fa;
+  --spg-text: #333;
+  --spg-border: #ddd;
+}
+
+* { box-sizing: border-box; }
+
+body.spg-page {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: var(--spg-bg);
+  color: var(--spg-text);
+  line-height: 1.6;
+}
+
+.spg-header {
+  background: var(--spg-black);
+  color: #fff;
+  padding: 1rem;
+  text-align: center;
+}
+
+.spg-header h1 { margin: 0.2rem 0; font-size: 1.6rem; }
+.spg-header p { margin: 0.2rem 0; opacity: 0.9; }
+
+.spg-nav {
+  background: #111;
+  padding: 0.6rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+}
+
+.spg-nav a {
+  color: #f1f1f1;
+  text-decoration: none;
+  font-size: 0.92rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.spg-nav a:hover, .spg-nav a.active {
+  background: var(--spg-accent);
+  color: #fff;
+}
+
+.spg-main {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.spg-hero {
+  text-align: center;
+  padding: 10px 10px 30px;
+}
+
+.spg-hero h2 { font-size: 2rem; margin-bottom: 10px; }
+.spg-hero p.lead { font-size: 1.15rem; color: #555; max-width: 720px; margin: 0 auto; }
+
+.spg-btn {
+  display: inline-block;
+  background: var(--spg-accent);
+  color: #fff;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 50px;
+  font-size: 17px;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: bold;
+  transition: 0.2s;
+}
+.spg-btn:hover { background: var(--spg-accent-dark); }
+
+.spg-btn-outline {
+  display: inline-block;
+  background: transparent;
+  color: var(--spg-black);
+  border: 2px solid var(--spg-black);
+  padding: 10px 26px;
+  border-radius: 50px;
+  font-size: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.spg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+  margin: 20px 0;
+}
+
+.spg-card {
+  border: 1px solid var(--spg-border);
+  padding: 18px;
+  border-radius: 10px;
+  background: #fff;
+  transition: 0.25s;
+}
+.spg-card:hover { box-shadow: 0 0 15px rgba(0,0,0,0.15); transform: translateY(-4px); }
+.spg-card h3 { margin: 0 0 8px; }
+.spg-card ul { padding-left: 20px; margin: 10px 0; }
+
+.spg-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  margin: 30px 0;
+  align-items: stretch;
+}
+
+.spg-plan {
+  border: 1px solid var(--spg-border);
+  border-radius: 14px;
+  padding: 26px 22px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+.spg-plan.featured {
+  border: 2px solid var(--spg-accent);
+  box-shadow: 0 0 25px rgba(255,90,95,0.25);
+  position: relative;
+}
+.spg-plan.featured::before {
+  content: "★ Most Popular";
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--spg-accent);
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+}
+.spg-plan h3 { margin-top: 6px; }
+.spg-plan .price { font-size: 2.1rem; font-weight: bold; margin: 8px 0; }
+.spg-plan .price span { font-size: 0.95rem; font-weight: normal; color: #777; }
+.spg-plan ul { flex-grow: 1; padding-left: 20px; }
+.spg-plan ul li { margin: 6px 0; }
+.spg-plan .spg-btn, .spg-plan .spg-btn-outline { text-align: center; margin-top: 14px; }
+
+.spg-badge-included {
+  display: inline-block;
+  background: #eafbea;
+  color: #1a7f37;
+  font-size: 0.75rem;
+  padding: 2px 10px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+
+.spg-setup-card {
+  border: 2px dashed var(--spg-accent);
+  border-radius: 14px;
+  padding: 26px;
+  background: #fff8f8;
+  margin: 30px 0;
+}
+
+.spg-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+  text-align: center;
+}
+.spg-metric { background: #fff; border-radius: 12px; padding: 20px 10px; border: 1px solid var(--spg-border); }
+.spg-metric .num { font-size: 2rem; font-weight: bold; color: var(--spg-accent); }
+.spg-metric .label { font-size: 0.9rem; color: #666; }
+
+.spg-footer {
+  text-align: center;
+  padding: 24px 10px 40px;
+  color: #777;
+  font-size: 0.85rem;
+}
+.spg-footer a { color: var(--spg-accent); text-decoration: none; }
+
+.spg-watermark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #888;
+  border-top: 1px dashed var(--spg-border);
+  padding-top: 8px;
+  margin-top: 10px;
+}
+.spg-watermark a { color: var(--spg-accent); text-decoration: none; font-weight: bold; }
+
+.spg-breadcrumb { font-size: 0.85rem; color: #888; margin-bottom: 14px; }
+.spg-breadcrumb a { color: #888; text-decoration: none; }
+.spg-breadcrumb a:hover { color: var(--spg-accent); }
+
+.spg-video-wrap {
+  max-width: 900px;
+  margin: 20px auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 25px rgba(0,0,0,0.15);
+}
+.spg-video-wrap video { width: 100%; display: block; background: #000; }
+
+.spg-toc { columns: 2; column-gap: 30px; margin: 20px 0; }
+.spg-toc a { display: block; margin: 4px 0; color: var(--spg-text); text-decoration: none; font-size: 0.92rem; }
+.spg-toc a:hover { color: var(--spg-accent); }
+
+.spg-pagination { display: flex; justify-content: center; gap: 8px; margin: 24px 0; flex-wrap: wrap; }
+.spg-pagination a { padding: 6px 12px; border: 1px solid var(--spg-border); border-radius: 6px; text-decoration: none; color: var(--spg-text); font-size: 0.85rem; }
+.spg-pagination a:hover { background: var(--spg-accent); color: #fff; }
+
+@media (max-width: 640px) {
+  .spg-toc { columns: 1; }
+}
