@@ -99,6 +99,12 @@ def slugify(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
 
 
+def combination_slug(tool_name: str, industry_slug: str) -> str:
+    tool_slug = slugify(tool_name)
+    separator = "-" if "-for-" in tool_slug else "-for-"
+    return f"{tool_slug}{separator}{industry_slug}"
+
+
 def page_html(tool, industry=None, related=()):
     name, capability = tool
     tool_slug = slugify(name)
@@ -107,7 +113,7 @@ def page_html(tool, industry=None, related=()):
         title = f"{name} for {audience.title()} | Sitp GPT"
         heading = f"{name} for {audience}"
         description = f"Learn how {audience} can use {name.lower()} to {capability}, with workflow, launch, and measurement guidance."
-        slug = f"{tool_slug}-for-{industry_slug}"
+        slug = combination_slug(name, industry_slug)
         context = (
             f"For {audience}, the most useful starting point is a recurring, well-documented task. "
             f"Common demand includes {questions}. A focused workflow gives the team enough evidence "
@@ -144,6 +150,8 @@ def page_html(tool, industry=None, related=()):
 
 def main():
     OUT.mkdir(exist_ok=True)
+    for old_page in OUT.glob("*.html"):
+        old_page.unlink()
     pages = []
 
     # 64 primary tool pages.
@@ -156,11 +164,11 @@ def main():
     # 896 pages: every tool for the first 14 audiences.
     for tool_index, tool in enumerate(TOOLS):
         for industry in INDUSTRIES[:14]:
-            slug = f"{slugify(tool[0])}-for-{industry[0]}"
+            slug = combination_slug(tool[0], industry[0])
             related = [
                 slugify(tool[0]),
-                f"{slugify(TOOLS[(tool_index + 1) % len(TOOLS)][0])}-for-{industry[0]}",
-                f"{slugify(TOOLS[(tool_index + 2) % len(TOOLS)][0])}-for-{industry[0]}",
+                combination_slug(TOOLS[(tool_index + 1) % len(TOOLS)][0], industry[0]),
+                combination_slug(TOOLS[(tool_index + 2) % len(TOOLS)][0], industry[0]),
             ]
             (OUT / f"{slug}.html").write_text(page_html(tool, industry, related), encoding="utf-8")
             pages.append(slug)
@@ -168,8 +176,8 @@ def main():
     # 40 pages for the fifteenth audience, producing exactly 1,000 pages.
     for tool_index, tool in enumerate(TOOLS[:40]):
         industry = INDUSTRIES[14]
-        slug = f"{slugify(tool[0])}-for-{industry[0]}"
-        related = [slugify(tool[0]), f"{slugify(TOOLS[(tool_index + 1) % 40][0])}-for-{industry[0]}"]
+        slug = combination_slug(tool[0], industry[0])
+        related = [slugify(tool[0]), combination_slug(TOOLS[(tool_index + 1) % 40][0], industry[0])]
         (OUT / f"{slug}.html").write_text(page_html(tool, industry, related), encoding="utf-8")
         pages.append(slug)
 
