@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://yoursite.asia/sitemap.xml
+Sitemap: https://yoursite.asia/sitemap-seo.xml

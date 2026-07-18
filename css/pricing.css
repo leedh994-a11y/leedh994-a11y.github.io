@@ -200,3 +200,7 @@
 .status-pill.trialing { background: var(--info-bg); color: var(--info); }
 .status-pill.active { background: var(--success-bg); color: var(--success); }
 .status-pill.cancelled { background: var(--error-bg); color: var(--error); }
+
+/* Added: highlighted paid features shared across paid plans */
+.price-features .paid-feature { color: #0f766e; font-weight: 600; }
+.price-features .paid-feature::marker { color: #0d9488; }

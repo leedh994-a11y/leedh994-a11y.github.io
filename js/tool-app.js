@@ -219,6 +219,12 @@ function renderResult(tool, data) {
     el.innerHTML += `<p class="hint">${isZh ? "AI 未启用 — 使用模板生成。设置 OPENAI_API_KEY 启用完整 AI 功能。" : "AI disabled — using templates. Set OPENAI_API_KEY for full AI."}</p>`;
   }
 
+  // Free-tier viral branding: shown on-screen and included in copied output.
+  el.innerHTML += `<div class="sitp-powered-badge">⚡ ${isZh ? "由" : "Powered by"} <a href="https://yoursite.asia" target="_blank" rel="noopener">Sitp GPT</a> ${isZh ? "提供支持 — 在 yoursite.asia 打造你自己的 AI 客服" : "— build your own AI customer support at yoursite.asia"}</div>`;
+  if (window._lastResult) {
+    window._lastResult += `\n\n— ${isZh ? "由 Sitp GPT 提供支持" : "Powered by Sitp GPT"} · https://yoursite.asia`;
+  }
+
   document.getElementById("results").classList.add("visible");
 }
 
