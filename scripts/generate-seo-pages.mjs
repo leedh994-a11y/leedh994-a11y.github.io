@@ -332,6 +332,7 @@ const urls = [
   "/pricing.html",
   "/case-study.html",
   "/install-service.html",
+  "/free-demo.html",
   "/learn/ai-customer-support.html",
   "/learn/ai-automation-tutorials.html",
   "/learn/enterprise-ai-cases.html",

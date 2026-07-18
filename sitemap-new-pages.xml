@@ -25,6 +25,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://yoursite.asia/free-demo.html</loc>
+    <lastmod>2026-07-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://yoursite.asia/learn/ai-customer-support.html</loc>
     <lastmod>2026-07-18</lastmod>
     <changefreq>weekly</changefreq>
