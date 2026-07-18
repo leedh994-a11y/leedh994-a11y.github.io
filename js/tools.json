@@ -1,0 +1,362 @@
+[
+  {
+    "id": "sitemap-checker",
+    "name": "Sitemap Finder & Checker",
+    "desc": "Find and validate all sitemaps on a website, discover hidden sitemaps, and count URLs.",
+    "category": "sitemap"
+  },
+  {
+    "id": "sitemap-validator",
+    "name": "Sitemap Validator",
+    "desc": "Validate XML sitemaps for errors, compliance, and SEO optimization.",
+    "category": "sitemap"
+  },
+  {
+    "id": "sitemap-generator",
+    "name": "XML Sitemap Generator",
+    "desc": "Crawl a website to generate an XML sitemap with up to 50,000 URLs.",
+    "category": "sitemap"
+  },
+  {
+    "id": "sitemap-url-extractor",
+    "name": "Sitemap URL Extractor",
+    "desc": "Extract all URLs from a sitemap.xml.",
+    "category": "sitemap"
+  },
+  {
+    "id": "sitemap-urls-comparison",
+    "name": "Sitemap Comparison Tool",
+    "desc": "Compare two sitemaps and find differences.",
+    "category": "sitemap"
+  },
+  {
+    "id": "sitemap-split-merger",
+    "name": "Sitemap Split/Merge",
+    "desc": "Split a large sitemap or merge multiple sitemaps.",
+    "category": "sitemap"
+  },
+  {
+    "id": "sitemap-analytics",
+    "name": "Sitemap Analytics",
+    "desc": "Analyze URL patterns, depth, and file type distribution in a sitemap.",
+    "category": "sitemap"
+  },
+  {
+    "id": "sitemap-index-generator",
+    "name": "Sitemap Index Generator",
+    "desc": "Generate an index file from multiple sitemap URLs.",
+    "category": "sitemap"
+  },
+  {
+    "id": "sitemap-robots-generator",
+    "name": "Sitemap to Robots.txt",
+    "desc": "Generate a robots.txt with sitemap references.",
+    "category": "sitemap"
+  },
+  {
+    "id": "sitemap-frequency-analyzer",
+    "name": "Sitemap Frequency Analyzer",
+    "desc": "Analyze changefreq and priority distribution.",
+    "category": "sitemap"
+  },
+  {
+    "id": "website-url-extractor",
+    "name": "Website URL Extractor",
+    "desc": "Crawl and extract all URLs from a website.",
+    "category": "sitemap"
+  },
+  {
+    "id": "robots-txt-checker",
+    "name": "Robots.txt Checker",
+    "desc": "Analyze robots.txt rules and sitemaps.",
+    "category": "sitemap"
+  },
+  {
+    "id": "convert-json-to-markdown",
+    "name": "JSON to Markdown",
+    "desc": "Convert JSON to well-formatted Markdown.",
+    "category": "converter"
+  },
+  {
+    "id": "convert-csv-to-markdown",
+    "name": "CSV to Markdown",
+    "desc": "Convert CSV to a Markdown table.",
+    "category": "converter"
+  },
+  {
+    "id": "convert-html-to-markdown",
+    "name": "HTML to Markdown",
+    "desc": "Convert HTML to clean Markdown.",
+    "category": "converter"
+  },
+  {
+    "id": "convert-xml-to-markdown",
+    "name": "XML to Markdown",
+    "desc": "Convert XML documents to Markdown.",
+    "category": "converter"
+  },
+  {
+    "id": "convert-rtf-to-markdown",
+    "name": "RTF to Markdown",
+    "desc": "Convert RTF documents to Markdown.",
+    "category": "converter"
+  },
+  {
+    "id": "convert-paste-to-markdown",
+    "name": "Paste to Markdown",
+    "desc": "Convert pasted text to Markdown.",
+    "category": "converter"
+  },
+  {
+    "id": "convert-webpage-to-markdown",
+    "name": "Webpage to Markdown",
+    "desc": "Enter a URL to convert to Markdown.",
+    "category": "converter"
+  },
+  {
+    "id": "convert-notion-to-markdown",
+    "name": "Notion to Markdown",
+    "desc": "Convert a public Notion page to Markdown.",
+    "category": "converter"
+  },
+  {
+    "id": "convert-google-docs-to-markdown",
+    "name": "Google Docs to Markdown",
+    "desc": "Convert a public Google Docs document to Markdown.",
+    "category": "converter"
+  },
+  {
+    "id": "convert-pdf-to-markdown",
+    "name": "PDF to Markdown",
+    "desc": "Upload a PDF to convert to Markdown.",
+    "category": "converter"
+  },
+  {
+    "id": "convert-docx-to-markdown",
+    "name": "DOCX to Markdown",
+    "desc": "Upload a Word document to convert to Markdown.",
+    "category": "converter"
+  },
+  {
+    "id": "ai-chat-with-your-text-data",
+    "name": "AI Chat: Text Data",
+    "desc": "Paste text and ask AI questions.",
+    "category": "ai-chat"
+  },
+  {
+    "id": "ai-chat-with-your-website-data",
+    "name": "AI Chat: Website Data",
+    "desc": "Enter a webpage URL and chat with AI.",
+    "category": "ai-chat"
+  },
+  {
+    "id": "ai-chat-with-your-document-data",
+    "name": "AI Chat: Document Data",
+    "desc": "Upload a document and chat with AI.",
+    "category": "ai-chat"
+  },
+  {
+    "id": "ai-chat-with-your-pdf-document-data",
+    "name": "AI Chat: PDF",
+    "desc": "Upload a PDF and chat with AI.",
+    "category": "ai-chat"
+  },
+  {
+    "id": "ai-chat-with-your-word-document-data",
+    "name": "AI Chat: Word",
+    "desc": "Upload a Word document and chat with AI.",
+    "category": "ai-chat"
+  },
+  {
+    "id": "ai-chatbot-conversation-analysis",
+    "name": "AI Conversation Analysis",
+    "desc": "Analyze chatbot conversations to identify knowledge gaps.",
+    "category": "ai-chat"
+  },
+  {
+    "id": "ai-prompt-generator",
+    "name": "AI Prompt Generator",
+    "desc": "Generate prompts using APE/RACE/CREATE/SPARK frameworks.",
+    "category": "ai-generator"
+  },
+  {
+    "id": "ai-prompt-optimizer",
+    "name": "AI Prompt Optimizer",
+    "desc": "Optimize an existing prompt.",
+    "category": "ai-generator"
+  },
+  {
+    "id": "ai-faq-generator",
+    "name": "AI FAQ Generator",
+    "desc": "Generate FAQs from content.",
+    "category": "ai-generator"
+  },
+  {
+    "id": "ai-reply-generator",
+    "name": "AI Reply Generator",
+    "desc": "Generate appropriate replies.",
+    "category": "ai-generator"
+  },
+  {
+    "id": "ai-answer-generator",
+    "name": "AI Answer Generator",
+    "desc": "Quickly generate accurate answers.",
+    "category": "ai-generator"
+  },
+  {
+    "id": "ai-email-response-generator",
+    "name": "AI Email Response Generator",
+    "desc": "Generate professional email replies.",
+    "category": "ai-generator"
+  },
+  {
+    "id": "ai-letter-generator",
+    "name": "AI Letter Generator",
+    "desc": "Generate professional letters.",
+    "category": "ai-generator"
+  },
+  {
+    "id": "ai-blog-title-generator",
+    "name": "AI Blog Title Generator",
+    "desc": "Generate engaging blog titles.",
+    "category": "ai-generator"
+  },
+  {
+    "id": "ai-chatbot-name-generator",
+    "name": "AI Chatbot Name Generator",
+    "desc": "Generate names for AI assistants.",
+    "category": "ai-generator"
+  },
+  {
+    "id": "ai-saas-brand-name-generator",
+    "name": "AI SaaS Brand Name Generator",
+    "desc": "Generate brand names for SaaS products.",
+    "category": "ai-generator"
+  },
+  {
+    "id": "customer-service-script-generator",
+    "name": "Customer Service Script Generator",
+    "desc": "Generate scripts for customer service scenarios.",
+    "category": "ai-generator"
+  },
+  {
+    "id": "ai-search-visibility-checker",
+    "name": "AI Search Visibility Checker",
+    "desc": "Enter a keyword to analyze how your website content ranks and is cited in AI search engines such as Perplexity, Doubao, and Gemini.",
+    "category": "ai-studio"
+  },
+  {
+    "id": "ai-qa-content-generator",
+    "name": "AI Q&A Content Generator",
+    "desc": "Generate structured Q&A articles around a keyword, optimized for AI answer citations.",
+    "category": "ai-studio"
+  },
+  {
+    "id": "vlog-title-description-generator",
+    "name": "Vlog Title & Description Generator",
+    "desc": "Enter a video topic or script to generate multi-style titles and a complete video description.",
+    "category": "ai-studio"
+  },
+  {
+    "id": "video-chapter-timestamp-generator",
+    "name": "Video Chapter/Timestamp Generator",
+    "desc": "Analyze video subtitles or narration to generate a timestamped chapter list for long videos.",
+    "category": "ai-studio"
+  },
+  {
+    "id": "broll-script-generator",
+    "name": "B-Roll Creative Script Generator",
+    "desc": "Generate B-roll shot suggestions and scripts based on video narration content.",
+    "category": "ai-studio"
+  },
+  {
+    "id": "customer-service-qa-analyzer",
+    "name": "Customer Service QA & Sentiment Analyzer",
+    "desc": "Analyze customer service conversations for tone, accuracy, and improvement suggestions.",
+    "category": "ai-studio"
+  },
+  {
+    "id": "prd-generator",
+    "name": "Product Requirements Document Generator",
+    "desc": "Enter a feature idea to generate a PRD draft covering background, goals, scope, and more.",
+    "category": "ai-studio"
+  },
+  {
+    "id": "internal-email-tone-adjuster",
+    "name": "Internal Email/Ticket Tone Adjuster",
+    "desc": "Adjust draft emails to be more professional, diplomatic, or friendly.",
+    "category": "ai-studio"
+  },
+  {
+    "id": "ai-subscription-pricing-advisor",
+    "name": "AI Subscription Pricing Advisor",
+    "desc": "Recommend multi-tier subscription pricing based on features, target market, competitors, and willingness to pay.",
+    "category": "ai-studio"
+  },
+  {
+    "id": "saas-cost-calculator",
+    "name": "SaaS Cost Calculator",
+    "desc": "Estimate server and API costs and gross margin based on projected users and API call volume.",
+    "category": "ai-studio"
+  },
+  {
+    "id": "vc-term-sheet-simulator",
+    "name": "VC Term Sheet Simulator",
+    "desc": "Generate a simulated term sheet from a business idea, explaining valuation, option pool, liquidation preferences, and more.",
+    "category": "ai-studio"
+  },
+  {
+    "id": "website-faq-generator",
+    "name": "Website FAQ Generator",
+    "desc": "Generate FAQs from up to 5 websites.",
+    "category": "faq"
+  },
+  {
+    "id": "webpage-to-faq-generator",
+    "name": "Webpage FAQ Generator",
+    "desc": "Generate FAQs from a webpage URL.",
+    "category": "faq"
+  },
+  {
+    "id": "pdf-to-faq-generator",
+    "name": "PDF FAQ Generator",
+    "desc": "Generate FAQs from a PDF.",
+    "category": "faq"
+  },
+  {
+    "id": "docx-to-faq-generator",
+    "name": "DOCX FAQ Generator",
+    "desc": "Generate FAQs from a Word document.",
+    "category": "faq"
+  },
+  {
+    "id": "html-to-faq-generator",
+    "name": "HTML FAQ Generator",
+    "desc": "Generate FAQs from HTML content.",
+    "category": "faq"
+  },
+  {
+    "id": "google-docs-to-faq-generator",
+    "name": "Google Docs FAQ Generator",
+    "desc": "Generate FAQs from a Google Docs document.",
+    "category": "faq"
+  },
+  {
+    "id": "notion-to-faq-generator",
+    "name": "Notion FAQ Generator",
+    "desc": "Generate FAQs from a Notion page.",
+    "category": "faq"
+  },
+  {
+    "id": "chatbot-roi-calculator",
+    "name": "Chatbot ROI Calculator",
+    "desc": "Estimate cost savings from a customer service chatbot.",
+    "category": "utility"
+  },
+  {
+    "id": "email-signature-generator",
+    "name": "Email Signature Generator",
+    "desc": "Design a professional email signature.",
+    "category": "utility"
+  }
+]

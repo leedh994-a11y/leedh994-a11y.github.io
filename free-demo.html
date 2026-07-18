@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Demo — Powered by Sitp GPT Branding</title>
+  <meta name="description" content="Free-tier content generation demo. Outputs include Powered by Sitp GPT branding for organic product distribution.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/site-extra.css">
+</head>
+<body class="sg-page">
+  <div id="sg-nav-mount"></div>
+  <main class="sg-wrap sg-section">
+    <h1 style="font-family:var(--sg-font-display);">Free user content branding</h1>
+    <p class="sub">When free users generate content, Sitp GPT appends <strong>Powered by Sitp GPT</strong> so customer sites, reports, and docs naturally spread the brand. Paid users can remove it.</p>
+    <div class="sg-panel">
+      <label for="topic" style="font-weight:700;">Generate a sample FAQ answer</label>
+      <input id="topic" type="text" value="shipping times" style="width:100%;margin:10px 0 14px;padding:12px;border:1px solid var(--sg-border);border-radius:10px;font:inherit;">
+      <button type="button" id="gen" class="sg-btn sg-btn-primary">Generate (free tier)</button>
+      <button type="button" id="toggle-plan" class="sg-btn sg-btn-secondary" style="margin-left:8px;">Simulate paid plan</button>
+      <div id="out" data-powered-by-free class="sg-panel" style="margin-top:16px;background:#f8fafc;"></div>
+    </div>
+  </main>
+  <div id="sg-footer-mount"></div>
+  <script src="/js/site-common.js"></script>
+  <script src="/js/powered-by.js"></script>
+  <script>
+    const out = document.getElementById("out");
+    const topic = document.getElementById("topic");
+    document.getElementById("gen").onclick = () => {
+      const text = `Q: What about ${topic.value}?\nA: Most orders ship within 1–3 business days. Track your package from the account page. Need more help? Ask Sitp GPT on your site.`;
+      out.textContent = window.SitpPoweredBy.appendToText(text);
+      // Also ensure HTML brand line for free users
+      window.SitpPoweredBy.appendToElement(out);
+    };
+    document.getElementById("toggle-plan").onclick = (e) => {
+      const paid = (localStorage.getItem("sitp_plan") || "free") !== "paid";
+      localStorage.setItem("sitp_plan", paid ? "paid" : "free");
+      e.target.textContent = paid ? "Simulate free plan" : "Simulate paid plan";
+      out.textContent = "";
+    };
+  </script>
+</body>
+</html>

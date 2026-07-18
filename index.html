@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sitp GPT — Replace your first-line customer support team with AI</title>
+  <meta name="description" content="Replace your first-line customer support team with AI. Sitp GPT offers AI customer support, 60+ free SaaS tools, SEO pages, and install services.">
+  <link rel="canonical" href="https://yoursite.asia/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/site-extra.css">
+</head>
+<body class="sg-page">
+  <div id="sg-nav-mount"></div>
+
+  <main>
+    <section class="sg-wrap sg-hero">
+      <div>
+        <div class="sg-badge">Sitp GPT · AI Customer Support</div>
+        <h1>Replace your first-line customer support team with AI.</h1>
+        <p class="lead">Train Sitp GPT on your site, answer visitors 24/7, and keep all 60+ free SaaS tools — plus new SEO traffic hubs, case studies, and a one-time install service.</p>
+        <div class="sg-hero-actions">
+          <a class="sg-btn sg-btn-primary" href="/pricing.html">View plans</a>
+          <a class="sg-btn sg-btn-secondary" href="https://yoursite.asia/" target="_blank" rel="noopener">Open live tools</a>
+          <a class="sg-btn sg-btn-amber" href="/install-service.html">$599 Install Service</a>
+        </div>
+      </div>
+      <div class="sg-hero-visual" role="img" aria-label="Sitp GPT AI assistant visual"></div>
+    </section>
+
+    <section class="sg-section">
+      <div class="sg-wrap">
+        <h2>What you get</h2>
+        <p class="sub">New pages and capabilities added alongside the existing live product — tools, payments, and subscriptions stay unchanged.</p>
+        <div class="sg-grid-3">
+          <div class="sg-panel">
+            <h3>Free + paid support plans</h3>
+            <p>Free tier for testing. Paid plans unlock unlimited AI answers, WhatsApp/Slack, lead capture, and analytics.</p>
+            <a href="/pricing.html">See pricing →</a>
+          </div>
+          <div class="sg-panel">
+            <h3>Case Study</h3>
+            <p>An ecommerce brand cut support load by 80% and saved about $2,000/month with Sitp GPT.</p>
+            <a href="/case-study.html">Read the case →</a>
+          </div>
+          <div class="sg-panel">
+            <h3>1,000 SEO entry pages</h3>
+            <p>Search hubs for AI chatbot, Shopify support, PDF chatbot, FAQ generator, sitemap tools, and every Sitp GPT tool.</p>
+            <a href="/seo/">Browse SEO hub →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sg-section" style="padding-top:0;">
+      <div class="sg-wrap">
+        <h2>Learn & demos</h2>
+        <p class="sub">Guides, enterprise cases, AI employee playbooks, and product video demos.</p>
+        <div class="sg-grid-2">
+          <a class="sg-tool-link" href="/learn/ai-customer-support.html"><h3>AI customer support intro</h3><p>What Sitp GPT replaces and how training works.</p></a>
+          <a class="sg-tool-link" href="/learn/ai-automation-tutorials.html"><h3>AI automation tutorials</h3><p>Step-by-step workflows for FAQ, chat, and routing.</p></a>
+          <a class="sg-tool-link" href="/learn/enterprise-ai-cases.html"><h3>Enterprise AI cases</h3><p>How teams deploy AI employees across support.</p></a>
+          <a class="sg-tool-link" href="/learn/ai-employee-guide.html"><h3>AI employee usage guide</h3><p>Day-to-day playbook for agents and managers.</p></a>
+          <a class="sg-tool-link" href="/learn/demos.html"><h3>Video demos</h3><p>Watch install, training, and live chat demos.</p></a>
+          <a class="sg-tool-link" href="/tools/"><h3>60+ tool SEO entries</h3><p>Each tool becomes a discoverable landing page.</p></a>
+          <a class="sg-tool-link" href="/free-demo.html"><h3>Powered by Sitp GPT</h3><p>Free-tier content branding for organic product distribution.</p></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="sg-section" style="padding-top:0;">
+      <div class="sg-wrap">
+        <h2>60+ AI tools (SEO entries)</h2>
+        <p class="sub">Every existing tool is preserved on the live site. These pages are additive SEO doorways that deep-link to the original tools.</p>
+        <div class="sg-tools-grid" id="tools-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="sg-footer-mount"></div>
+  <script src="/js/site-common.js"></script>
+  <script type="module">
+    import { TOOLS } from "/js/tools-data.js";
+    const grid = document.getElementById("tools-grid");
+    grid.innerHTML = TOOLS.map((t) => `
+      <a class="sg-tool-link" href="/tools/${t.id}.html">
+        <h3>${t.name}</h3>
+        <p>${t.desc}</p>
+      </a>`).join("");
+  </script>
+</body>
+</html>

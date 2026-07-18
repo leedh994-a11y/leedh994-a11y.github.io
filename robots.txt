@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Sitemap: https://yoursite.asia/sitemap-new-pages.xml
+Sitemap: https://yoursite.asia/sitemap.xml
