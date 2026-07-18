@@ -1,0 +1,8 @@
+{
+  "name": "sitp-gpt-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate-seo": "node scripts/generate-seo-pages.js"
+  }
+}

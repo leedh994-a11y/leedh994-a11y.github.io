@@ -1,0 +1,127 @@
+.resource-hero {
+  padding: 48px 0 32px;
+  text-align: center;
+}
+
+.resource-hero h1 {
+  font-size: 2.25rem;
+  margin: 12px 0;
+}
+
+.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 24px 0 48px;
+}
+
+.resource-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.resource-card h2 {
+  font-size: 1.15rem;
+  margin: 0 0 8px;
+}
+
+.case-study-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin: 32px 0;
+}
+
+.case-stat {
+  background: var(--primary-light);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+}
+
+.case-stat .val {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  padding: 24px 0 48px;
+}
+
+.video-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.video-placeholder {
+  aspect-ratio: 16/9;
+  background: linear-gradient(135deg, #0d9488 0%, #2563eb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 3rem;
+}
+
+.video-card .body {
+  padding: 16px;
+}
+
+.powered-by-badge {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 6px 12px;
+  background: var(--primary-light);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: var(--primary);
+}
+
+.installation-banner {
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 32px;
+  margin: 32px 0;
+}
+
+.installation-banner h2 {
+  margin-top: 0;
+}
+
+.installation-banner .btn {
+  background: #fff;
+  color: var(--primary);
+}
+
+.price-card.free-tier {
+  border: 2px dashed var(--border);
+}
+
+.price-card.installation {
+  border: 2px solid var(--primary);
+  grid-column: 1 / -1;
+  max-width: 100%;
+}
+
+.installation-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .installation-inner {
+    grid-template-columns: 1fr;
+  }
+}

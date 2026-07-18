@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Subscription - Sitp GPT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/pricing.css">
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x0r5cbb7p5");
+  </script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?09c617d7b704bf771069f0d8e48fde65";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo"><span class="logo-icon">◆</span> Sitp GPT</a>
+      <nav class="nav-links">
+        <a href="/pricing.html">Pricing</a>
+        <a href="/">Tools</a>
+        <a href="/zh/" class="lang-switch">中文</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <span class="hero-badge">Account</span>
+        <h1>My subscription</h1>
+      </div>
+    </section>
+
+    <section class="container" style="padding-bottom:64px">
+      <div class="tool-panel" style="max-width:480px;margin:0 auto 24px">
+        <div class="form-group">
+          <label for="lookup-email">Email</label>
+          <input type="email" id="lookup-email" placeholder="you@company.com">
+        </div>
+        <button type="button" class="btn btn-primary" id="btn-lookup">View subscription</button>
+      </div>
+
+      <div id="account-card" class="account-card" style="display:none">
+        <p><span class="status-pill" id="sub-status">-</span></p>
+        <h2 id="sub-plan" style="margin:12px 0 4px">-</h2>
+        <p class="hint" id="sub-cycle">-</p>
+        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0">
+        <p id="sub-trial"></p>
+        <p id="sub-period"></p>
+        <p id="sub-access"></p>
+        <div class="btn-row" style="margin-top:24px">
+          <a href="/" class="btn btn-primary">Use tools</a>
+          <button type="button" class="btn btn-secondary" id="btn-cancel">Cancel subscription</button>
+          <a href="/checkout.html" id="btn-upgrade" class="btn btn-secondary" style="display:none">Upgrade / Pay</a>
+        </div>
+      </div>
+
+      <div id="no-sub" class="account-card" style="display:none;text-align:center">
+        <p>No active subscription found.</p>
+        <a href="/pricing.html" class="btn btn-primary" style="margin-top:16px">View plans</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/account.js"></script>
+</body>
+</html>
