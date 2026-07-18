@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PayPal 支付 - Sitp GPT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    #paypal-button-container { min-height: 48px; margin-top: 16px; }
+    .amount-presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .amount-presets button { padding: 8px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); cursor: pointer; font-weight: 600; }
+    .amount-presets button.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+    .config-badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+    .config-badge.ok { background: var(--success-bg); color: var(--success); }
+    .config-badge.warn { background: var(--warning-bg); color: var(--warning); }
+  </style>
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x0r5cbb7p5");
+  </script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?09c617d7b704bf771069f0d8e48fde65";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo"><span class="logo-icon">◆</span> Sitp GPT</a>
+      <nav class="nav-links">
+        <a href="/">全部工具</a>
+        <a href="/paypal.html">PayPal</a>
+        <a href="/paypal-config.html">PayPal 配置</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <span class="hero-badge">Payments</span>
+        <h1>PayPal 支付</h1>
+        <p>使用 PayPal Sandbox 安全测试支付。状态：<span id="config-badge" class="config-badge warn">检测中...</span></p>
+      </div>
+    </section>
+
+    <section class="container">
+      <div class="tool-panel">
+        <form id="pay-form" onsubmit="return false;">
+          <div class="form-group">
+            <label for="amount">支付金额 (USD)</label>
+            <div class="amount-presets">
+              <button type="button" data-amount="5">$5</button>
+              <button type="button" data-amount="10">$10</button>
+              <button type="button" data-amount="25">$25</button>
+              <button type="button" data-amount="50">$50</button>
+            </div>
+            <input type="number" id="amount" min="0.01" step="0.01" value="5.00" required>
+          </div>
+          <div class="form-group">
+            <label for="description">订单说明</label>
+            <input type="text" id="description" value="Sitp GPT 支持付款" maxlength="127">
+          </div>
+
+          <div id="error-alert" class="alert alert-error" style="display:none;"></div>
+
+          <div class="btn-row">
+            <button type="button" class="btn btn-primary" id="pay-link-btn">前往 PayPal 付款</button>
+            <button type="button" class="btn btn-secondary" id="create-order-btn">仅创建订单（测试）</button>
+          </div>
+
+          <div id="paypal-button-container"></div>
+        </form>
+
+        <div id="order-result" class="results" style="margin-top:24px;">
+          <h3>订单信息</h3>
+          <pre id="order-output" class="raw-content"></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p><a href="/paypal-config.html">PayPal 配置说明</a> · Sandbox 测试环境 · <a href="https://x.com/XZZ13340061411" class="social-x-link" title="Follow @XZZ13340061411 on X" target="_blank" rel="noopener noreferrer"><svg class="social-x-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>@XZZ13340061411</a></p>
+    </div>
+  </footer>
+
+  <script src="/js/paypal-checkout.js"></script>
+</body>
+</html>

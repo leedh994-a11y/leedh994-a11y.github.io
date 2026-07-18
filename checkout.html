@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout - Sitp GPT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/pricing.css">
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x0r5cbb7p5");
+  </script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?09c617d7b704bf771069f0d8e48fde65";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo"><span class="logo-icon">?</span> Sitp GPT</a>
+      <nav class="nav-links"><a href="/pricing.html">Back to pricing</a> · <a href="/zh/" class="lang-switch">中文</a></nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <span class="hero-badge">Checkout</span>
+        <h1 id="checkout-title">Complete subscription</h1>
+        <p id="checkout-subtitle"></p>
+      </div>
+    </section>
+
+    <section class="container" style="max-width:560px;padding-bottom:64px">
+      <div class="tool-panel">
+        <div id="error-alert" class="alert alert-error" style="display:none;white-space:pre-wrap;font-size:14px;line-height:1.5"></div>
+
+        <div class="checkout-summary" id="summary">
+          <div class="checkout-line"><span>Plan</span><strong id="sum-plan">-</strong></div>
+          <div class="checkout-line"><span>Billing</span><strong id="sum-cycle">-</strong></div>
+          <div class="checkout-line"><span>Trial</span><strong>7 days free</strong></div>
+          <div class="checkout-line total"><span>Due today</span><strong id="sum-total">$0</strong></div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Work email</label>
+          <input type="email" id="email" placeholder="you@company.com" required>
+        </div>
+
+        <label style="display:flex;gap:8px;margin-bottom:12px">
+          <input type="checkbox" id="addon-branding"> Remove branding (+$39/mo)
+        </label>
+        <label style="display:flex;gap:8px;margin-bottom:20px">
+          <input type="checkbox" id="addon-messages"> Extra 5k messages (+$39/mo)
+        </label>
+
+        <div class="btn-row" style="flex-direction:column">
+          <button type="button" class="btn btn-primary" id="btn-trial">Start 7-day free trial</button>
+          <button type="button" class="btn btn-secondary" id="btn-pay">Subscribe now (PayPal)</button>
+        </div>
+        <p class="hint" style="margin-top:16px;text-align:center">试用无需付款。手机请点「Subscribe now」或下方「前往 PayPal 付款」。</p>
+        <div id="paypal-button-container" style="margin-top:16px"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/checkout.js"></script>
+</body>
+</html>

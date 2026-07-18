@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing — Sitp GPT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/pricing.css">
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x0r5cbb7p5");
+  </script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?09c617d7b704bf771069f0d8e48fde65";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo"><span class="logo-icon">◆</span> Sitp GPT</a>
+      <nav class="nav-links">
+        <a href="/">Tools</a>
+        <a href="/pricing.html">Pricing</a>
+        <a href="/account.html">My Subscription</a>
+        <a href="/zh/pricing.html" class="lang-switch">中文</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="pricing-hero">
+      <div class="container">
+        <span class="hero-badge">Pricing</span>
+        <h1>Pricing Plans</h1>
+        <p>Save support time and get ROI fast — whether you're a startup or enterprise, there's a plan for you.</p>
+        <div class="billing-toggle">
+          <label><input type="radio" name="cycle" id="cycle-monthly" checked> Monthly</label>
+          <label><input type="radio" name="cycle" id="cycle-yearly"> Yearly <span class="save-badge" id="save-badge" style="display:none">Save 40%</span></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="container openrouter-section" id="openrouter-advisor">
+      <div class="tool-panel openrouter-panel">
+        <span class="hero-badge">OpenRouter AI</span>
+        <h2 style="margin:12px 0 8px">AI Plan Advisor</h2>
+        <p class="hint" style="margin-bottom:16px">
+          Powered by OpenRouter — get a plan recommendation based on your team size and usage.
+        </p>
+        <div id="openrouter-status" class="hint" style="margin-bottom:12px"></div>
+        <div class="openrouter-chat" id="openrouter-messages" aria-live="polite"></div>
+        <form id="openrouter-form" class="openrouter-form">
+          <textarea id="openrouter-input" rows="2" placeholder="e.g. Small team with ~5,000 support messages/month — which plan?" maxlength="2000"></textarea>
+          <button type="submit" class="btn btn-primary" id="openrouter-send">Ask AI</button>
+        </form>
+        <p class="hint" style="margin-top:12px;font-size:0.8rem">API keys are stored server-side, never exposed to the browser.</p>
+      </div>
+    </section>
+
+    <section class="container paypal-login-section">
+      <div class="tool-panel paypal-login-panel">
+        <span class="hero-badge">PayPal</span>
+        <h2 style="margin:12px 0 8px">Sign in with PayPal</h2>
+        <p class="hint" style="margin-bottom:12px">Link your subscription and payment. You'll return here to complete checkout after authorization.</p>
+        <div class="paypal-login-wrap">
+          <span id="AUrJIWxY7dAh_eYG-kShzcV0fQNMCX2pV0mNM54sJlOw7LPBT1hf8RtYJCrk4pmspw_0IVxwSYUPuWzQ"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="container" id="fc-comfyui">
+      <div class="tool-panel" style="margin-bottom:32px;border:2px solid var(--accent,#0d9488)">
+        <span class="hero-badge">FC 3.0 · ComfyUI</span>
+        <h2 style="margin:12px 0 8px">FC ComfyUI Workflows</h2>
+        <p class="hint" style="margin-bottom:16px">
+          Alibaba Cloud FC 3.0 integrated. Complete Sitp GPT subscriptions via PayPal on this page; ComfyUI compute pricing runs in the FC console.
+        </p>
+        <div class="btn-row" style="flex-wrap:wrap;gap:12px">
+          <a id="fc-pricing-link" href="/fc/pricing" class="btn btn-primary" target="_blank" rel="noopener">Open FC ComfyUI pricing</a>
+          <a id="fc-app-link" href="/fc/comfyui" class="btn btn-secondary" target="_blank" rel="noopener">Open ComfyUI console</a>
+          <a href="/checkout.html?plan=growth&cycle=monthly" class="btn btn-secondary">Sitp GPT checkout (PayPal)</a>
+        </div>
+        <p id="fc-url-hint" class="hint" style="margin-top:12px;word-break:break-all"></p>
+      </div>
+
+      <div class="pricing-grid" id="pricing-grid">
+        <article class="price-card" data-plan="starter">
+          <h2>Starter</h2>
+          <p class="desc">For solo founders and small teams</p>
+          <div class="price-amount">$39</div>
+          <p class="price-period">/mo</p>
+          <p class="price-billed">Billed monthly</p>
+          <ul class="price-features">
+            <li>1 AI chatbot</li>
+            <li>Up to 4,000 messages/mo</li>
+            <li>Up to 1,000 pages</li>
+            <li>Manual training refresh</li>
+            <li>1 team member</li>
+          </ul>
+          <a href="/checkout.html?plan=starter&cycle=monthly" class="btn btn-primary checkout-link">Start 7-day free trial</a>
+        </article>
+
+        <article class="price-card popular" data-plan="growth">
+          <span class="popular-tag">Most Popular</span>
+          <h2>Growth</h2>
+          <p class="desc">For growing teams that need automation</p>
+          <div class="price-amount">$79</div>
+          <p class="price-period">/mo</p>
+          <p class="price-billed">Billed monthly</p>
+          <ul class="price-features">
+            <li>Up to 2 chatbots</li>
+            <li>Up to 10,000 messages/mo</li>
+            <li>Up to 10,000 pages</li>
+            <li>Up to 4 team members</li>
+            <li>API access · monthly auto-refresh</li>
+          </ul>
+          <a href="/checkout.html?plan=growth&cycle=monthly" class="btn btn-primary checkout-link">Start 7-day free trial</a>
+        </article>
+
+        <article class="price-card" data-plan="scale">
+          <h2>Scale</h2>
+          <p class="desc">For larger teams needing more automation</p>
+          <div class="price-amount">$259</div>
+          <p class="price-period">/mo</p>
+          <p class="price-billed">Billed monthly</p>
+          <ul class="price-features">
+            <li>Up to 3 chatbots</li>
+            <li>Up to 40,000 messages/mo</li>
+            <li>Up to 50,000 pages</li>
+            <li>Webhooks · weekly auto-refresh</li>
+            <li>Up to 10 team members</li>
+          </ul>
+          <a href="/checkout.html?plan=scale&cycle=monthly" class="btn btn-primary checkout-link">Start 7-day free trial</a>
+        </article>
+
+        <article class="price-card enterprise">
+          <h2>Enterprise</h2>
+          <p class="desc">Custom capacity, compliance &amp; support</p>
+          <div class="price-amount">Custom</div>
+          <p class="price-billed">Contact for pricing</p>
+          <ul class="price-features">
+            <li>Custom message &amp; page limits</li>
+            <li>Priority support · custom integrations</li>
+            <li>HIPAA · DPA/BAA</li>
+          </ul>
+          <a href="mailto:support@yoursite.asia" class="btn btn-secondary">Contact us</a>
+        </article>
+      </div>
+
+      <section class="addons-section">
+        <h2>Add-ons</h2>
+        <div class="addons-grid">
+          <div class="addon-card" data-addon="remove-branding">
+            <div><strong>Remove branding</strong><br><span class="hint addon-price">+$39/mo</span></div>
+          </div>
+          <div class="addon-card" data-addon="extra-messages">
+            <div><strong>Extra 5,000 messages</strong><br><span class="hint addon-price">+$39/mo</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="calculator-section">
+        <h2>Message quota calculator</h2>
+        <p class="hint">GPT-4.1-mini is ~10× cheaper than GPT-4.1 — drag the slider to allocate quota.</p>
+        <div class="calc-row calc-plans">
+          <button type="button" data-plan="starter">Starter</button>
+          <button type="button" data-plan="growth">Growth</button>
+          <button type="button" data-plan="scale">Scale</button>
+        </div>
+        <div class="calc-row">
+          <label id="slider-label">50% GPT-4.1 · 50% GPT-4.1-mini</label>
+          <input type="range" id="model-slider" class="calc-slider" min="0" max="100" value="50">
+        </div>
+        <div class="calc-results">
+          <div class="calc-stat"><div class="val" id="calc-gpt41">500</div><div class="lbl">GPT-4.1 messages</div></div>
+          <div class="calc-stat"><div class="val" id="calc-mini">5,000</div><div class="lbl">GPT-4.1-mini messages</div></div>
+          <div class="calc-stat"><div class="val" id="calc-total">5,500</div><div class="lbl">Total / month</div></div>
+        </div>
+        <a id="calc-cta" href="/checkout.html?plan=growth&cycle=monthly" class="btn btn-primary" style="margin-top:20px">Try Growth free · <span id="calc-cta-price">$79/mo</span></a>
+      </section>
+
+      <section class="faq-section">
+        <h2>FAQ</h2>
+        <details class="faq-item"><summary>How does the free trial work?</summary><p>7-day free trial — no charge during trial. After trial, PayPal bills your selected plan.</p></details>
+        <details class="faq-item"><summary>Can I cancel anytime?</summary><p>Yes. Cancel from My Subscription anytime; access continues until period end.</p></details>
+        <details class="faq-item"><summary>What payment methods are supported?</summary><p>PayPal (sandbox available for testing).</p></details>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="container"><p><a href="/">Back to home</a> · <a href="/zh/">中文</a> · <a href="https://x.com/XZZ13340061411" class="social-x-link" title="Follow @XZZ13340061411 on X" target="_blank" rel="noopener noreferrer"><svg class="social-x-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>@XZZ13340061411</a></p></div></footer>
+  <script src="/js/pricing.js"></script>
+  <script src="/js/pricing-openrouter.js"></script>
+  <script src="/js/pricing-fc.js"></script>
+  <script src="https://www.paypalobjects.com/js/external/api.js"></script>
+  <script src="/js/pricing-paypal-login.js"></script>
+</body>
+</html>

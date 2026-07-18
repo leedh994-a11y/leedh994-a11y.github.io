@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sitp GPT — 创客故事宣传视频</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      font-family: "Inter", sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+    }
+    .stage {
+      position: relative;
+      width: 100vw; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 48px 64px;
+      opacity: 0;
+      transform: scale(1.04);
+      transition: opacity 0.9s ease, transform 1.2s ease;
+      pointer-events: none;
+    }
+    .slide.active {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+    .slide::before {
+      content: "";
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 30% 20%, rgba(13,148,136,0.25), transparent 55%),
+                  radial-gradient(circle at 80% 80%, rgba(37,99,235,0.15), transparent 50%);
+      z-index: 0;
+    }
+    .slide > * { position: relative; z-index: 1; }
+    .badge {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(13,148,136,0.2);
+      border: 1px solid rgba(13,148,136,0.5);
+      color: #5eead4;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.15;
+      max-width: 900px;
+      margin-bottom: 20px;
+    }
+    h2 {
+      font-size: clamp(1.5rem, 3.5vw, 2.4rem);
+      font-weight: 700;
+      max-width: 820px;
+      margin-bottom: 16px;
+    }
+    p {
+      font-size: clamp(1rem, 2vw, 1.35rem);
+      color: #cbd5e1;
+      max-width: 720px;
+      line-height: 1.7;
+    }
+    .url {
+      margin-top: 28px;
+      font-size: clamp(1.1rem, 2.2vw, 1.6rem);
+      font-weight: 700;
+      color: #5eead4;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(140px, 1fr));
+      gap: 16px;
+      margin-top: 32px;
+      max-width: 640px;
+    }
+    .chip {
+      padding: 14px 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .steps {
+      text-align: left;
+      max-width: 560px;
+      margin-top: 24px;
+    }
+    .steps li {
+      margin: 12px 0;
+      font-size: 1.15rem;
+      color: #e2e8f0;
+    }
+    .logo { font-size: 2rem; margin-bottom: 8px; }
+    .logo span { color: #14b8a6; }
+    .progress {
+      position: fixed; bottom: 0; left: 0; height: 4px;
+      background: linear-gradient(90deg, #0d9488, #2563eb);
+      width: 0%;
+      transition: width 0.3s linear;
+      z-index: 10;
+    }
+    .controls {
+      position: fixed; bottom: 20px; right: 24px;
+      z-index: 20;
+      display: flex; gap: 10px;
+    }
+    .controls button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+    .controls button:hover { background: rgba(255,255,255,0.2); }
+    .hint-bar {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      font-size: 13px; color: #94a3b8;
+      z-index: 20;
+    }
+  </style>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?09c617d7b704bf771069f0d8e48fde65";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+</head>
+<body>
+  <div class="hint-bar">按 F11 全屏 · 用 OBS/Win+G 录屏即可导出视频 · 空格暂停</div>
+  <a class="lang-link" href="/promo-video-en.html" style="position:fixed;top:16px;right:24px;font-size:13px;color:#5eead4;z-index:20;text-decoration:none;">English version</a>
+  <div class="progress" id="progress"></div>
+
+  <div class="stage" id="stage">
+    <section class="slide active" data-duration="6">
+      <div class="logo"><span>◆</span> Sitp GPT</div>
+      <span class="badge">创客故事</span>
+      <h1>做 SaaS 的人，不该在十几个网站之间来回切换</h1>
+      <p>这是我创建 Sitp GPT 的原因。</p>
+    </section>
+
+    <section class="slide" data-duration="7">
+      <span class="badge">痛点</span>
+      <h2>Sitemap 要查、格式要转、AI 文案要生成……</h2>
+      <p>注册、登录、付费，标签页开满屏——时间都耗在找工具上。</p>
+    </section>
+
+    <section class="slide" data-duration="8">
+      <span class="badge">解决方案</span>
+      <h2>一个网站，60+ 实用工具</h2>
+      <div class="grid">
+        <div class="chip">Sitemap 工具</div>
+        <div class="chip">格式转换</div>
+        <div class="chip">AI 生成器</div>
+        <div class="chip">FAQ 生成</div>
+        <div class="chip">PayPal 订阅</div>
+        <div class="chip">AI 创作与商业</div>
+      </div>
+    </section>
+
+    <section class="slide" data-duration="8">
+      <span class="badge">如何使用</span>
+      <h2>3 步开始，无需注册</h2>
+      <ol class="steps">
+        <li>① 打开 <strong>yoursite.asia</strong></li>
+        <li>② 选择工具 → 填写内容 → 点击执行</li>
+        <li>③ 需要完整 AI？升级 Pro <strong>$79/月</strong></li>
+      </ol>
+    </section>
+
+    <section class="slide" data-duration="7">
+      <span class="badge">面向谁</span>
+      <h2>SaaS 创始人 · SEO 从业者 · 独立开发者</h2>
+      <p>面向 SaaS 与 SEO 的 60+ 实用工具。无需注册，打开即用。</p>
+    </section>
+
+    <section class="slide" data-duration="8">
+      <span class="badge">现在开始</span>
+      <h1>Sitp GPT</h1>
+      <p>免费试用 · Pro $79/月 · 全球可访问</p>
+      <div class="url">https://yoursite.asia</div>
+      <p style="margin-top:20px;font-size:1rem;">@XZZ13340061411</p>
+    </section>
+  </div>
+
+  <div class="controls">
+    <button type="button" id="restart">重新播放</button>
+    <button type="button" id="pause">暂停</button>
+  </div>
+
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    const progress = document.getElementById("progress");
+    let index = 0;
+    let timer = null;
+    let paused = false;
+    let elapsed = 0;
+    let slideStart = 0;
+
+    const totalDuration = slides.reduce((s, el) => s + Number(el.dataset.duration || 6), 0);
+
+    function show(i) {
+      slides.forEach((s, j) => s.classList.toggle("active", j === i));
+      index = i;
+      slideStart = Date.now();
+      elapsed = 0;
+      scheduleNext();
+    }
+
+    function updateProgress() {
+      let done = 0;
+      for (let j = 0; j < index; j++) done += Number(slides[j].dataset.duration || 6);
+      done += Math.min(elapsed, Number(slides[index].dataset.duration || 6));
+      progress.style.width = (done / totalDuration * 100) + "%";
+    }
+
+    function scheduleNext() {
+      clearTimeout(timer);
+      if (paused) return;
+      const dur = Number(slides[index].dataset.duration || 6) * 1000;
+      timer = setTimeout(() => {
+        if (index < slides.length - 1) show(index + 1);
+        else show(0);
+      }, dur - elapsed);
+    }
+
+    function tick() {
+      if (!paused) {
+        elapsed = (Date.now() - slideStart) / 1000;
+        updateProgress();
+      }
+      requestAnimationFrame(tick);
+    }
+
+    document.getElementById("pause").addEventListener("click", () => {
+      paused = !paused;
+      document.getElementById("pause").textContent = paused ? "继续" : "暂停";
+      if (!paused) {
+        slideStart = Date.now() - elapsed * 1000;
+        scheduleNext();
+      } else clearTimeout(timer);
+    });
+
+    document.getElementById("restart").addEventListener("click", () => {
+      paused = false;
+      document.getElementById("pause").textContent = "暂停";
+      show(0);
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.code === "Space") { e.preventDefault(); document.getElementById("pause").click(); }
+    });
+
+    tick();
+    scheduleNext();
+  </script>
+</body>
+</html>
