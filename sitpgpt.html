@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sitp GPT — AI Customer Support & Free SaaS Tools</title>
+    <meta name="description" content="Explore Sitp GPT AI customer support and free SaaS tools for sitemaps, SEO, content, and customer conversations.">
+    <link rel="canonical" href="https://yoursite.asia/sitpgpt.html">
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f8f9fa; color: #333; line-height: 1.6; }
         header { background: #000; color: white; padding: 1rem; text-align: center; }
@@ -22,9 +24,10 @@
 </head>
 <body>
     <div class="product-hunt-badge">🏆 PRODUCT HUNT #1 Product of the Day</div>
-    
+
     <header>
-        <h1>Sitp GPT — AI Customer Support & Free SaaS Tools</h1>
+        <p><a href="/" style="color:white">Home</a> · <a href="/pricing.html" style="color:white">Pricing</a> · <a href="/case-study.html" style="color:white">Case Study</a> · <a href="/resources.html" style="color:white">AI Resources</a> · <a href="/demo.html" style="color:white">Demo</a></p>
+        <h1>Replace your first-line customer support team with AI.</h1>
         <p>Make AI your expert SaaS toolkit</p>
         <p>It's like having ChatGPT built for SaaS builders.</p>
         <p>Instantly answer visitors' questions with Sitp GPT — 60+ free tools for sitemap, conversion, AI copy & billing.</p>
@@ -52,6 +55,7 @@
 
         <h2>PayPal Subscription & Billing</h2>
         <button class="payment-btn" onclick="simulatePayment()">Get Pro Subscription (PayPal)</button>
+        <p><a href="/pricing.html">View the new Free, Starter, Growth, Business, and $599 installation plans →</a></p>
 
         <h2>Other Pages (FAQ, Contact, etc.) — 全部保留</h2>
         <h3>Frequently Asked Questions</h3>
@@ -70,22 +74,33 @@
                 "AI Copy生成成功！",
                 // ... 所有60+工具功能（完整版本已包含）
             ];
-            alert(tools[toolId % tools.length] + "\n\n（浏览器内实时运行，无需服务器）");
+            const result = tools[toolId % tools.length] + "\n\n（浏览器内实时运行，无需服务器）";
+            alert((localStorage.getItem("sitpPlan") || "free") === "free" ? result + "\n\nPowered by Sitp GPT — https://yoursite.asia/" : result);
         }
 
         function sendChatMessage() {
             const input = document.getElementById('chatInput');
             const chat = document.getElementById('aiChat');
             if (!input.value.trim()) return;
-            chat.innerHTML += `<div class="message user-message">${input.value}</div>`;
+            const prompt = input.value;
+            const userMessage = document.createElement('div');
+            userMessage.className = 'message user-message';
+            userMessage.textContent = prompt;
+            chat.appendChild(userMessage);
             // 模拟AI回答（原网站所有AI功能保留）
             setTimeout(() => {
-                chat.innerHTML += `<div class="message bot-message">Sitp GPT 回答：${input.value} 已处理完成！如需更多工具或订阅，请告诉我。</div>`;
+                const poweredBy = (localStorage.getItem("sitpPlan") || "free") === "free" ? '<br><small>Powered by Sitp GPT</small>' : '';
+                const response = document.createElement('div');
+                response.className = 'message bot-message';
+                response.textContent = `Sitp GPT 回答：${prompt} 已处理完成！如需更多工具或订阅，请告诉我。`;
+                response.insertAdjacentHTML('beforeend', poweredBy);
+                chat.appendChild(response);
             }, 800);
             input.value = '';
         }
 
         function simulatePayment() {
+            localStorage.setItem("sitpPlan", "pro");
             alert("✅ PayPal订阅已成功！（浏览器内模拟，零服务器）\n你现在可以访问所有 Pro 功能了！\n感谢购买 Sitp GPT Pro！");
         }
 
