@@ -25,10 +25,23 @@
     
     <header>
         <h1>Sitp GPT — AI Customer Support & Free SaaS Tools</h1>
-        <p>Make AI your expert SaaS toolkit</p>
+        <p>Replace your first-line customer support team with AI.</p>
         <p>It's like having ChatGPT built for SaaS builders.</p>
         <p>Instantly answer visitors' questions with Sitp GPT — 60+ free tools for sitemap, conversion, AI copy & billing.</p>
     </header>
+
+    <!-- 新增导航（纯增加，不影响原有内容） -->
+    <nav style="background:#111; padding:10px; text-align:center;">
+        <a href="pricing.html" style="color:#fff; text-decoration:none; margin:0 12px;">Pricing & Plans</a>
+        <a href="install-service.html" style="color:#fff; text-decoration:none; margin:0 12px;">$599 Setup Service</a>
+        <a href="case-study.html" style="color:#fff; text-decoration:none; margin:0 12px;">Case Study</a>
+        <a href="guides/ai-customer-service-tools.html" style="color:#fff; text-decoration:none; margin:0 12px;">AI Tools Guide</a>
+        <a href="guides/ai-automation-tutorial.html" style="color:#fff; text-decoration:none; margin:0 12px;">AI Tutorial</a>
+        <a href="guides/enterprise-ai-cases.html" style="color:#fff; text-decoration:none; margin:0 12px;">Enterprise Cases</a>
+        <a href="guides/ai-employee-guide.html" style="color:#fff; text-decoration:none; margin:0 12px;">AI Employee Guide</a>
+        <a href="tools/index.html" style="color:#fff; text-decoration:none; margin:0 12px;">All Tools Directory</a>
+        <a href="seo/index.html" style="color:#fff; text-decoration:none; margin:0 12px;">Explore 1,000 Topics</a>
+    </nav>
 
     <main>
         <h2>All Tools</h2>
@@ -58,6 +71,41 @@
         <p><strong>Is there a demo I can try?</strong><br>Ask</p>
         <p>All 60+ tools are free to try on yousite.asia — no signup required.</p>
         <p>Contact: support@yoursite.asia or @XZZ13340061411 on X</p>
+
+        <!-- 新增页面入口（纯增加，原有内容全部保留） -->
+        <h2>More from Sitp GPT</h2>
+        <div class="tool-grid">
+            <div class="tool-card">
+                <h3>💳 Pricing & Plans</h3>
+                <p>Free plan: 10 AI support test replies, 1 knowledge base, 100 pages trained. Paid plans: unlimited answers, auto-sync, WhatsApp/Slack, email capture, analytics.</p>
+                <a href="pricing.html">View Pricing →</a>
+            </div>
+            <div class="tool-card">
+                <h3>🛠 $599 AI Setup Service</h3>
+                <p>One-time done-for-you package: we train your AI, install the website bot, set up your FAQ and optimize your support workflow.</p>
+                <a href="install-service.html">Learn More →</a>
+            </div>
+            <div class="tool-card">
+                <h3>📈 Case Study</h3>
+                <p>E-commerce client: 100 daily questions → AI handles 80%, saving $2,000/month in labor costs.</p>
+                <a href="case-study.html">Read Case Study →</a>
+            </div>
+            <div class="tool-card">
+                <h3>📚 Guides & Video Demos</h3>
+                <p>AI customer service tools intro, AI automation tutorial, enterprise AI cases, and the AI employee usage guide — with feature demos.</p>
+                <a href="guides/ai-customer-service-tools.html">Start Learning →</a>
+            </div>
+            <div class="tool-card">
+                <h3>🧰 All Tools Directory</h3>
+                <p>Every one of our 60+ free tools has its own landing page — browse the full directory.</p>
+                <a href="tools/index.html">Browse Tools →</a>
+            </div>
+            <div class="tool-card">
+                <h3>🔍 Explore 1,000 Topics</h3>
+                <p>AI customer service bots, Shopify chatbots, support automation, PDF chatbots, website AI assistants, FAQ & sitemap generators — for every platform and industry.</p>
+                <a href="seo/index.html">Explore Topics →</a>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -91,6 +139,22 @@
 
         // 加载时欢迎
         console.log("Sitp GPT 纯网页版已加载完毕！所有AI工具、支付页面、功能全部保留。");
+    </script>
+
+    <!-- 新增：免费用户生成内容自动带 "Powered by Sitp GPT" 品牌传播徽章（纯增加，不改动原有功能） -->
+    <script src="assets/powered-by.js"></script>
+    <script>
+        (function () {
+            var chat = document.getElementById('aiChat');
+            if (!chat || !window.SitpGPTBadge) return;
+            window.SitpGPTBadge.attach(chat);
+            // 每次AI生成新内容后，把徽章保持在内容末尾
+            new MutationObserver(function () {
+                var badge = chat.querySelector('.powered-by-sitpgpt');
+                if (badge && badge !== chat.lastElementChild) chat.appendChild(badge);
+                else if (!badge) window.SitpGPTBadge.attach(chat);
+            }).observe(chat, { childList: true });
+        })();
     </script>
 </body>
 </html>
