@@ -7,7 +7,34 @@ if (params.get("welcome")) {
   setTimeout(() => loadSubscription(), 300);
 }
 
+if (params.get("installation") === "1" || localStorage.getItem("sitp_installation_paid")) {
+  showInstallationSuccess(params.get("order") || localStorage.getItem("sitp_installation_paid"));
+}
+
 document.getElementById("btn-lookup").addEventListener("click", loadSubscription);
+
+function showInstallationSuccess(orderId) {
+  const card = document.getElementById("account-card");
+  const none = document.getElementById("no-sub");
+  none.style.display = "none";
+  card.style.display = "block";
+
+  const statusEl = document.getElementById("sub-status");
+  statusEl.textContent = "paid";
+  statusEl.className = "status-pill active";
+
+  document.getElementById("sub-plan").textContent = "AI Installation Service";
+  document.getElementById("sub-cycle").textContent = "One-time · $599";
+  document.getElementById("sub-trial").textContent =
+    "Thank you! Our team will contact you within 1 business day to schedule setup.";
+  document.getElementById("sub-period").textContent = orderId
+    ? `PayPal order: ${orderId}`
+    : "";
+  document.getElementById("sub-access").textContent =
+    "Includes: AI training, widget install, FAQ setup, workflow optimization, and all Pro features during setup.";
+  document.getElementById("btn-cancel").style.display = "none";
+  document.getElementById("btn-upgrade").style.display = "none";
+}
 
 async function loadSubscription() {
   const email = emailInput.value.trim();
@@ -32,8 +59,16 @@ async function loadSubscription() {
   statusEl.textContent = sub.status;
   statusEl.className = `status-pill ${sub.status}`;
 
-  document.getElementById("sub-plan").textContent = sub.planId.charAt(0).toUpperCase() + sub.planId.slice(1);
-  document.getElementById("sub-cycle").textContent = sub.cycle === "yearly" ? "Yearly billing" : "Monthly billing";
+  document.getElementById("sub-plan").textContent =
+    sub.planId === "installation"
+      ? "AI Installation Service"
+      : sub.planId.charAt(0).toUpperCase() + sub.planId.slice(1);
+  document.getElementById("sub-cycle").textContent =
+    sub.planId === "installation"
+      ? "One-time · $599"
+      : sub.cycle === "yearly"
+        ? "Yearly billing"
+        : "Monthly billing";
 
   if (sub.status === "trialing" && sub.trialEndsAt) {
     document.getElementById("sub-trial").textContent = `Trial ends: ${new Date(sub.trialEndsAt).toLocaleDateString()}`;
