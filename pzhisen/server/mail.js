@@ -11,12 +11,23 @@ export function isMailConfigured() {
 }
 
 function createTransport() {
+  const secure = SMTP_PORT === 465;
   return nodemailer.createTransport({
     host: SMTP_HOST,
     port: SMTP_PORT,
-    secure: SMTP_PORT === 465,
+    secure,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
+    tls: { minVersion: "TLSv1.2", rejectUnauthorized: true },
+    ...(SMTP_PORT === 587 ? { requireTLS: true } : {}),
   });
+}
+
+function resolveFromAddress() {
+  // QQ/163 等国内邮箱要求发件人必须与登录账号一致
+  if (SMTP_USER.includes("@qq.com") || SMTP_USER.includes("@foxmail.com")) {
+    return SMTP_USER;
+  }
+  return SMTP_FROM;
 }
 
 export async function sendOtpEmail(email, code) {
@@ -37,6 +48,6 @@ export async function sendOtpEmail(email, code) {
   }
 
   const transport = createTransport();
-  await transport.sendMail({ from: SMTP_FROM, to: email, subject, text, html });
+  await transport.sendMail({ from: resolveFromAddress(), to: email, subject, text, html });
   return { sent: true };
 }
