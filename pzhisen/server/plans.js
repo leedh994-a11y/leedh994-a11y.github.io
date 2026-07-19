@@ -1,54 +1,40 @@
-/** Subscription plans — prices in USD (PayPal) and CNY (WeChat / Alipay). */
+/** Single plan — free forever, all features included. */
 export const PLANS = {
-  pro: {
-    id: "pro",
-    name: "Pro",
-    nameZh: "专业版",
-    description: "Unlimited AI agent runs, daily standups, priority models",
-    descriptionZh: "无限 AI Agent 运行、每日站会、优先模型",
+  free: {
+    id: "free",
+    name: "Free Forever",
+    nameZh: "永久免费",
+    description: "All features. No payment. Lifetime access for everyone.",
+    descriptionZh: "全部功能永久免费，无需付款，终身使用。",
     features: [
       "All 6 AI agents",
       "Unlimited daily standups",
-      "Priority OpenRouter models",
-      "Email support",
+      "Unlimited agent chats",
+      "Full dashboard access",
+      "Lifetime access — $0 forever",
     ],
-    featuresZh: ["全部 6 个 AI Agent", "无限每日站会", "优先 AI 模型", "邮件支持"],
-    priceUsd: { monthly: 29, yearly: 290 },
-    priceCny: { monthly: 199, yearly: 1990 },
-    trialDays: 7,
-  },
-  team: {
-    id: "team",
-    name: "Team",
-    nameZh: "团队版",
-    description: "Everything in Pro + multi-seat & API access",
-    descriptionZh: "专业版全部功能 + 多席位与 API",
-    features: [
-      "Everything in Pro",
-      "Up to 5 team seats",
-      "API access",
-      "Dedicated support",
+    featuresZh: [
+      "全部 6 个 AI Agent",
+      "无限每日站会",
+      "无限 Agent 对话",
+      "完整 Dashboard 功能",
+      "永久免费 — 终身 $0",
     ],
-    featuresZh: ["专业版全部功能", "最多 5 个席位", "API 访问", "专属客服"],
-    priceUsd: { monthly: 79, yearly: 790 },
-    priceCny: { monthly: 499, yearly: 4990 },
-    trialDays: 7,
+    priceUsd: { monthly: 0, yearly: 0 },
+    priceCny: { monthly: 0, yearly: 0 },
+    free: true,
+    lifetime: true,
   },
 };
 
 export function getPlan(planId) {
-  return PLANS[planId] || null;
+  return PLANS[planId] || PLANS.free;
 }
 
 export function listPlans() {
-  return Object.values(PLANS);
+  return [PLANS.free];
 }
 
-export function getAmount(planId, cycle, currency = "usd") {
-  const plan = getPlan(planId);
-  if (!plan) return null;
-  const key = currency === "cny" ? "priceCny" : "priceUsd";
-  const amount = plan[key]?.[cycle];
-  if (amount == null) return null;
-  return { amount, currency: currency === "cny" ? "CNY" : "USD", plan, cycle };
+export function getAmount() {
+  return { amount: 0, currency: "USD", plan: PLANS.free, cycle: "lifetime" };
 }
