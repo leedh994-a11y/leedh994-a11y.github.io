@@ -13,6 +13,16 @@ import {
   getLogs,
   getGlobalLogs,
 } from "./store.js";
+import {
+  getBillingConfig,
+  getPlansHandler,
+  getSubscriptionStatus,
+  checkoutHandler,
+  capturePayPalHandler,
+  orderStatusHandler,
+  xunhuWebhookHandler,
+} from "./billing.js";
+import { isSubscriptionActive } from "./billing-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -22,6 +32,7 @@ const PUBLIC_URL = process.env.PUBLIC_URL || `http://localhost:${PORT}`;
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
   res.setHeader("X-Powered-By", "Pzhisen");
@@ -40,8 +51,18 @@ app.get("/api/config", (_req, res) => {
     aiEnabled: isAiEnabled(),
     models: getModels(),
     agents: Object.values(AGENTS).map((a) => ({ id: a.id, name: a.name, icon: a.icon })),
+    billing: getBillingConfig(),
   });
 });
+
+// ─── Billing / subscriptions ───
+app.get("/api/billing/config", (_req, res) => res.json(getBillingConfig()));
+app.get("/api/billing/plans", getPlansHandler);
+app.get("/api/billing/subscription", getSubscriptionStatus);
+app.post("/api/billing/checkout", checkoutHandler);
+app.post("/api/billing/paypal/capture", capturePayPalHandler);
+app.get("/api/billing/order/:orderId", orderStatusHandler);
+app.post("/api/billing/webhook/xunhu", xunhuWebhookHandler);
 
 app.get("/api/logs/global", (_req, res) => {
   res.json({ success: true, logs: getGlobalLogs(40) });
@@ -57,15 +78,17 @@ app.post("/api/signup", async (req, res) => {
       return res.status(400).json({ success: false, error: "Business idea required" });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
     const company = {
       id: uuidv4(),
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
       name: (name || idea.split(" ").slice(0, 3).join(" ")).trim().slice(0, 80),
       idea: idea.trim().slice(0, 2000),
       industry: inferIndustry(idea),
       stage: "idea",
       createdAt: new Date().toISOString(),
       status: "active",
+      plan: isSubscriptionActive(normalizedEmail) ? "paid" : "free",
     };
 
     upsertCompany(company);
