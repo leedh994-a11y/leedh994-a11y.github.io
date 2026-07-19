@@ -1,5 +1,12 @@
 (function () {
   const nav = document.getElementById("site-nav");
+  const navDash = document.getElementById("nav-dashboard");
+  const savedCompany = localStorage.getItem("pzhisen_company_id");
+  if (savedCompany && navDash) {
+    navDash.style.display = "inline";
+    navDash.href = `/dashboard.html?company=${savedCompany}`;
+  }
+
   const topBars = document.getElementById("top-bars");
   const terminalText = document.getElementById("terminal-text");
 
@@ -65,36 +72,58 @@
 
   const agentLog = document.getElementById("agent-log");
   if (agentLog) {
-    const lines = [
-      ['[CEO]', 'Weekly OKRs updated. Focus: conversion + retention.'],
-      ['[Engineering]', 'Fixed checkout bug in staging <span class="success">✓</span>'],
-      ['[Marketing]', 'Cold email sequence sent to 200 leads.'],
-      ['[Ads]', 'Paused ad set #4 — CPA above threshold.'],
-      ['[Support]', 'Auto-replied 12 tickets. NPS survey sent.'],
-      ['[Ops]', 'Stripe webhook verified. DNS propagated.'],
-    ];
-    let lineIdx = 0;
-    setInterval(() => {
-      const [agent, msg] = lines[lineIdx % lines.length];
-      lineIdx++;
-      const div = document.createElement("div");
-      div.innerHTML = `<span class="highlight">${agent}</span> ${msg}`;
-      agentLog.appendChild(div);
-      if (agentLog.children.length > 8) agentLog.removeChild(agentLog.firstChild);
-      agentLog.scrollTop = agentLog.scrollHeight;
-    }, 4000);
+    async function loadGlobalLogs() {
+      try {
+        const res = await fetch("/api/logs/global");
+        const data = await res.json();
+        if (data.success && data.logs?.length) {
+          agentLog.innerHTML = data.logs
+            .map(
+              (l) =>
+                `<div><span class="highlight">[${l.agent}]</span> ${escapeHtml(l.message?.slice(0, 120) || "")}${l.ai ? ' <span class="success">AI</span>' : ""}</div>`
+            )
+            .join("");
+        }
+      } catch {
+        /* offline — keep static demo lines */
+      }
+    }
+    function escapeHtml(s) {
+      const d = document.createElement("div");
+      d.textContent = s;
+      return d.innerHTML;
+    }
+    loadGlobalLogs();
+    setInterval(loadGlobalLogs, 12000);
   }
 
-  document.getElementById("signup-form")?.addEventListener("submit", (e) => {
+  document.getElementById("signup-form")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = document.getElementById("signup-email").value.trim();
     const idea = document.getElementById("signup-idea").value.trim();
-    if (!email) return;
-    alert(
-      `Welcome to Pzhisen!\n\nWe've received your signup for ${email}.\n` +
-        (idea ? `Idea: ${idea}\n\n` : "") +
-        "Your AI employee team will be ready shortly. (Demo — connect backend to go live.)"
-    );
+    const btn = e.target.querySelector('button[type="submit"]');
+    if (!email || !idea) return;
+
+    btn.disabled = true;
+    btn.textContent = "Deploying AI team…";
+
+    try {
+      const res = await fetch("/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, idea }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Signup failed");
+
+      localStorage.setItem("pzhisen_company_id", data.company.id);
+      localStorage.setItem("pzhisen_email", email);
+      window.location.href = data.redirectUrl || `/dashboard.html?company=${data.company.id}`;
+    } catch (err) {
+      alert(err.message);
+      btn.disabled = false;
+      btn.textContent = "Get started free";
+    }
   });
 
   document.querySelectorAll('a[href^="#"]').forEach((link) => {

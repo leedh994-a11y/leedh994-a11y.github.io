@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Pzhisen AI Team</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body class="dashboard-body">
+  <header class="dashboard-nav">
+    <a href="/" class="logo">Pzhisen</a>
+    <div class="status-row" style="margin:0">
+      <span class="status-pill" id="ai-status">Checking AI…</span>
+      <a href="/" class="btn-primary" style="height:40px;padding:0 16px;font-size:13px">Home</a>
+    </div>
+  </header>
+
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <h3>Your AI team</h3>
+      <ul class="agent-list" id="agent-list"></ul>
+      <button type="button" class="btn-primary" id="btn-run-daily" style="width:100%">Run daily standup</button>
+    </aside>
+
+    <main class="main-panel">
+      <section class="company-card" id="company-card">
+        <h1 id="company-name">Loading…</h1>
+        <p class="idea" id="company-idea"></p>
+        <div class="btn-row">
+          <button type="button" class="btn-primary" id="btn-run-all">Deploy all agents</button>
+        </div>
+      </section>
+
+      <section class="log-terminal">
+        <div class="log-terminal__bar"><span></span><span></span><span></span></div>
+        <div class="log-terminal__body" id="log-body">
+          <div class="log-line"><span class="time">--:--</span><span class="agent">[System]</span> Connecting to Pzhisen command center…</div>
+        </div>
+      </section>
+
+      <section class="chat-panel">
+        <h3 id="chat-title">Ask CEO Agent</h3>
+        <form class="chat-form" id="chat-form">
+          <input type="text" id="chat-input" placeholder="e.g. What should we prioritize this week?" autocomplete="off">
+          <button type="submit" class="btn-primary">Send</button>
+        </form>
+        <div class="chat-response" id="chat-response"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

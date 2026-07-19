@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: pzhisen
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PUBLIC_URL
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: openai/gpt-4o-mini
+      - key: OPENROUTER_CEO_MODEL
+        value: anthropic/claude-sonnet-4
+      - key: DATA_DIR
+        value: /app/data
+    disk:
+      name: pzhisen-data
+      mountPath: /app/data
+      sizeGB: 1

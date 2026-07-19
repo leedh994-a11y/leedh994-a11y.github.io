@@ -1,25 +1,88 @@
-# Pzhisen Landing Page
+# Pzhisen — AI Employee Team Platform
 
-English marketing site inspired by modern AI workforce landing patterns. **Original branding and copy — not affiliated with Polsia.**
+Full-stack app: landing page + AI agent dashboard + OpenRouter backend.
 
-## Preview locally
+## Quick start (local)
 
 ```bash
 cd pzhisen
-python3 -m http.server 8080
+cp .env.example .env
+# Add OPENROUTER_API_KEY to .env (https://openrouter.ai/keys)
+npm install
+npm start
 ```
 
-Open http://localhost:8080/
+Open http://localhost:3000
 
-## Structure (4 hero sections in order)
+## Features
 
-1. **Office hero** — terminal bar, live banner, serif headline, CTA
-2. **CRT desk** — founder taglines, retro desk scene
-3. **AI team** — role list + SVG illustration
-4. **Cloud CTA** — “Start a company tonight”
+- **6 AI Agents**: CEO, Engineering, Marketing, Ads, Support, Ops
+- **OpenRouter** integration (live AI when `OPENROUTER_API_KEY` is set)
+- **Template fallback** when no API key (demo mode)
+- **Dashboard**: run daily standup, chat with agents, live logs
+- **Persistent storage**: JSON files in `data/` (mount volume in production)
 
-Additional sections: AI agent cards, marketing features, live dashboard mock, signup form.
+## API
 
-## Design tokens
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/health` | GET | Health check |
+| `/api/config` | GET | AI status + agent list |
+| `/api/signup` | POST | `{ email, idea }` → create company + CEO brief |
+| `/api/companies/:id` | GET | Company + logs |
+| `/api/companies/:id/run-daily` | POST | Run all agents |
+| `/api/companies/:id/agents/:agentId` | POST | `{ message }` → agent reply |
+| `/api/logs/global` | GET | Public activity feed for homepage |
 
-See `css/tokens.css` — Primary `#4F46E5`, Inter + Playfair Display, 8px grid, WCAG-friendly neutrals.
+## Independent domain deployment
+
+### Option A: Render (recommended)
+
+1. Push repo to GitHub
+2. [Render](https://render.com) → New **Blueprint** → connect repo, select `pzhisen/render.yaml`
+3. Set environment variables:
+   - `PUBLIC_URL` = `https://pzhisen.com`
+   - `OPENROUTER_API_KEY` = your key
+4. **Custom domain**: Render dashboard → Settings → Custom Domains → add `pzhisen.com`
+5. DNS at your registrar:
+   - `CNAME` `@` or `www` → `pzhisen.onrender.com` (or A record per Render docs)
+
+### Option B: Fly.io
+
+```bash
+cd pzhisen
+fly launch
+fly secrets set OPENROUTER_API_KEY=sk-or-...
+fly secrets set PUBLIC_URL=https://pzhisen.com
+fly volumes create pzhisen_data --size 1
+fly deploy
+fly certs add pzhisen.com
+```
+
+### Option C: Docker (any VPS)
+
+```bash
+docker build -t pzhisen .
+docker run -d -p 3000:3000 \
+  -e OPENROUTER_API_KEY=sk-or-... \
+  -e PUBLIC_URL=https://pzhisen.com \
+  -v pzhisen-data:/app/data \
+  pzhisen
+```
+
+Point `pzhisen.com` A record to your server IP. Use Caddy/Nginx reverse proxy with TLS.
+
+### Option D: GitHub Pages (static only — no AI backend)
+
+GitHub Pages serves static files only. Use for marketing mirror; point API subdomain to Render:
+
+- `pzhisen.com` → GitHub Pages (static `index.html`)
+- `app.pzhisen.com` → Render (full stack)
+
+## Environment variables
+
+See `.env.example`.
+
+## License
+
+Original work — not affiliated with Polsia or any third party.
