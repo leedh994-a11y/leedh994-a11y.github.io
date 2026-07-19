@@ -41,8 +41,9 @@
       <form class="auth-form auth-step active" id="login-form">
         <h1 style="margin:0;font-size:1.5rem">登录账号</h1>
         <p class="checkout-hint" style="margin:0">使用注册邮箱和密码登录，已付费用户无需重复付款。</p>
+        <p class="checkout-hint email-providers-hint" style="margin:0;font-size:12px">支持 Gmail、Outlook、Yahoo、iCloud、QQ邮箱、163邮箱等全球主流邮箱</p>
         <label>邮箱
-          <input type="email" id="login-email" required autocomplete="email" placeholder="you@company.com">
+          <input type="email" id="login-email" required autocomplete="email" placeholder="name@gmail.com / name@outlook.com / name@qq.com" spellcheck="false">
         </label>
         <label>密码
           <input type="password" id="login-password" required autocomplete="current-password" placeholder="至少 8 位">
@@ -55,8 +56,9 @@
       <form class="auth-form auth-step" id="register-form">
         <h1 style="margin:0;font-size:1.5rem">注册账号</h1>
         <p class="checkout-hint" style="margin:0">注册后需验证邮箱收到的 6 位验证码。</p>
+        <p class="checkout-hint email-providers-hint" style="margin:0;font-size:12px">支持 Gmail、Outlook、Yahoo、iCloud、QQ邮箱、163邮箱、126邮箱、ProtonMail 等全球主流邮箱</p>
         <label>邮箱
-          <input type="email" id="reg-email" required autocomplete="email" placeholder="you@company.com">
+          <input type="email" id="reg-email" required autocomplete="email" placeholder="name@gmail.com / name@outlook.com / name@qq.com" spellcheck="false">
         </label>
         <label>密码
           <input type="password" id="reg-password" required autocomplete="new-password" placeholder="至少 8 位" minlength="8">
@@ -85,6 +87,6 @@
     </div>
   </main>
 
-  <script src="js/auth-page.js"></script>
+  <script type="module" src="js/auth-page.js"></script>
 </body>
 </html>

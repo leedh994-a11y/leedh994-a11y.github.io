@@ -15,6 +15,7 @@ import {
   getPending,
 } from "./otp-store.js";
 import { sendOtpEmail, isMailConfigured } from "./mail.js";
+import { validateEmail } from "./email-validator.js";
 import { isSubscriptionActive, getSubscriptionByEmail } from "./billing-store.js";
 import { upsertCompany, getCompany, appendLog, findCompanyByEmail, findCompanyByUserId } from "./store.js";
 import { runCeoOnboarding } from "./agents.js";
@@ -139,13 +140,14 @@ function authPayload(user) {
 export async function registerHandler(req, res) {
   try {
     const { email, password, idea } = req.body || {};
-    if (!email?.includes("@")) {
-      return res.status(400).json({ success: false, error: "请填写有效邮箱" });
+    const emailCheck = validateEmail(email);
+    if (!emailCheck.ok) {
+      return res.status(400).json({ success: false, error: emailCheck.error });
     }
     const pwdErr = validatePassword(password);
     if (pwdErr) return res.status(400).json({ success: false, error: pwdErr });
 
-    const normalized = email.trim().toLowerCase();
+    const normalized = emailCheck.email;
     if (getUserByEmail(normalized)) {
       return res.status(400).json({ success: false, error: "该邮箱已注册，请直接登录" });
     }
@@ -175,7 +177,11 @@ export async function registerHandler(req, res) {
 export async function resendOtpHandler(req, res) {
   try {
     const { email, password, idea } = req.body || {};
-    const normalized = (email || "").trim().toLowerCase();
+    const emailCheck = validateEmail(email);
+    if (!emailCheck.ok) {
+      return res.status(400).json({ success: false, error: emailCheck.error });
+    }
+    const normalized = emailCheck.email;
     const pending = getPending(normalized);
     if (!pending) {
       return res.status(400).json({ success: false, error: "请重新填写注册信息" });
@@ -197,10 +203,11 @@ export async function resendOtpHandler(req, res) {
 export async function verifyOtpHandler(req, res) {
   try {
     const { email, code } = req.body || {};
-    const normalized = (email || "").trim().toLowerCase();
-    if (!normalized.includes("@") || !code) {
+    const emailCheck = validateEmail(email);
+    if (!emailCheck.ok || !code) {
       return res.status(400).json({ success: false, error: "请填写邮箱和验证码" });
     }
+    const normalized = emailCheck.email;
 
     const result = verifyPendingOtp(normalized, String(code).trim());
     if (!result.ok) {
@@ -232,10 +239,11 @@ export async function verifyOtpHandler(req, res) {
 export async function loginHandler(req, res) {
   try {
     const { email, password } = req.body || {};
-    const normalized = (email || "").trim().toLowerCase();
-    if (!normalized.includes("@") || !password) {
+    const emailCheck = validateEmail(email);
+    if (!emailCheck.ok || !password) {
       return res.status(400).json({ success: false, error: "请填写邮箱和密码" });
     }
+    const normalized = emailCheck.email;
 
     const user = getUserByEmail(normalized);
     if (!user) {

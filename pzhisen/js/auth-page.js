@@ -1,6 +1,8 @@
 const api = (path, options = {}) =>
   fetch(path, { credentials: "include", ...options });
 
+import { validateEmail } from "./email-utils.js";
+
 function showError(el, msg) {
   el.hidden = !msg;
   el.textContent = msg || "";
@@ -54,6 +56,11 @@ registerForm.addEventListener("submit", async (e) => {
   showError(errEl, "");
 
   const email = document.getElementById("reg-email").value.trim();
+  const emailCheck = validateEmail(email);
+  if (!emailCheck.ok) {
+    showError(errEl, emailCheck.error);
+    return;
+  }
   const password = document.getElementById("reg-password").value;
   const password2 = document.getElementById("reg-password2").value;
   const idea = document.getElementById("reg-idea").value.trim();
@@ -71,16 +78,16 @@ registerForm.addEventListener("submit", async (e) => {
     const res = await api("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, idea }),
+      body: JSON.stringify({ email: emailCheck.email, password, idea }),
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
 
-    pendingEmail = email;
+    pendingEmail = emailCheck.email;
     pendingIdea = idea;
     pendingPassword = password;
     document.getElementById("otp-hint").textContent =
-      `验证码已发送至 ${email}，请查收邮件并填写 6 位数字。`;
+      `验证码已发送至 ${emailCheck.email}，请查收邮件并填写 6 位数字。`;
     if (data.devCode) {
       document.getElementById("otp-hint").textContent += `（开发模式验证码：${data.devCode}）`;
     }
@@ -140,6 +147,11 @@ loginForm.addEventListener("submit", async (e) => {
   showError(errEl, "");
 
   const email = document.getElementById("login-email").value.trim();
+  const emailCheck = validateEmail(email);
+  if (!emailCheck.ok) {
+    showError(errEl, emailCheck.error);
+    return;
+  }
   const password = document.getElementById("login-password").value;
   const btn = e.target.querySelector('button[type="submit"]');
   btn.disabled = true;
@@ -149,7 +161,7 @@ loginForm.addEventListener("submit", async (e) => {
     const res = await api("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email: emailCheck.email, password }),
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
