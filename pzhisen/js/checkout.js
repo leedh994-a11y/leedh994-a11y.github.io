@@ -13,7 +13,7 @@ let plan = null;
 let currentBankOrder = null;
 
 const METHODS = [
-  { id: "bank", icon: "🏦", name: "银行卡转账", desc: "免费 · 转账至商户银行卡（全国银行均可）", providerKey: "bankCard" },
+  { id: "bank", icon: "🏦", name: "银行卡转账", desc: "¥1 · 转账至商户银行卡（全国银行均可）", providerKey: "bankCard" },
   { id: "paypal", icon: "🅿️", name: "PayPal", desc: "海外用户", providerKey: "paypal" },
 ];
 
@@ -50,7 +50,7 @@ async function loadPlan() {
 function renderSummary() {
   const cny = plan.priceCny[cycle];
   const usd = plan.priceUsd[cycle];
-  document.getElementById("checkout-title").textContent = `订阅 ${plan.nameZh || plan.name}`;
+  document.getElementById("checkout-title").textContent = "支付 ¥1 开通终身版";
   document.getElementById("checkout-subtitle").textContent = plan.descriptionZh || plan.description;
   document.getElementById("sum-plan").textContent = plan.nameZh || plan.name;
   document.getElementById("sum-cycle").textContent = "终身（一次付费）";
