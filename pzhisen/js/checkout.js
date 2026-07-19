@@ -1,6 +1,6 @@
 const params = new URLSearchParams(location.search);
-const planId = params.get("plan") || "pro";
-const cycle = params.get("cycle") || "monthly";
+const planId = params.get("plan") || "lifetime";
+const cycle = params.get("cycle") || "lifetime";
 
 const isChinaUser = () =>
   navigator.language?.startsWith("zh") ||
@@ -53,9 +53,9 @@ function renderSummary() {
   document.getElementById("checkout-title").textContent = `订阅 ${plan.nameZh || plan.name}`;
   document.getElementById("checkout-subtitle").textContent = plan.descriptionZh || plan.description;
   document.getElementById("sum-plan").textContent = plan.nameZh || plan.name;
-  document.getElementById("sum-cycle").textContent = cycle === "yearly" ? "年付" : "月付";
+  document.getElementById("sum-cycle").textContent = "终身（一次付费）";
   document.getElementById("sum-total").textContent =
-    selectedProvider === "paypal" ? `$${usd} USD` : `¥${cny} CNY`;
+    selectedProvider === "paypal" ? `$1 USD` : `¥1 CNY`;
   setBusy(false);
 }
 
