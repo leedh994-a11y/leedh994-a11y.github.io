@@ -14,8 +14,8 @@ let currentBankOrder = null;
 let pendingPayPalOrder = null;
 
 const METHODS = [
-  { id: "bank", icon: "🏦", name: "银行卡转账", desc: "¥1 · 转账至商户银行卡（全国银行均可）", providerKey: "bankCard" },
-  { id: "paypal", icon: "🅿️", name: "PayPal", desc: "Global · instant activation after payment", providerKey: "paypal" },
+  { id: "bank", icon: "🏦", name: "银行卡转账", desc: "¥1 · 转账后点击确认，立即开通", providerKey: "bankCard" },
+  { id: "paypal", icon: "🅿️", name: "PayPal", desc: "$1 · 支付后立即可用", providerKey: "paypal" },
 ];
 
 function showError(msg) {
@@ -112,7 +112,7 @@ function showBankPanel(data) {
       <div class="checkout-line"><span>金额</span><strong style="color:#dc2626">¥${data.amount}</strong></div>
       <div class="checkout-line total"><span>转账备注（必填）</span><strong style="color:#dc2626">${data.transferCode}</strong></div>
     </div>
-    <p class="checkout-hint">转账时务必填写备注 <strong>${data.transferCode}</strong>，否则无法核对。完成后点击下方按钮。</p>
+    <p class="checkout-hint">转账时务必填写备注 <strong>${data.transferCode}</strong>。完成转账后点击下方按钮，即可立即开通全部功能。</p>
   `;
   setBusy(false);
 }
@@ -191,7 +191,8 @@ async function pay() {
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
-      location.href = `/checkout-success.html?order=${currentBankOrder.orderId}&pending=1`;
+      if (data.companyId) localStorage.setItem("pzhisen_company_id", data.companyId);
+      location.href = `/checkout-success.html?order=${currentBankOrder.orderId}`;
       return;
     }
 

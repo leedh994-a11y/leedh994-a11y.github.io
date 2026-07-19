@@ -32,8 +32,8 @@ export function getBillingConfig() {
     bankAccount: bank.configured
       ? { bankName: bank.bankName, accountName: bank.accountName, accountNumberMask: maskAccount(bank.accountNumber) }
       : null,
-    noteZh: "仅需支付 ¥1 即可永久使用全部功能。国内用户银行卡转账 ¥1，海外用户 PayPal $1。",
-    noteEn: "Pay ¥1 (or $1 via PayPal) once for lifetime access to all features.",
+    noteZh: "仅需支付 ¥1 即可永久使用全部功能。银行卡转账或 PayPal 支付后立即可用。",
+    noteEn: "Pay ¥1 (bank transfer) or $1 (PayPal) once — instant lifetime access worldwide.",
   };
 }
 
@@ -155,14 +155,32 @@ export function confirmBankTransferHandler(req, res) {
     return res.status(400).json({ success: false, error: "Not a bank transfer order" });
   }
   if (order.status === "completed") {
-    return res.json({ success: true, message: "Subscription already active", order });
+    const sub = getSubscriptionByEmail(order.email);
+    return res.json({
+      success: true,
+      message: "订阅已开通",
+      order,
+      active: true,
+      subscription: sub,
+      ...activationPayload(order.email),
+    });
   }
 
-  updateOrder(order.id, { status: "pending_review", confirmedAt: new Date().toISOString() });
+  updateOrder(order.id, { status: "paid", confirmedAt: new Date().toISOString() });
+  const sub = activateLifetime({
+    email: order.email,
+    planId: order.planId,
+    provider: "bankcard",
+    externalId: order.transferCode,
+  });
+  updateOrder(order.id, { status: "completed" });
   res.json({
     success: true,
-    message: "已收到您的确认，我们将在核实转账后 24 小时内开通订阅。",
+    message: "订阅已开通，可立即使用全部功能。",
     order: getOrder(order.id),
+    subscription: sub,
+    active: true,
+    ...activationPayload(order.email),
   });
 }
 
@@ -173,7 +191,7 @@ export function listPendingBankOrdersHandler(req, res) {
   }
   const { orders } = getOrders();
   const pending = orders.filter((o) =>
-    o.provider === "bankcard" && (o.status === "pending_review" || o.status === "awaiting_transfer")
+    o.provider === "bankcard" && o.status === "awaiting_transfer"
   );
   res.json({ success: true, orders: pending });
 }
