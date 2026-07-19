@@ -24,7 +24,7 @@ import {
   listPendingBankOrdersHandler,
   approveBankOrderHandler,
 } from "./billing.js";
-import { isSubscriptionActive } from "./billing-store.js";
+import { isSubscriptionActive, activateFreeLifetime } from "./billing-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -82,6 +82,7 @@ app.post("/api/signup", async (req, res) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    activateFreeLifetime(normalizedEmail);
     const company = {
       id: uuidv4(),
       email: normalizedEmail,
@@ -91,7 +92,7 @@ app.post("/api/signup", async (req, res) => {
       stage: "idea",
       createdAt: new Date().toISOString(),
       status: "active",
-      plan: isSubscriptionActive(normalizedEmail) ? "paid" : "free",
+      plan: "lifetime",
     };
 
     upsertCompany(company);

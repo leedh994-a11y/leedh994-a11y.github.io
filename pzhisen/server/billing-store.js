@@ -96,10 +96,26 @@ export function getSubscriptionByEmail(email) {
   return subscriptions.find((s) => s.email === normalized) || null;
 }
 
-export function isSubscriptionActive(email) {
-  const sub = getSubscriptionByEmail(email);
-  if (!sub || sub.status !== "active") return false;
-  return new Date(sub.expiresAt) > new Date();
+export function isSubscriptionActive(_email) {
+  return true;
+}
+
+export function activateFreeLifetime(email) {
+  const sub = {
+    email: email.trim().toLowerCase(),
+    planId: "free",
+    cycle: "lifetime",
+    provider: "free",
+    status: "active",
+    activatedAt: new Date().toISOString(),
+    expiresAt: "2099-12-31T23:59:59.000Z",
+  };
+  const data = getSubscriptions();
+  const idx = data.subscriptions.findIndex((s) => s.email === sub.email);
+  if (idx >= 0) data.subscriptions[idx] = { ...data.subscriptions[idx], ...sub };
+  else data.subscriptions.push(sub);
+  saveSubscriptions(data);
+  return sub;
 }
 
 export function subscriptionDaysForCycle(cycle) {
