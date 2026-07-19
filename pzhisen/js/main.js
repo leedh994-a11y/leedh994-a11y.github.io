@@ -122,8 +122,7 @@
       if (data.subscriptionActive) {
         window.location.href = data.redirectUrl || `/dashboard.html?company=${data.company.id}`;
       } else {
-        sessionStorage.setItem("pzhisen_checkout_email", email);
-        window.location.href = `/pricing.html?email=${encodeURIComponent(email)}`;
+        window.location.href = `/checkout.html?plan=lifetime&cycle=lifetime&email=${encodeURIComponent(email)}`;
       }
     } catch (err) {
       alert(err.message);

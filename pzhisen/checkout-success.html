@@ -32,9 +32,7 @@
       if (data.companyId) localStorage.setItem("pzhisen_company_id", data.companyId);
 
       title.textContent = "支付成功！";
-      const expires = (data.subscription?.expiresAt || "").slice(0, 10);
-      const cycle = data.subscription?.cycle === "yearly" ? "年付" : "月付";
-      msg.textContent = `您的${cycle}订阅已激活，有效期至 ${expires}。正在跳转到 Dashboard…`;
+      msg.textContent = "您的终身版已激活，正在跳转到 Dashboard，全部功能已永久解锁。";
       const url = dashboardUrl(data);
       btnDash.href = url;
       btnDash.textContent = "立即使用全部功能";

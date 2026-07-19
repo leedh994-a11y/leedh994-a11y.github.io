@@ -1,82 +1,52 @@
-/** Pro plan — monthly ($99) or yearly ($999) subscription. */
+/** Single lifetime plan — ¥1 one-time payment for permanent access. */
 export const PLANS = {
-  pro: {
-    id: "pro",
-    name: "Pro",
-    nameZh: "专业版",
-    description: "Full access to all features while your subscription is active.",
-    descriptionZh: "订阅有效期内可使用全部功能。",
+  lifetime: {
+    id: "lifetime",
+    name: "Lifetime",
+    nameZh: "终身版",
+    description: "Pay once (¥1), use all features forever.",
+    descriptionZh: "仅需支付 1 元，永久使用全部功能。",
     features: [
       "All 6 AI agents",
       "Unlimited daily standups",
       "Unlimited agent chats",
       "Full dashboard access",
-      "Cancel anytime — access until period ends",
+      "Lifetime access — pay once",
     ],
     featuresZh: [
       "全部 6 个 AI Agent",
       "无限每日站会",
       "无限 Agent 对话",
       "完整 Dashboard 功能",
-      "按订阅周期使用，到期需续费",
+      "一次付费，终身使用",
     ],
-    priceUsd: { monthly: 99, yearly: 999 },
-    priceCny: { monthly: 699, yearly: 6999 },
+    priceCny: { lifetime: 1 },
+    priceUsd: { lifetime: 1 },
+    lifetime: true,
   },
 };
 
-export const CYCLE_LABELS = {
-  monthly: { en: "Monthly", zh: "月付", suffix: "/ month" },
-  yearly: { en: "Yearly", zh: "年付", suffix: "/ year" },
-};
-
 export function getPlan(planId) {
-  return PLANS[planId] || PLANS.pro;
+  return PLANS[planId] || PLANS.lifetime;
 }
 
 export function isValidCycle(cycle) {
-  return cycle === "monthly" || cycle === "yearly";
+  return cycle === "lifetime";
 }
 
 export function listPlans() {
-  const plan = PLANS.pro;
-  return [
-    {
-      ...plan,
-      cycle: "monthly",
-      amount: plan.priceUsd.monthly,
-      amountCny: plan.priceCny.monthly,
-      priceLabel: "$99",
-      priceLabelCny: "¥699",
-      periodLabel: "/ month",
-      periodLabelZh: "/ 月",
-    },
-    {
-      ...plan,
-      cycle: "yearly",
-      amount: plan.priceUsd.yearly,
-      amountCny: plan.priceCny.yearly,
-      priceLabel: "$999",
-      priceLabelCny: "¥6999",
-      periodLabel: "/ year",
-      periodLabelZh: "/ 年",
-      featured: true,
-      savings: "Save $189 vs monthly",
-      savingsZh: "比月付节省 ¥1299",
-    },
-  ];
+  return [PLANS.lifetime];
 }
 
-export function getAmount(planId, cycle = "monthly", currency = "usd") {
+export function getAmount(planId, cycle = "lifetime", currency = "cny") {
   const plan = getPlan(planId);
   if (!plan || !isValidCycle(cycle)) return null;
   const isCny = currency === "cny";
-  const amount = isCny ? plan.priceCny[cycle] : plan.priceUsd[cycle];
-  if (amount == null) return null;
+  const amount = isCny ? plan.priceCny.lifetime : plan.priceUsd.lifetime;
   return {
     amount,
     currency: isCny ? "CNY" : "USD",
     plan,
-    cycle,
+    cycle: "lifetime",
   };
 }

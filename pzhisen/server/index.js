@@ -93,7 +93,7 @@ app.post("/api/signup", async (req, res) => {
       stage: "idea",
       createdAt: new Date().toISOString(),
       status: "active",
-      plan: subActive ? (sub?.cycle || "pro") : "trial",
+      plan: subActive ? "lifetime" : "trial",
     };
 
     upsertCompany(company);
@@ -124,8 +124,8 @@ app.get("/api/companies/:id", (req, res) => {
   if (!company) return res.status(404).json({ success: false, error: "Company not found" });
   const active = isSubscriptionActive(company.email);
   const sub = getSubscriptionByEmail(company.email);
-  if (active && sub?.cycle && company.plan !== sub.cycle) {
-    company.plan = sub.cycle;
+  if (active && company.plan !== "lifetime") {
+    company.plan = "lifetime";
     upsertCompany(company);
   }
   res.json({
@@ -186,7 +186,7 @@ function subscriptionPayload(email) {
   return {
     subscriptionActive: active,
     subscription: sub,
-    checkoutUrl: `/pricing.html?email=${encodeURIComponent(email || "")}`,
+    checkoutUrl: `/checkout.html?plan=lifetime&cycle=lifetime&email=${encodeURIComponent(email || "")}`,
   };
 }
 
@@ -202,8 +202,8 @@ function requireSubscription(company, res) {
       success: false,
       error: "Subscription required",
       errorZh: expired
-        ? "您的订阅已过期，请续费：月付 ¥699 / 年付 ¥6999（银行卡）或 $99 / $999（PayPal）。"
-        : "请先订阅：月付 ¥699 / 年付 ¥6999（银行卡）或 $99 / $999（PayPal）。",
+        ? "您的终身版已失效，请重新支付 ¥1（或 PayPal $1）开通。"
+        : "请先支付 ¥1（银行卡）或 PayPal $1 开通终身版后使用全部功能。",
       expired,
       ...subscriptionPayload(company.email),
     });

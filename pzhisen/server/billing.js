@@ -1,9 +1,9 @@
-import { getPlan, listPlans, getAmount, isValidCycle, CYCLE_LABELS } from "./plans.js";
+import { getPlan, listPlans, getAmount, isValidCycle } from "./plans.js";
 import {
   createPendingOrder,
   getOrder,
   updateOrder,
-  activateSubscription,
+  activateLifetime,
   getSubscriptionByEmail,
   isSubscriptionActive,
   getOrders,
@@ -37,8 +37,8 @@ export function getBillingConfig() {
     bankAccount: bank.configured
       ? { bankName: bank.bankName, accountName: bank.accountName, accountNumberMask: maskAccount(bank.accountNumber) }
       : null,
-    noteZh: "月付 ¥699 / 年付 ¥6999（银行卡转账）或 $99 / $999（PayPal）。确认支付后立即可用，到期需续费。",
-    noteEn: "Monthly ¥699 / yearly ¥6999 (bank transfer) or $99 / $999 (PayPal). Instant access while subscribed.",
+    noteZh: "仅需支付 ¥1 即可永久使用全部功能。银行卡转账或 PayPal $1，支付后立即可用。",
+    noteEn: "Pay ¥1 (bank transfer) or $1 (PayPal) once for lifetime access to all features.",
   };
 }
 
@@ -48,12 +48,6 @@ function activationPayload(email) {
     companyId: company?.id || null,
     dashboardUrl: company ? `/dashboard.html?company=${company.id}` : "/dashboard.html",
   };
-}
-
-function cycleLabel(cycle, lang = "en") {
-  const labels = CYCLE_LABELS[cycle];
-  if (!labels) return cycle;
-  return lang === "zh" ? labels.zh : labels.en;
 }
 
 export function getPlansHandler(_req, res) {
@@ -70,15 +64,24 @@ export function getSubscriptionStatus(req, res) {
 
 export async function checkoutHandler(req, res) {
   try {
-    const { email, planId = "pro", cycle = "monthly", provider, method } = req.body || {};
+    const { email, planId = "lifetime", cycle = "lifetime", provider, method } = req.body || {};
     if (!email?.includes("@")) {
       return res.status(400).json({ success: false, error: "Valid email required" });
     }
     if (!isValidCycle(cycle)) {
-      return res.status(400).json({ success: false, error: "Invalid cycle. Use monthly or yearly." });
+      return res.status(400).json({ success: false, error: "Invalid plan cycle" });
     }
     const plan = getPlan(planId);
     if (!plan) return res.status(400).json({ success: false, error: "Invalid plan" });
+    if (isSubscriptionActive(email)) {
+      return res.json({
+        success: true,
+        alreadyActive: true,
+        message: "您已开通终身版",
+        subscription: getSubscriptionByEmail(email),
+        ...activationPayload(email),
+      });
+    }
 
     const payProvider = provider || method || "paypal";
     const returnUrl = `${PUBLIC_URL}/checkout-success.html?order=`;
@@ -92,7 +95,7 @@ export async function checkoutHandler(req, res) {
       const order = createPendingOrder({
         email, planId, cycle, amount, currency, provider: "paypal",
       });
-      const desc = `Pzhisen Pro — ${cycleLabel(cycle)} ($${amount})`;
+      const desc = `Pzhisen Lifetime — one-time ¥1 / $1`;
       const pp = await createPayPalOrder({
         orderId: order.id,
         amount,
@@ -172,15 +175,10 @@ export function confirmBankTransferHandler(req, res) {
     });
   }
 
-  if (!isValidCycle(order.cycle)) {
-    return res.status(400).json({ success: false, error: "Invalid order cycle" });
-  }
-
   updateOrder(order.id, { status: "paid", confirmedAt: new Date().toISOString() });
-  const sub = activateSubscription({
+  const sub = activateLifetime({
     email: order.email,
     planId: order.planId,
-    cycle: order.cycle,
     provider: "bankcard",
     externalId: order.transferCode,
   });
@@ -220,15 +218,10 @@ export function approveBankOrderHandler(req, res) {
     return res.json({ success: true, subscription: getSubscriptionByEmail(order.email) });
   }
 
-  if (!isValidCycle(order.cycle)) {
-    return res.status(400).json({ success: false, error: "Invalid order cycle" });
-  }
-
   updateOrder(order.id, { status: "paid" });
-  const sub = activateSubscription({
+  const sub = activateLifetime({
     email: order.email,
     planId: order.planId,
-    cycle: order.cycle,
     provider: "bankcard",
     externalId: order.transferCode,
   });
@@ -255,10 +248,9 @@ export async function capturePayPalHandler(req, res) {
     }
 
     updateOrder(order.id, { status: "paid", captureId: cap.captureId });
-    const sub = activateSubscription({
+    const sub = activateLifetime({
       email: order.email,
       planId: order.planId,
-      cycle: order.cycle,
       provider: "paypal",
       externalId: cap.captureId,
     });
@@ -285,10 +277,9 @@ export async function orderStatusHandler(req, res) {
       const cap = await capturePayPalOrder(order.externalId);
       if (cap.success) {
         updateOrder(order.id, { status: "paid", captureId: cap.captureId });
-        const sub = activateSubscription({
+        const sub = activateLifetime({
           email: order.email,
           planId: order.planId,
-          cycle: order.cycle,
           provider: "paypal",
           externalId: cap.captureId,
         });

@@ -1,12 +1,11 @@
 const params = new URLSearchParams(location.search);
-const planId = params.get("plan") || "pro";
-const cycle = params.get("cycle") || "monthly";
+const planId = params.get("plan") || "lifetime";
+const cycle = params.get("cycle") || "lifetime";
 
 const isChinaUser = () =>
   navigator.language?.startsWith("zh") ||
   Intl.DateTimeFormat().resolvedOptions().timeZone?.includes("Shanghai") ||
-  Intl.DateTimeFormat().resolvedOptions().timeZone?.includes("Chongqing") ||
-  Intl.DateTimeFormat().resolvedOptions().timeZone?.includes("Asia/Hong_Kong");
+  Intl.DateTimeFormat().resolvedOptions().timeZone?.includes("Chongqing");
 
 let selectedProvider = isChinaUser() ? "bank" : "paypal";
 let billingConfig = null;
@@ -14,11 +13,9 @@ let plan = null;
 let currentBankOrder = null;
 let pendingPayPalOrder = null;
 
-const CYCLE_ZH = { monthly: "月付（1 个月）", yearly: "年付（12 个月）" };
-
 const METHODS = [
-  { id: "bank", icon: "🏦", name: "银行卡转账", desc: "中国内地 · 转账后确认，立即开通", providerKey: "bankCard" },
-  { id: "paypal", icon: "🅿️", name: "PayPal", desc: "全球用户 · 支付后立即可用", providerKey: "paypal" },
+  { id: "bank", icon: "🏦", name: "银行卡转账", desc: "¥1 · 转账后确认，立即开通", providerKey: "bankCard" },
+  { id: "paypal", icon: "🅿️", name: "PayPal", desc: "$1 · 支付后立即可用", providerKey: "paypal" },
 ];
 
 function showError(msg) {
@@ -29,10 +26,12 @@ function showError(msg) {
 
 function setBusy(busy) {
   const btn = document.getElementById("btn-pay");
-  if (!btn || selectedProvider !== "bank") return;
-  btn.style.display = "block";
   btn.disabled = busy;
-  btn.textContent = busy ? "处理中…" : (currentBankOrder ? "我已完成转账" : "生成转账信息");
+  if (selectedProvider === "bank") {
+    btn.textContent = busy ? "处理中…" : (currentBankOrder ? "我已完成转账" : "生成转账信息");
+  } else {
+    btn.textContent = busy ? "Processing…" : "Pay with PayPal";
+  }
 }
 
 async function loadPlan() {
@@ -42,24 +41,20 @@ async function loadPlan() {
   ]);
   billingConfig = await cfgRes.json();
   const { plans } = await plansRes.json();
-  const selected = plans.find((p) => p.cycle === cycle);
-  plan = selected || plans[0];
+  plan = plans.find((p) => p.id === planId) || plans[0];
   if (!plan) location.href = "/pricing.html";
   renderSummary();
   renderMethods();
-  document.getElementById("pay-hint").textContent = billingConfig.noteZh || billingConfig.noteEn || "";
+  document.getElementById("pay-hint").textContent = billingConfig.noteZh || "";
 }
 
 function renderSummary() {
-  document.getElementById("checkout-title").textContent =
-    `订阅 ${plan.nameZh || plan.name} — ${plan.cycle === "yearly" ? "年付" : "月付"}`;
+  document.getElementById("checkout-title").textContent = "支付 ¥1 开通终身版";
   document.getElementById("checkout-subtitle").textContent = plan.descriptionZh || plan.description;
   document.getElementById("sum-plan").textContent = plan.nameZh || plan.name;
-  document.getElementById("sum-cycle").textContent = CYCLE_ZH[plan.cycle] || plan.cycle;
-  const cny = plan.priceLabelCny || `¥${plan.amountCny}`;
-  const usd = plan.priceLabel || `$${plan.amount}`;
+  document.getElementById("sum-cycle").textContent = "终身（一次付费）";
   document.getElementById("sum-total").textContent =
-    selectedProvider === "bank" ? `${cny} CNY` : `${usd} USD`;
+    selectedProvider === "paypal" ? "$1 USD" : "¥1 CNY";
   setBusy(false);
 }
 
@@ -70,6 +65,7 @@ function renderMethods() {
 
   if (!available.length) {
     container.innerHTML = `<p class="checkout-hint">请配置银行卡信息（BANK_*）或 PayPal 密钥。</p>`;
+    document.getElementById("btn-pay").disabled = true;
     return;
   }
 
@@ -116,7 +112,7 @@ function showBankPanel(data) {
       <div class="checkout-line"><span>金额</span><strong style="color:#dc2626">¥${data.amount}</strong></div>
       <div class="checkout-line total"><span>转账备注（必填）</span><strong style="color:#dc2626">${data.transferCode}</strong></div>
     </div>
-    <p class="checkout-hint">转账时务必填写备注 <strong>${data.transferCode}</strong>。完成转账后点击下方按钮，即可立即开通。</p>
+    <p class="checkout-hint">转账时务必填写备注 <strong>${data.transferCode}</strong>。完成转账后点击下方按钮，即可立即开通终身版。</p>
   `;
   setBusy(false);
 }
@@ -140,7 +136,7 @@ function initPayPalButtons() {
       const email = document.getElementById("checkout-email").value.trim();
       if (!email.includes("@")) throw new Error("请填写有效邮箱");
       localStorage.setItem("pzhisen_email", email);
-      pendingPayPalOrder = await startCheckout(email, "paypal");
+      pendingPayPalOrder = await startCheckout(email);
       return pendingPayPalOrder.paypalOrderId;
     },
     onApprove: async (data) => {
@@ -164,11 +160,11 @@ function initPayPalButtons() {
   }).render("#paypal-button-container");
 }
 
-async function startCheckout(email, provider) {
+async function startCheckout(email) {
   const res = await fetch("/api/billing/checkout", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, planId, cycle, provider: provider || selectedProvider }),
+    body: JSON.stringify({ email, planId, cycle, provider: selectedProvider }),
   });
   const data = await res.json();
   if (!data.success) throw new Error(data.error || "创建订单失败");
@@ -184,7 +180,7 @@ async function pay() {
   try {
     if (selectedProvider === "bank") {
       if (!currentBankOrder) {
-        const data = await startCheckout(email, "bank");
+        const data = await startCheckout(email);
         showBankPanel(data);
         return;
       }
@@ -200,7 +196,7 @@ async function pay() {
       return;
     }
 
-    const data = await startCheckout(email, "paypal");
+    const data = await startCheckout(email);
     if (data.approveUrl) location.href = data.approveUrl;
     else throw new Error("未获得 PayPal 支付链接");
   } catch (e) {
