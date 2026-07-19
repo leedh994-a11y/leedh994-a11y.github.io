@@ -1,7 +1,11 @@
+# Render Blueprint — deploy from repo root (monorepo)
+# Dashboard: New > Blueprint > connect this repo
+
 services:
   - type: web
     name: pzhisen
     runtime: docker
+    rootDir: pzhisen
     dockerfilePath: ./Dockerfile
     plan: free
     region: oregon
