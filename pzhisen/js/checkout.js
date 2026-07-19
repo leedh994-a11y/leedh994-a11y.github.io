@@ -91,6 +91,12 @@ async function loadPlan() {
   renderSummary();
   renderMethods();
   document.getElementById("pay-hint").textContent = billingConfig.noteZh || "";
+
+  if (billingConfig.paypal?.authOk === false && billingConfig.paypal?.authError) {
+    showError(
+      `PayPal 服务端配置有误：${billingConfig.paypal.authError}。请改用银行卡转账，或联系管理员修正 Render 中的 PayPal 环境变量。`
+    );
+  }
 }
 
 function renderSummary() {
@@ -207,7 +213,16 @@ function initPayPalButtons() {
         throw new Error(cap.error || "扣款失败");
       }
     },
-    onError: (err) => showError(err?.message || "PayPal 出错"),
+    onError: (err) => {
+      const msg = err?.message || String(err) || "PayPal 出错";
+      if (/authentication|invalid_client|凭证/i.test(msg)) {
+        showError(
+          "PayPal 认证失败：请确认 Render 中 PAYPAL_CLIENT_ID、PAYPAL_CLIENT_SECRET 来自同一 PayPal 应用，且 PAYPAL_MODE 与密钥环境一致（live 用正式密钥，sandbox 用沙盒密钥）。中国内地用户可先选择「银行卡转账」。"
+        );
+      } else {
+        showError(msg);
+      }
+    },
   }).render("#paypal-button-container");
 }
 

@@ -1,11 +1,16 @@
-const CLIENT_ID = process.env.PAYPAL_CLIENT_ID || "";
-const CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET || "";
-const MODE = process.env.PAYPAL_MODE || "sandbox";
-const BASE = MODE === "live"
+const CLIENT_ID = (process.env.PAYPAL_CLIENT_ID || "").trim();
+const CLIENT_SECRET = (process.env.PAYPAL_CLIENT_SECRET || "").trim();
+const MODE = (process.env.PAYPAL_MODE || "sandbox").trim().toLowerCase();
+const IS_LIVE = MODE === "live";
+const BASE = IS_LIVE
   ? "https://api-m.paypal.com"
   : "https://api-m.sandbox.paypal.com";
+const SDK_HOST = IS_LIVE
+  ? "https://www.paypal.com"
+  : "https://www.sandbox.paypal.com";
 
 let tokenCache = { token: null, expiresAt: 0 };
+let authCheckCache = { ok: null, error: null, checkedAt: 0 };
 
 export function isPayPalConfigured() {
   return Boolean(CLIENT_ID && CLIENT_SECRET);
@@ -15,10 +20,12 @@ export function getPayPalPublicConfig() {
   return {
     configured: isPayPalConfigured(),
     clientId: CLIENT_ID || null,
-    mode: MODE,
+    mode: IS_LIVE ? "live" : "sandbox",
     sdkUrl: CLIENT_ID
-      ? `https://www.paypal.com/sdk/js?client-id=${CLIENT_ID}&currency=USD&intent=capture&vault=true`
+      ? `${SDK_HOST}/sdk/js?client-id=${encodeURIComponent(CLIENT_ID)}&currency=USD&intent=capture&components=buttons`
       : null,
+    authOk: authCheckCache.ok,
+    authError: authCheckCache.error,
   };
 }
 
@@ -36,13 +43,39 @@ async function getAccessToken() {
     body: "grant_type=client_credentials",
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error_description || data.error || "PayPal auth failed");
+  if (!res.ok) {
+    const msg = data.error_description || data.error || "PayPal auth failed";
+    if (/invalid_client|authentication/i.test(msg)) {
+      throw new Error(
+        `PayPal 凭证无效（${IS_LIVE ? "live" : "sandbox"}）：请确认 PAYPAL_CLIENT_ID 与 PAYPAL_CLIENT_SECRET 来自同一应用，且 PAYPAL_MODE=${MODE} 与密钥环境一致`
+      );
+    }
+    throw new Error(msg);
+  }
 
   tokenCache = {
     token: data.access_token,
     expiresAt: Date.now() + (data.expires_in - 60) * 1000,
   };
   return data.access_token;
+}
+
+/** Cached server-side credential check (for diagnostics). */
+export async function verifyPayPalAuth() {
+  if (!isPayPalConfigured()) {
+    authCheckCache = { ok: false, error: "PayPal credentials not set", checkedAt: Date.now() };
+    return authCheckCache;
+  }
+  if (authCheckCache.checkedAt && Date.now() - authCheckCache.checkedAt < 5 * 60 * 1000) {
+    return authCheckCache;
+  }
+  try {
+    await getAccessToken();
+    authCheckCache = { ok: true, error: null, checkedAt: Date.now() };
+  } catch (err) {
+    authCheckCache = { ok: false, error: err.message, checkedAt: Date.now() };
+  }
+  return authCheckCache;
 }
 
 export async function createPayPalOrder({ orderId, amount, currency, description, returnUrl, cancelUrl }) {

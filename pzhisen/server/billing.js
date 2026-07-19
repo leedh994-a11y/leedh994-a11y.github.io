@@ -8,7 +8,13 @@ import {
   isSubscriptionActive,
   getOrders,
 } from "./billing-store.js";
-import { isPayPalConfigured, getPayPalPublicConfig, createPayPalOrder, capturePayPalOrder } from "./paypal.js";
+import {
+  isPayPalConfigured,
+  getPayPalPublicConfig,
+  createPayPalOrder,
+  capturePayPalOrder,
+  verifyPayPalAuth,
+} from "./paypal.js";
 import {
   getBankAccountConfig,
   isBankTransferConfigured,
@@ -29,8 +35,10 @@ function formatExpiry(iso) {
   return new Date(iso).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" });
 }
 
-export function getBillingConfig() {
+export async function getBillingConfig() {
   const bank = getBankAccountConfig();
+  if (isPayPalConfigured()) await verifyPayPalAuth();
+  const paypal = getPayPalPublicConfig();
   return {
     success: true,
     providers: {
@@ -38,7 +46,7 @@ export function getBillingConfig() {
       bankCard: isBankTransferConfigured(),
     },
     publicUrl: PUBLIC_URL,
-    paypal: getPayPalPublicConfig(),
+    paypal,
     bankAccount: bank.configured
       ? { bankName: bank.bankName, accountName: bank.accountName, accountNumberMask: maskAccount(bank.accountNumber) }
       : null,

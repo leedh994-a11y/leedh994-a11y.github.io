@@ -59,14 +59,14 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "pzhisen", ai: isAiEnabled() });
 });
 
-app.get("/api/config", (_req, res) => {
+app.get("/api/config", async (_req, res) => {
   res.json({
     success: true,
     publicUrl: PUBLIC_URL,
     aiEnabled: isAiEnabled(),
     models: getModels(),
     agents: Object.values(AGENTS).map((a) => ({ id: a.id, name: a.name, icon: a.icon })),
-    billing: getBillingConfig(),
+    billing: await getBillingConfig(),
     auth: {
       supportedEmailHint: "Gmail, Outlook, Yahoo, iCloud, QQ, 163, 126, ProtonMail and all mainstream email providers worldwide",
       supportedEmailHintZh: "支持 Gmail、Outlook、Yahoo、iCloud、QQ邮箱、163邮箱、126邮箱、ProtonMail 等全球主流邮箱",
@@ -83,7 +83,7 @@ app.post("/api/auth/logout", logoutHandler);
 app.get("/api/auth/me", requireAuth, meHandler);
 
 // ─── Billing / subscriptions ───
-app.get("/api/billing/config", (_req, res) => res.json(getBillingConfig()));
+app.get("/api/billing/config", async (_req, res) => res.json(await getBillingConfig()));
 app.get("/api/billing/plans", getPlansHandler);
 app.get("/api/billing/subscription", requireAuth, (req, res) => {
   req.query.email = req.user.email;
