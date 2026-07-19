@@ -24,6 +24,9 @@ function formatExpiry(iso) {
 
 function subscriptionLabel(sub) {
   if (!sub) return "专业版";
+  if (sub.cycle === "lifetime" || sub.planId === "lifetime" || sub.lifetime) {
+    return "✓ 终身版";
+  }
   const cycle = sub.cycle === "annual" ? "年付" : "月付";
   return `✓ ${cycle} · 至 ${formatExpiry(sub.expiresAt)}`;
 }

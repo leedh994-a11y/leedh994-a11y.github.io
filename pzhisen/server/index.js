@@ -24,8 +24,9 @@ import {
   confirmBankTransferHandler,
   listPendingBankOrdersHandler,
   approveBankOrderHandler,
+  grantLifetimeHandler,
 } from "./billing.js";
-import { isSubscriptionActive, getSubscriptionByEmail } from "./billing-store.js";
+import { isSubscriptionActive, getSubscriptionByEmail, ensureGrandfatheredLifetimeAccess } from "./billing-store.js";
 import { DEFAULT_PLAN_ID, DEFAULT_CYCLE } from "./plans.js";
 import {
   registerHandler,
@@ -98,6 +99,7 @@ app.get("/api/billing/order/:orderId", orderStatusHandler);
 app.post("/api/billing/bank/confirm", confirmBankTransferHandler);
 app.get("/api/billing/admin/pending", listPendingBankOrdersHandler);
 app.post("/api/billing/admin/approve", approveBankOrderHandler);
+app.post("/api/billing/admin/grant-lifetime", grantLifetimeHandler);
 
 app.get("/api/logs/global", (_req, res) => {
   res.json({ success: true, logs: getGlobalLogs(40) });
@@ -216,6 +218,10 @@ app.get("*", (req, res, next) => {
 });
 
 app.listen(PORT, () => {
+  const restored = ensureGrandfatheredLifetimeAccess();
+  if (restored.length) {
+    console.log(`Restored lifetime access for: ${restored.map((s) => s.email).join(", ")}`);
+  }
   console.log(`Pzhisen running at ${PUBLIC_URL}`);
   console.log(`AI agents: ${isAiEnabled() ? "enabled (OpenRouter)" : "template mode — set OPENROUTER_API_KEY"}`);
 });

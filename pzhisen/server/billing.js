@@ -4,9 +4,11 @@ import {
   getOrder,
   updateOrder,
   activateSubscription,
+  activateLifetime,
   getSubscriptionByEmail,
   isSubscriptionActive,
   getOrders,
+  ensureGrandfatheredLifetimeAccess,
 } from "./billing-store.js";
 import {
   isPayPalConfigured,
@@ -304,6 +306,29 @@ export async function orderStatusHandler(req, res) {
     active,
     subscription: getSubscriptionByEmail(order.email),
     ...activationPayload(order.email),
+  });
+}
+
+export function grantLifetimeHandler(req, res) {
+  const key = req.query.key || req.body?.key || req.headers["x-admin-key"];
+  if (!isAdminAuthorized(key)) {
+    return res.status(401).json({ success: false, error: "Unauthorized" });
+  }
+  const email = (req.body?.email || "").trim().toLowerCase();
+  if (!email?.includes("@")) {
+    return res.status(400).json({ success: false, error: "Valid email required" });
+  }
+  const sub = activateLifetime({
+    email,
+    provider: "admin_grant",
+    note: req.body?.note || "Admin granted lifetime access",
+  });
+  res.json({
+    success: true,
+    message: `已为 ${email} 恢复终身版权限`,
+    subscription: sub,
+    active: true,
+    ...activationPayload(email),
   });
 }
 

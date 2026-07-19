@@ -101,7 +101,7 @@ async function createCompanyForUser(user, idea) {
     stage: "idea",
     createdAt: new Date().toISOString(),
     status: "active",
-    plan: subActive ? (sub?.cycle || "pro") : "trial",
+    plan: subActive ? (sub?.cycle === "lifetime" || sub?.planId === "lifetime" ? "lifetime" : (sub?.cycle || "pro")) : "trial",
   };
   upsertCompany(company);
   appendLog(company.id, { agent: "System", message: `Company "${company.name}" created. Deploying AI team...` });
