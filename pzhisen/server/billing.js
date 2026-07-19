@@ -9,7 +9,7 @@ import {
   subscriptionDaysForCycle,
 } from "./billing-store.js";
 import { isPayPalConfigured, getPayPalPublicConfig, createPayPalOrder, capturePayPalOrder } from "./paypal.js";
-import { isXunhuConfigured, createXunhuPayment, verifyXunhuNotify } from "./xunhupay.js";
+import { isXunhuConfigured, createBankCardPayment, verifyXunhuNotify } from "./xunhupay.js";
 
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 
@@ -18,15 +18,13 @@ export function getBillingConfig() {
     success: true,
     providers: {
       paypal: isPayPalConfigured(),
-      wechat: isXunhuConfigured(),
-      alipay: isXunhuConfigured(),
-      bankCard: isXunhuConfigured(), // via Alipay (supports CN bank cards)
+      bankCard: isXunhuConfigured(),
     },
     publicUrl: PUBLIC_URL,
     paypal: getPayPalPublicConfig(),
-    xunhu: { configured: isXunhuConfigured() },
-    noteZh: "支持全国银行卡（工行/建行/农行/中行/招商/交通等），请选「银行卡支付」或支付宝；款项结算至您的国内收款账户。",
-    noteEn: "China bank cards (all major banks) supported via Alipay. Funds settle to your domestic merchant account.",
+    bankGateway: { configured: isXunhuConfigured() },
+    noteZh: "国内用户使用银行卡支付（支持工行、建行、农行、中行、招商、交通等全国银行），款项结算至您绑定的国内银行卡。",
+    noteEn: "China users pay with domestic bank cards. Funds settle to your linked Chinese bank account.",
   };
 }
 
@@ -85,40 +83,38 @@ export async function checkoutHandler(req, res) {
       });
     }
 
-    if (payProvider === "wechat" || payProvider === "alipay" || payProvider === "bank" || payProvider === "bankcard") {
+    if (payProvider === "bank" || payProvider === "bankcard") {
       if (!isXunhuConfigured()) {
         return res.status(503).json({
           success: false,
-          error: "国内支付未配置。请在 Render 设置 XUNHU_APP_ID 和 XUNHU_APP_SECRET。",
+          error: "国内银行卡支付未配置。请在 Render 设置 XUNHU_APP_ID 和 XUNHU_APP_SECRET。",
         });
       }
       const { amount, currency } = getAmount(planId, cycle, "cny");
-      const cnProvider = payProvider === "wechat" ? "wechat" : "alipay";
       const order = createPendingOrder({
-        email, planId, cycle, amount, currency, provider: cnProvider,
+        email, planId, cycle, amount, currency, provider: "bankcard",
       });
       const title = `Pzhisen ${plan.nameZh || plan.name} ${cycle === "yearly" ? "年付" : "月付"}`;
-      const xh = await createXunhuPayment({
+      const pay = await createBankCardPayment({
         orderId: order.id,
         amountCny: amount,
         title,
         notifyUrl: `${PUBLIC_URL}/api/billing/webhook/xunhu`,
         returnUrl: returnUrl + order.id,
-        type: cnProvider,
       });
-      updateOrder(order.id, { payUrl: xh.payUrl });
+      updateOrder(order.id, { payUrl: pay.payUrl });
       return res.json({
         success: true,
         orderId: order.id,
-        provider: cnProvider,
-        payUrl: xh.payUrl,
-        qrcodeUrl: xh.qrcodeUrl,
+        provider: "bankcard",
+        payUrl: pay.payUrl,
+        qrcodeUrl: pay.qrcodeUrl,
       });
     }
 
     return res.status(400).json({
       success: false,
-      error: "Invalid provider. Use: paypal, wechat, alipay, or bank",
+      error: "Invalid provider. Use: bank (China) or paypal (international)",
     });
   } catch (err) {
     console.error("checkout error:", err);
@@ -190,7 +186,7 @@ export async function xunhuWebhookHandler(req, res) {
     const body = req.body || {};
     const verified = verifyXunhuNotify(body);
     if (!verified.valid) {
-      console.warn("xunhu webhook invalid:", verified.error);
+      console.warn("bank webhook invalid:", verified.error);
       return res.status(400).send("fail");
     }
     if (!verified.paid) return res.send("success");
@@ -204,14 +200,14 @@ export async function xunhuWebhookHandler(req, res) {
       email: order.email,
       planId: order.planId,
       cycle: order.cycle,
-      provider: order.provider,
+      provider: "bankcard",
       externalId: verified.externalId,
       days: subscriptionDaysForCycle(order.cycle),
     });
     updateOrder(order.id, { status: "completed" });
     res.send("success");
   } catch (err) {
-    console.error("xunhu webhook error:", err);
+    console.error("bank webhook error:", err);
     res.status(500).send("fail");
   }
 }

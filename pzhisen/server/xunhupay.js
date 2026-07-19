@@ -20,19 +20,17 @@ function sign(params, secret) {
 }
 
 /**
- * Create WeChat / Alipay payment via 虎皮椒 (XunhuPay).
- * Funds settle to your Xunhu account → linked WeChat / Alipay merchant wallet.
- * Bank cards: users pay through Alipay (supports debit/credit cards).
+ * Create domestic bank card payment via licensed gateway (XunhuPay).
+ * User selects their bank card at checkout; funds settle to merchant's linked Chinese bank account.
  */
-export async function createXunhuPayment({
+export async function createBankCardPayment({
   orderId,
   amountCny,
   title,
   notifyUrl,
   returnUrl,
-  type = "wechat", // wechat | alipay
 }) {
-  if (!isXunhuConfigured()) throw new Error("XunhuPay not configured");
+  if (!isXunhuConfigured()) throw new Error("Bank payment gateway not configured");
 
   const params = {
     version: "1.1",
@@ -45,7 +43,7 @@ export async function createXunhuPayment({
     return_url: returnUrl,
     callback_url: returnUrl,
     nonce_str: crypto.randomBytes(8).toString("hex"),
-    type: type === "alipay" ? "alipay" : "wechat",
+    type: "alipay", // gateway channel for CN bank card checkout
     wap_url: returnUrl,
     wap_name: "Pzhisen",
   };
@@ -62,11 +60,11 @@ export async function createXunhuPayment({
   try {
     data = JSON.parse(text);
   } catch {
-    throw new Error(`XunhuPay invalid response: ${text.slice(0, 200)}`);
+    throw new Error(`Payment gateway invalid response: ${text.slice(0, 200)}`);
   }
 
   if (data.errcode !== 0 && data.errcode !== "0") {
-    throw new Error(data.errmsg || data.err_msg || "XunhuPay order failed");
+    throw new Error(data.errmsg || data.err_msg || "Bank payment order failed");
   }
 
   return {

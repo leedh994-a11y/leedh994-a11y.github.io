@@ -17,32 +17,14 @@ const METHODS = [
     id: "bank",
     icon: "🏦",
     name: "银行卡支付",
-    desc: "支持全国所有银行储蓄卡/信用卡（工行·建行·农行·中行·招商等）",
-    region: "cn",
+    desc: "全国银行储蓄卡/信用卡（工行·建行·农行·中行·招商·交通等）",
     providerKey: "bankCard",
-  },
-  {
-    id: "alipay",
-    icon: "💙",
-    name: "支付宝",
-    desc: "支付宝余额或绑定的银行卡",
-    region: "cn",
-    providerKey: "alipay",
-  },
-  {
-    id: "wechat",
-    icon: "💚",
-    name: "微信支付",
-    desc: "微信扫码或 H5 支付",
-    region: "cn",
-    providerKey: "wechat",
   },
   {
     id: "paypal",
     icon: "🅿️",
     name: "PayPal",
-    desc: "国际信用卡 / PayPal 余额",
-    region: "intl",
+    desc: "海外用户 — 国际信用卡 / PayPal 余额",
     providerKey: "paypal",
   },
 ];
@@ -55,7 +37,7 @@ function showError(msg) {
 
 function setBusy(busy) {
   document.getElementById("btn-pay").disabled = busy;
-  document.getElementById("btn-pay").textContent = busy ? "处理中…" : "立即支付";
+  document.getElementById("btn-pay").textContent = busy ? "处理中…" : "银行卡支付";
 }
 
 async function loadPlan() {
@@ -73,7 +55,7 @@ async function loadPlan() {
   renderSummary();
   renderMethods();
   document.getElementById("pay-hint").textContent =
-    billingConfig.noteZh || "支持全国银行卡支付，款项进入您的国内收款账户。";
+    billingConfig.noteZh || "使用银行卡安全支付，款项进入您绑定的国内银行卡。";
 }
 
 function renderSummary() {
@@ -85,6 +67,8 @@ function renderSummary() {
   document.getElementById("sum-cycle").textContent = cycle === "yearly" ? "年付" : "月付";
   document.getElementById("sum-total").textContent =
     selectedProvider === "paypal" ? `$${usd} USD` : `¥${cny} CNY`;
+  document.getElementById("btn-pay").textContent =
+    selectedProvider === "paypal" ? "Pay with PayPal" : "银行卡支付";
 }
 
 function renderMethods() {
@@ -93,7 +77,7 @@ function renderMethods() {
   const available = METHODS.filter((m) => providers[m.providerKey]);
 
   if (!available.length) {
-    container.innerHTML = `<p class="checkout-hint">支付尚未配置。国内支付请设置虎皮椒（XUNHU）密钥；海外请设置 PayPal 密钥。</p>`;
+    container.innerHTML = `<p class="checkout-hint">支付尚未配置。国内银行卡请设置 XUNHU 密钥；海外请设置 PayPal 密钥。</p>`;
     document.getElementById("btn-pay").disabled = true;
     return;
   }
@@ -201,11 +185,7 @@ async function pay() {
     if (data.payUrl) {
       const qr = document.getElementById("qr-container");
       if (data.qrcodeUrl) {
-        qr.innerHTML = `<div class="qr-box"><p>请使用手机扫码完成支付</p><img src="${data.qrcodeUrl}" alt="支付二维码"><p class="checkout-hint" style="margin-top:12px">也可<a href="${data.payUrl}">点击此处</a>跳转支付页面</p></div>`;
-        if (/MicroMessenger/i.test(navigator.userAgent)) {
-          location.href = data.payUrl;
-        }
-        return;
+        qr.innerHTML = `<div class="qr-box"><p>请在支付页面选择您的银行卡完成付款</p><img src="${data.qrcodeUrl}" alt="支付二维码"><p class="checkout-hint" style="margin-top:12px"><a href="${data.payUrl}">点击此处打开支付页面</a></p></div>`;
       }
       location.href = data.payUrl;
       return;
