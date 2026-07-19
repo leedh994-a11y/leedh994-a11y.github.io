@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>收款管理 — Pzhisen</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/pricing.css">
+</head>
+<body>
+  <main class="checkout-page">
+    <div class="checkout-card">
+      <h1>银行卡收款管理</h1>
+      <p class="checkout-hint">核实用户转账后，点击「确认收款」开通订阅。</p>
+
+      <label style="display:block;margin:16px 0">
+        管理密钥 (BILLING_ADMIN_SECRET)
+        <input type="password" id="admin-key" placeholder="输入 Render 中设置的密钥"
+          style="display:block;width:100%;height:44px;margin-top:8px;padding:0 16px;border:1px solid var(--border);border-radius:8px;">
+      </label>
+      <button type="button" class="btn-primary" id="btn-load" style="width:100%">加载待确认订单</button>
+
+      <div id="orders-list" style="margin-top:24px"></div>
+      <p class="checkout-error" id="admin-error" hidden></p>
+    </div>
+  </main>
+  <script>
+    const keyInput = document.getElementById("admin-key");
+    const saved = sessionStorage.getItem("pzhisen_admin_key");
+    if (saved) keyInput.value = saved;
+
+    async function loadOrders() {
+      const key = keyInput.value.trim();
+      if (!key) return alert("请输入管理密钥");
+      sessionStorage.setItem("pzhisen_admin_key", key);
+      const res = await fetch(`/api/billing/admin/pending?key=${encodeURIComponent(key)}`);
+      const data = await res.json();
+      const el = document.getElementById("admin-error");
+      const list = document.getElementById("orders-list");
+      if (!data.success) {
+        el.hidden = false;
+        el.textContent = data.error || "加载失败";
+        list.innerHTML = "";
+        return;
+      }
+      el.hidden = true;
+      if (!data.orders.length) {
+        list.innerHTML = "<p class='checkout-hint'>暂无待确认订单</p>";
+        return;
+      }
+      list.innerHTML = data.orders.map((o) => `
+        <div class="checkout-summary" style="margin-bottom:12px;text-align:left">
+          <div class="checkout-line"><span>订单</span><strong>${o.id}</strong></div>
+          <div class="checkout-line"><span>邮箱</span><strong>${o.email}</strong></div>
+          <div class="checkout-line"><span>方案</span><strong>${o.planId} / ${o.cycle}</strong></div>
+          <div class="checkout-line"><span>金额</span><strong>¥${o.amount}</strong></div>
+          <div class="checkout-line"><span>备注码</span><strong>${o.transferCode || "—"}</strong></div>
+          <div class="checkout-line"><span>状态</span><strong>${o.status}</strong></div>
+          ${o.status === "pending_review" ? `<button type="button" class="btn-primary" style="width:100%;margin-top:12px" data-approve="${o.id}">确认收款并开通</button>` : ""}
+        </div>
+      `).join("");
+      list.querySelectorAll("[data-approve]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const r = await fetch("/api/billing/admin/approve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Admin-Key": key },
+            body: JSON.stringify({ orderId: btn.dataset.approve, key }),
+          });
+          const d = await r.json();
+          if (d.success) { alert("已开通订阅"); loadOrders(); }
+          else alert(d.error || "失败");
+        });
+      });
+    }
+    document.getElementById("btn-load").addEventListener("click", loadOrders);
+  </script>
+</body>
+</html>

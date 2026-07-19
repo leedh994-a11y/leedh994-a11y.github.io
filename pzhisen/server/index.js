@@ -20,7 +20,9 @@ import {
   checkoutHandler,
   capturePayPalHandler,
   orderStatusHandler,
-  xunhuWebhookHandler,
+  confirmBankTransferHandler,
+  listPendingBankOrdersHandler,
+  approveBankOrderHandler,
 } from "./billing.js";
 import { isSubscriptionActive } from "./billing-store.js";
 
@@ -32,7 +34,6 @@ const PUBLIC_URL = process.env.PUBLIC_URL || `http://localhost:${PORT}`;
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
   res.setHeader("X-Powered-By", "Pzhisen");
@@ -62,7 +63,9 @@ app.get("/api/billing/subscription", getSubscriptionStatus);
 app.post("/api/billing/checkout", checkoutHandler);
 app.post("/api/billing/paypal/capture", capturePayPalHandler);
 app.get("/api/billing/order/:orderId", orderStatusHandler);
-app.post("/api/billing/webhook/xunhu", xunhuWebhookHandler);
+app.post("/api/billing/bank/confirm", confirmBankTransferHandler);
+app.get("/api/billing/admin/pending", listPendingBankOrdersHandler);
+app.post("/api/billing/admin/approve", approveBankOrderHandler);
 
 app.get("/api/logs/global", (_req, res) => {
   res.json({ success: true, logs: getGlobalLogs(40) });

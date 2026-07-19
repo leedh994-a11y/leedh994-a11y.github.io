@@ -33,6 +33,11 @@
           msg.textContent = `您的 ${data.subscription?.planId || ""} 订阅已激活，到期日：${(data.subscription?.expiresAt || "").slice(0, 10)}`;
           return;
         }
+        if (params.get("pending") === "1" || data.order?.status === "pending_review") {
+          title.textContent = "转账确认已提交";
+          msg.textContent = "我们已收到您的确认，核实银行到账后将开通订阅（通常 24 小时内）。";
+          return;
+        }
         if (data.order?.status === "pending") {
           title.textContent = "等待付款确认";
           msg.textContent = "如已完成支付，请稍等几秒后刷新页面。";

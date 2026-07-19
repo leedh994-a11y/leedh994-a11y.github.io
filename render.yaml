@@ -35,7 +35,13 @@ services:
         sync: false
       - key: PAYPAL_MODE
         value: sandbox
-      - key: XUNHU_APP_ID
+      - key: BANK_ACCOUNT_NAME
         sync: false
-      - key: XUNHU_APP_SECRET
+      - key: BANK_NAME
+        sync: false
+      - key: BANK_ACCOUNT_NUMBER
+        sync: false
+      - key: BANK_BRANCH
+        sync: false
+      - key: BILLING_ADMIN_SECRET
         sync: false

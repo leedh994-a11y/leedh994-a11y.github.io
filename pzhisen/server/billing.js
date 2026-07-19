@@ -7,25 +7,39 @@ import {
   getSubscriptionByEmail,
   isSubscriptionActive,
   subscriptionDaysForCycle,
+  getOrders,
 } from "./billing-store.js";
 import { isPayPalConfigured, getPayPalPublicConfig, createPayPalOrder, capturePayPalOrder } from "./paypal.js";
-import { isXunhuConfigured, createBankCardPayment, verifyXunhuNotify } from "./xunhupay.js";
+import {
+  getBankAccountConfig,
+  isBankTransferConfigured,
+  makeTransferCode,
+  isAdminAuthorized,
+} from "./bank-transfer.js";
 
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 
 export function getBillingConfig() {
+  const bank = getBankAccountConfig();
   return {
     success: true,
     providers: {
       paypal: isPayPalConfigured(),
-      bankCard: isXunhuConfigured(),
+      bankCard: isBankTransferConfigured(),
     },
     publicUrl: PUBLIC_URL,
     paypal: getPayPalPublicConfig(),
-    bankGateway: { configured: isXunhuConfigured() },
-    noteZh: "国内用户使用银行卡支付（支持工行、建行、农行、中行、招商、交通等全国银行），款项结算至您绑定的国内银行卡。",
-    noteEn: "China users pay with domestic bank cards. Funds settle to your linked Chinese bank account.",
+    bankAccount: bank.configured
+      ? { bankName: bank.bankName, accountName: bank.accountName, accountNumberMask: maskAccount(bank.accountNumber) }
+      : null,
+    noteZh: "国内用户请转账至页面显示的银行卡，完全免费、无第三方手续费。转账后点击「我已完成转账」，您在管理页确认后开通订阅。",
+    noteEn: "China users: free bank transfer to the account shown. No third-party fees.",
   };
+}
+
+function maskAccount(num) {
+  if (num.length <= 8) return num;
+  return num.slice(0, 4) + " **** **** " + num.slice(-4);
 }
 
 export function getPlansHandler(_req, res) {
@@ -84,31 +98,34 @@ export async function checkoutHandler(req, res) {
     }
 
     if (payProvider === "bank" || payProvider === "bankcard") {
-      if (!isXunhuConfigured()) {
+      if (!isBankTransferConfigured()) {
         return res.status(503).json({
           success: false,
-          error: "国内银行卡支付未配置。请在 Render 设置 XUNHU_APP_ID 和 XUNHU_APP_SECRET。",
+          error: "银行卡收款信息未配置。请在 Render 设置 BANK_ACCOUNT_NAME、BANK_NAME、BANK_ACCOUNT_NUMBER。",
         });
       }
       const { amount, currency } = getAmount(planId, cycle, "cny");
       const order = createPendingOrder({
         email, planId, cycle, amount, currency, provider: "bankcard",
       });
-      const title = `Pzhisen ${plan.nameZh || plan.name} ${cycle === "yearly" ? "年付" : "月付"}`;
-      const pay = await createBankCardPayment({
-        orderId: order.id,
-        amountCny: amount,
-        title,
-        notifyUrl: `${PUBLIC_URL}/api/billing/webhook/xunhu`,
-        returnUrl: returnUrl + order.id,
-      });
-      updateOrder(order.id, { payUrl: pay.payUrl });
+      const transferCode = makeTransferCode(order.id);
+      updateOrder(order.id, { status: "awaiting_transfer", transferCode });
+
+      const bank = getBankAccountConfig();
       return res.json({
         success: true,
         orderId: order.id,
         provider: "bankcard",
-        payUrl: pay.payUrl,
-        qrcodeUrl: pay.qrcodeUrl,
+        transferCode,
+        amount,
+        currency,
+        bankAccount: {
+          accountName: bank.accountName,
+          bankName: bank.bankName,
+          accountNumber: bank.accountNumber,
+          branch: bank.branch,
+        },
+        instructions: `请转账 ¥${amount} 至以下账户，备注填写：${transferCode}`,
       });
     }
 
@@ -120,6 +137,63 @@ export async function checkoutHandler(req, res) {
     console.error("checkout error:", err);
     res.status(500).json({ success: false, error: err.message });
   }
+}
+
+export function confirmBankTransferHandler(req, res) {
+  const { orderId } = req.body || {};
+  const order = getOrder(orderId);
+  if (!order) return res.status(404).json({ success: false, error: "Order not found" });
+  if (order.provider !== "bankcard") {
+    return res.status(400).json({ success: false, error: "Not a bank transfer order" });
+  }
+  if (order.status === "completed") {
+    return res.json({ success: true, message: "Subscription already active", order });
+  }
+
+  updateOrder(order.id, { status: "pending_review", confirmedAt: new Date().toISOString() });
+  res.json({
+    success: true,
+    message: "已收到您的确认，我们将在核实转账后 24 小时内开通订阅。",
+    order: getOrder(order.id),
+  });
+}
+
+export function listPendingBankOrdersHandler(req, res) {
+  const key = req.query.key || req.headers["x-admin-key"];
+  if (!isAdminAuthorized(key)) {
+    return res.status(401).json({ success: false, error: "Unauthorized" });
+  }
+  const { orders } = getOrders();
+  const pending = orders.filter((o) =>
+    o.provider === "bankcard" && (o.status === "pending_review" || o.status === "awaiting_transfer")
+  );
+  res.json({ success: true, orders: pending });
+}
+
+export function approveBankOrderHandler(req, res) {
+  const key = req.query.key || req.body?.key || req.headers["x-admin-key"];
+  if (!isAdminAuthorized(key)) {
+    return res.status(401).json({ success: false, error: "Unauthorized" });
+  }
+  const { orderId } = req.body || {};
+  const order = getOrder(orderId);
+  if (!order) return res.status(404).json({ success: false, error: "Order not found" });
+
+  if (order.status === "completed") {
+    return res.json({ success: true, subscription: getSubscriptionByEmail(order.email) });
+  }
+
+  updateOrder(order.id, { status: "paid" });
+  const sub = activateSubscription({
+    email: order.email,
+    planId: order.planId,
+    cycle: order.cycle,
+    provider: "bankcard",
+    externalId: order.transferCode,
+    days: subscriptionDaysForCycle(order.cycle),
+  });
+  updateOrder(order.id, { status: "completed" });
+  res.json({ success: true, order: getOrder(order.id), subscription: sub });
 }
 
 export async function capturePayPalHandler(req, res) {
@@ -179,35 +253,4 @@ export async function orderStatusHandler(req, res) {
 
   const active = isSubscriptionActive(order.email);
   res.json({ success: true, order, active, subscription: getSubscriptionByEmail(order.email) });
-}
-
-export async function xunhuWebhookHandler(req, res) {
-  try {
-    const body = req.body || {};
-    const verified = verifyXunhuNotify(body);
-    if (!verified.valid) {
-      console.warn("bank webhook invalid:", verified.error);
-      return res.status(400).send("fail");
-    }
-    if (!verified.paid) return res.send("success");
-
-    const order = getOrder(verified.orderId);
-    if (!order) return res.send("success");
-    if (order.status === "completed") return res.send("success");
-
-    updateOrder(order.id, { status: "paid", externalId: verified.externalId });
-    activateSubscription({
-      email: order.email,
-      planId: order.planId,
-      cycle: order.cycle,
-      provider: "bankcard",
-      externalId: verified.externalId,
-      days: subscriptionDaysForCycle(order.cycle),
-    });
-    updateOrder(order.id, { status: "completed" });
-    res.send("success");
-  } catch (err) {
-    console.error("bank webhook error:", err);
-    res.status(500).send("fail");
-  }
 }
