@@ -132,7 +132,7 @@ async function loadCompany() {
 
 async function runDaily() {
   if (!subscriptionActive) {
-    alert("Please pay $1 (PayPal) or ¥1 to unlock all features.");
+    alert("请先支付 ¥1（银行卡）或 $1（PayPal）开通终身版。");
     location.href = checkoutUrl;
     return;
   }
@@ -164,7 +164,7 @@ document.getElementById("btn-run-all").addEventListener("click", runDaily);
 document.getElementById("chat-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!subscriptionActive) {
-    alert("Please pay $1 (PayPal) or ¥1 to unlock all features.");
+    alert("请先支付 ¥1（银行卡）或 $1（PayPal）开通终身版。");
     location.href = checkoutUrl;
     return;
   }
