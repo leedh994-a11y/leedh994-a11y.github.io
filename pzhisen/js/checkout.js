@@ -11,10 +11,11 @@ let selectedProvider = isChinaUser() ? "bank" : "paypal";
 let billingConfig = null;
 let plan = null;
 let currentBankOrder = null;
+let pendingPayPalOrder = null;
 
 const METHODS = [
   { id: "bank", icon: "🏦", name: "银行卡转账", desc: "¥1 · 转账至商户银行卡（全国银行均可）", providerKey: "bankCard" },
-  { id: "paypal", icon: "🅿️", name: "PayPal", desc: "海外用户", providerKey: "paypal" },
+  { id: "paypal", icon: "🅿️", name: "PayPal", desc: "Global · instant activation after payment", providerKey: "paypal" },
 ];
 
 function showError(msg) {
@@ -133,18 +134,27 @@ function initPayPalButtons() {
     style: { layout: "vertical", color: "gold", shape: "rect" },
     createOrder: async () => {
       const email = document.getElementById("checkout-email").value.trim();
-      if (!email.includes("@")) throw new Error("请填写有效邮箱");
-      return (await startCheckout(email)).paypalOrderId;
+      if (!email.includes("@")) throw new Error("Please enter a valid email");
+      localStorage.setItem("pzhisen_email", email);
+      pendingPayPalOrder = await startCheckout(email);
+      return pendingPayPalOrder.paypalOrderId;
     },
     onApprove: async (data) => {
-      const orderData = await startCheckout(document.getElementById("checkout-email").value.trim());
+      if (!pendingPayPalOrder?.orderId) throw new Error("Order not found — please try again");
       const cap = await fetch("/api/billing/paypal/capture", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: orderData.orderId, paypalOrderId: data.orderID }),
+        body: JSON.stringify({
+          orderId: pendingPayPalOrder.orderId,
+          paypalOrderId: data.orderID || pendingPayPalOrder.paypalOrderId,
+        }),
       }).then((r) => r.json());
-      if (cap.success) location.href = `/checkout-success.html?order=${orderData.orderId}`;
-      else throw new Error(cap.error || "扣款失败");
+      if (cap.success) {
+        if (cap.companyId) localStorage.setItem("pzhisen_company_id", cap.companyId);
+        location.href = `/checkout-success.html?order=${pendingPayPalOrder.orderId}`;
+      } else {
+        throw new Error(cap.error || "Payment capture failed");
+      }
     },
     onError: (err) => showError(err?.message || "PayPal 出错"),
   }).render("#paypal-button-container");
@@ -197,7 +207,9 @@ async function pay() {
 
 document.getElementById("btn-pay").addEventListener("click", pay);
 const saved = localStorage.getItem("pzhisen_email");
-if (saved) document.getElementById("checkout-email").value = saved;
+const emailFromUrl = params.get("email");
+if (emailFromUrl) document.getElementById("checkout-email").value = emailFromUrl;
+else if (saved) document.getElementById("checkout-email").value = saved;
 document.getElementById("checkout-email").addEventListener("change", (e) => {
   localStorage.setItem("pzhisen_email", e.target.value.trim());
 });

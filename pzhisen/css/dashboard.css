@@ -33,6 +33,32 @@
   padding: 32px;
 }
 
+.paywall-banner {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid #fbbf24;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.paywall-banner p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.dashboard-layout.locked .sidebar button,
+.dashboard-layout.locked .btn-row button,
+.dashboard-layout.locked .chat-form {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 @media (max-width: 1023px) {
   .dashboard-layout {
     grid-template-columns: 1fr;

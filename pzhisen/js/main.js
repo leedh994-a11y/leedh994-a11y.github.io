@@ -118,7 +118,12 @@
 
       localStorage.setItem("pzhisen_company_id", data.company.id);
       localStorage.setItem("pzhisen_email", email);
-      window.location.href = data.redirectUrl || `/dashboard.html?company=${data.company.id}`;
+
+      if (data.company.plan === "lifetime") {
+        window.location.href = data.redirectUrl || `/dashboard.html?company=${data.company.id}`;
+      } else {
+        window.location.href = `/checkout.html?plan=lifetime&cycle=lifetime&email=${encodeURIComponent(email)}`;
+      }
     } catch (err) {
       alert(err.message);
       btn.disabled = false;

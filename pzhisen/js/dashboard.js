@@ -12,11 +12,19 @@ const AGENTS = [
 
 let activeAgent = "ceo";
 let company = null;
+let subscriptionActive = false;
+let checkoutUrl = "/checkout.html?plan=lifetime&cycle=lifetime";
 
 function formatTime(iso) {
   if (!iso) return "--:--";
   const d = new Date(iso);
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function escapeHtml(s) {
+  const d = document.createElement("div");
+  d.textContent = s ?? "";
+  return d.innerHTML;
 }
 
 function renderLogs(logs) {
@@ -39,12 +47,6 @@ function renderLogs(logs) {
   body.scrollTop = body.scrollHeight;
 }
 
-function escapeHtml(s) {
-  const d = document.createElement("div");
-  d.textContent = s ?? "";
-  return d.innerHTML;
-}
-
 function renderAgentList() {
   const ul = document.getElementById("agent-list");
   ul.innerHTML = AGENTS.map(
@@ -64,6 +66,31 @@ function renderAgentList() {
       document.getElementById("chat-title").textContent = `Ask ${agent.name}`;
     });
   });
+}
+
+function updateSubscriptionUi(active) {
+  subscriptionActive = active;
+  const banner = document.getElementById("paywall-banner");
+  const layout = document.querySelector(".dashboard-layout");
+  const pricingBtn = document.querySelector('a[href="/pricing.html"]');
+
+  if (active) {
+    banner.hidden = true;
+    layout?.classList.remove("locked");
+    if (pricingBtn) pricingBtn.textContent = "✓ Lifetime";
+  } else {
+    banner.hidden = false;
+    layout?.classList.add("locked");
+    const cta = document.getElementById("paywall-cta");
+    if (cta) cta.href = checkoutUrl;
+    if (pricingBtn) pricingBtn.textContent = "¥1 / $1 Lifetime";
+  }
+}
+
+function handleSubscriptionError(data) {
+  if (data.checkoutUrl) checkoutUrl = data.checkoutUrl;
+  updateSubscriptionUi(false);
+  return data.errorZh || data.error || "Subscription required";
 }
 
 async function loadConfig() {
@@ -94,13 +121,22 @@ async function loadCompany() {
   }
 
   company = data.company;
+  if (data.checkoutUrl) checkoutUrl = data.checkoutUrl;
   document.getElementById("company-name").textContent = company.name;
   document.getElementById("company-idea").textContent = company.idea;
   localStorage.setItem("pzhisen_company_id", company.id);
+  if (company.email) localStorage.setItem("pzhisen_email", company.email);
   renderLogs(data.logs);
+  updateSubscriptionUi(Boolean(data.subscriptionActive));
 }
 
 async function runDaily() {
+  if (!subscriptionActive) {
+    alert("Please pay $1 (PayPal) or ¥1 to unlock all features.");
+    location.href = checkoutUrl;
+    return;
+  }
+
   const btn = document.getElementById("btn-run-daily");
   const btnAll = document.getElementById("btn-run-all");
   btn.disabled = true;
@@ -110,6 +146,7 @@ async function runDaily() {
   try {
     const res = await fetch(`/api/companies/${companyId}/run-daily`, { method: "POST" });
     const data = await res.json();
+    if (res.status === 402) throw new Error(handleSubscriptionError(data));
     if (!data.success) throw new Error(data.error);
     renderLogs(data.logs);
   } catch (e) {
@@ -126,6 +163,12 @@ document.getElementById("btn-run-all").addEventListener("click", runDaily);
 
 document.getElementById("chat-form").addEventListener("submit", async (e) => {
   e.preventDefault();
+  if (!subscriptionActive) {
+    alert("Please pay $1 (PayPal) or ¥1 to unlock all features.");
+    location.href = checkoutUrl;
+    return;
+  }
+
   const input = document.getElementById("chat-input");
   const message = input.value.trim();
   if (!message || !companyId) return;
@@ -142,6 +185,7 @@ document.getElementById("chat-form").addEventListener("submit", async (e) => {
       body: JSON.stringify({ message }),
     });
     const data = await res.json();
+    if (res.status === 402) throw new Error(handleSubscriptionError(data));
     if (!data.success) throw new Error(data.error);
     respEl.textContent = data.result.content;
     const logsRes = await fetch(`/api/companies/${companyId}/logs`);
@@ -155,6 +199,13 @@ document.getElementById("chat-form").addEventListener("submit", async (e) => {
 renderAgentList();
 loadConfig();
 loadCompany();
+
+setInterval(async () => {
+  if (!companyId) return;
+  const res = await fetch(`/api/companies/${companyId}`);
+  const data = await res.json();
+  if (data.success) updateSubscriptionUi(Boolean(data.subscriptionActive));
+}, 10000);
 
 setInterval(async () => {
   if (!companyId) return;

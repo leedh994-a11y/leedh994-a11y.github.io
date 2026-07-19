@@ -1,4 +1,4 @@
-import { loadJson, saveJson } from "./store.js";
+import { loadJson, saveJson, updateCompaniesPlanByEmail } from "./store.js";
 
 function ordersFile() {
   return "orders.json";
@@ -77,6 +77,7 @@ export function activateLifetime({ email, planId, provider, externalId }) {
   if (idx >= 0) data.subscriptions[idx] = { ...data.subscriptions[idx], ...sub };
   else data.subscriptions.push(sub);
   saveSubscriptions(data);
+  updateCompaniesPlanByEmail(sub.email, "lifetime");
   return sub;
 }
 

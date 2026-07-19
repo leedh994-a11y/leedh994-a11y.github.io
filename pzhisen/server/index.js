@@ -24,7 +24,7 @@ import {
   listPendingBankOrdersHandler,
   approveBankOrderHandler,
 } from "./billing.js";
-import { isSubscriptionActive } from "./billing-store.js";
+import { isSubscriptionActive, getSubscriptionByEmail } from "./billing-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -119,13 +119,24 @@ app.post("/api/signup", async (req, res) => {
 app.get("/api/companies/:id", (req, res) => {
   const company = getCompany(req.params.id);
   if (!company) return res.status(404).json({ success: false, error: "Company not found" });
-  res.json({ success: true, company, logs: getLogs(company.id, 100) });
+  const active = isSubscriptionActive(company.email);
+  if (active && company.plan !== "lifetime") {
+    company.plan = "lifetime";
+    upsertCompany(company);
+  }
+  res.json({
+    success: true,
+    company,
+    logs: getLogs(company.id, 100),
+    ...subscriptionPayload(company.email),
+  });
 });
 
 app.post("/api/companies/:id/run-daily", async (req, res) => {
   try {
     const company = getCompany(req.params.id);
     if (!company) return res.status(404).json({ success: false, error: "Company not found" });
+    if (!requireSubscription(company, res)) return;
 
     appendLog(company.id, { agent: "System", message: "Daily standup started — all agents reporting..." });
 
@@ -147,6 +158,7 @@ app.post("/api/companies/:id/agents/:agentId", async (req, res) => {
   try {
     const company = getCompany(req.params.id);
     if (!company) return res.status(404).json({ success: false, error: "Company not found" });
+    if (!requireSubscription(company, res)) return;
 
     const { message } = req.body || {};
     const result = await runAgent(req.params.agentId, company, message || null);
@@ -163,6 +175,32 @@ app.get("/api/companies/:id/logs", (req, res) => {
   if (!company) return res.status(404).json({ success: false, error: "Company not found" });
   res.json({ success: true, logs: getLogs(company.id, 100) });
 });
+
+function subscriptionPayload(email) {
+  const active = isSubscriptionActive(email);
+  return {
+    subscriptionActive: active,
+    subscription: active ? getSubscriptionByEmail(email) : null,
+    checkoutUrl: `/checkout.html?plan=lifetime&cycle=lifetime&email=${encodeURIComponent(email || "")}`,
+  };
+}
+
+function requireSubscription(company, res) {
+  if (!company?.email) {
+    res.status(400).json({ success: false, error: "Company email missing" });
+    return false;
+  }
+  if (!isSubscriptionActive(company.email)) {
+    res.status(402).json({
+      success: false,
+      error: "Subscription required",
+      errorZh: "请先支付 ¥1（或 PayPal $1）开通终身版后使用全部功能。",
+      ...subscriptionPayload(company.email),
+    });
+    return false;
+  }
+  return true;
+}
 
 function inferIndustry(idea) {
   const t = idea.toLowerCase();

@@ -51,6 +51,28 @@ export function upsertCompany(company) {
   return company;
 }
 
+export function updateCompaniesPlanByEmail(email, plan) {
+  if (!email) return [];
+  const normalized = email.trim().toLowerCase();
+  const data = getCompanies();
+  const updated = [];
+  for (const company of data.companies) {
+    if (company.email === normalized && company.plan !== plan) {
+      company.plan = plan;
+      updated.push(company);
+    }
+  }
+  if (updated.length) saveCompanies(data);
+  return updated;
+}
+
+export function findCompanyByEmail(email) {
+  if (!email) return null;
+  const normalized = email.trim().toLowerCase();
+  const { companies } = getCompanies();
+  return companies.find((c) => c.email === normalized) || null;
+}
+
 export function appendLog(companyId, entry) {
   const logs = loadJson(`logs-${companyId}.json`, { entries: [] });
   logs.entries.push({ ...entry, at: new Date().toISOString() });

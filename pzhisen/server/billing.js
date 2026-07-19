@@ -15,6 +15,7 @@ import {
   makeTransferCode,
   isAdminAuthorized,
 } from "./bank-transfer.js";
+import { findCompanyByEmail } from "./store.js";
 
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 
@@ -39,6 +40,14 @@ export function getBillingConfig() {
 function maskAccount(num) {
   if (num.length <= 8) return num;
   return num.slice(0, 4) + " **** **** " + num.slice(-4);
+}
+
+function activationPayload(email) {
+  const company = findCompanyByEmail(email);
+  return {
+    companyId: company?.id || null,
+    dashboardUrl: company ? `/dashboard.html?company=${company.id}` : "/dashboard.html",
+  };
 }
 
 export function getPlansHandler(_req, res) {
@@ -190,7 +199,13 @@ export function approveBankOrderHandler(req, res) {
     externalId: order.transferCode,
   });
   updateOrder(order.id, { status: "completed" });
-  res.json({ success: true, order: getOrder(order.id), subscription: sub });
+  res.json({
+    success: true,
+    order: getOrder(order.id),
+    subscription: sub,
+    active: true,
+    ...activationPayload(order.email),
+  });
 }
 
 export async function capturePayPalHandler(req, res) {
@@ -213,7 +228,13 @@ export async function capturePayPalHandler(req, res) {
       externalId: cap.captureId,
     });
 
-    res.json({ success: true, order: updateOrder(order.id, { status: "completed" }), subscription: sub });
+    res.json({
+      success: true,
+      order: updateOrder(order.id, { status: "completed" }),
+      subscription: sub,
+      active: true,
+      ...activationPayload(order.email),
+    });
   } catch (err) {
     console.error("capture error:", err);
     res.status(500).json({ success: false, error: err.message });
@@ -236,7 +257,13 @@ export async function orderStatusHandler(req, res) {
           externalId: cap.captureId,
         });
         updateOrder(order.id, { status: "completed" });
-        return res.json({ success: true, order: getOrder(order.id), subscription: sub, active: true });
+        return res.json({
+          success: true,
+          order: getOrder(order.id),
+          subscription: sub,
+          active: true,
+          ...activationPayload(order.email),
+        });
       }
     } catch {
       /* still pending */
@@ -244,5 +271,11 @@ export async function orderStatusHandler(req, res) {
   }
 
   const active = isSubscriptionActive(order.email);
-  res.json({ success: true, order, active, subscription: getSubscriptionByEmail(order.email) });
+  res.json({
+    success: true,
+    order,
+    active,
+    subscription: getSubscriptionByEmail(order.email),
+    ...activationPayload(order.email),
+  });
 }

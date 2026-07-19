@@ -18,6 +18,26 @@
     const orderId = params.get("order");
     const title = document.getElementById("status-title");
     const msg = document.getElementById("status-msg");
+    const btnDash = document.getElementById("btn-dash");
+
+    function dashboardUrl(data) {
+      if (data.dashboardUrl) return data.dashboardUrl;
+      const companyId = data.companyId || localStorage.getItem("pzhisen_company_id");
+      return companyId ? `/dashboard.html?company=${companyId}` : "/dashboard.html";
+    }
+
+    function onActivated(data) {
+      const email = data.order?.email || data.subscription?.email;
+      if (email) localStorage.setItem("pzhisen_email", email);
+      if (data.companyId) localStorage.setItem("pzhisen_company_id", data.companyId);
+
+      title.textContent = "支付成功！";
+      msg.textContent = "您的终身版已激活，正在跳转到 Dashboard，全部功能已解锁。";
+      const url = dashboardUrl(data);
+      btnDash.href = url;
+      btnDash.textContent = "立即使用全部功能";
+      setTimeout(() => { location.href = url; }, 2000);
+    }
 
     async function check() {
       if (!orderId) {
@@ -28,20 +48,20 @@
       try {
         const res = await fetch(`/api/billing/order/${orderId}`);
         const data = await res.json();
-        if (data.active || data.order?.status === "completed" || data.order?.status === "paid") {
-          title.textContent = "支付成功！";
-          msg.textContent = `您的 ${data.subscription?.planId || ""} 订阅已激活，到期日：${(data.subscription?.expiresAt || "").slice(0, 10)}`;
+        if (data.active || data.order?.status === "completed") {
+          onActivated(data);
           return;
         }
         if (params.get("pending") === "1" || data.order?.status === "pending_review") {
           title.textContent = "转账确认已提交";
           msg.textContent = "我们已收到您的确认，核实银行到账后将开通订阅（通常 24 小时内）。";
+          btnDash.href = dashboardUrl(data);
           return;
         }
-        if (data.order?.status === "pending") {
+        if (data.order?.status === "pending" || data.order?.status === "paid") {
           title.textContent = "等待付款确认";
-          msg.textContent = "如已完成支付，请稍等几秒后刷新页面。";
-          setTimeout(check, 3000);
+          msg.textContent = "如已完成支付，请稍等几秒…";
+          setTimeout(check, 1500);
           return;
         }
         title.textContent = "付款未完成";
