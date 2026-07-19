@@ -1,5 +1,7 @@
 const params = new URLSearchParams(location.search);
-const companyId = params.get("company");
+let companyId = params.get("company");
+
+const api = (path, options = {}) => fetch(path, { credentials: "include", ...options });
 
 const AGENTS = [
   { id: "ceo", name: "CEO Agent", icon: "◆" },
@@ -107,16 +109,30 @@ async function loadConfig() {
 }
 
 async function loadCompany() {
+  const meRes = await api("/api/auth/me");
+  if (!meRes.ok) {
+    window.location.href = "/login.html";
+    return;
+  }
+  const me = await meRes.json();
+  if (!companyId && me.company?.id) {
+    window.location.replace(`/dashboard.html?company=${me.company.id}`);
+    return;
+  }
   if (!companyId) {
-    window.location.href = "/#signin";
+    window.location.href = "/login.html";
     return;
   }
 
-  const res = await fetch(`/api/companies/${companyId}`);
+  const res = await api(`/api/companies/${companyId}`);
+  if (res.status === 401) {
+    window.location.href = "/login.html";
+    return;
+  }
   const data = await res.json();
   if (!data.success) {
-    alert(data.error || "Company not found");
-    window.location.href = "/";
+    alert(data.errorZh || data.error || "Company not found");
+    window.location.href = "/login.html";
     return;
   }
 
@@ -144,7 +160,7 @@ async function runDaily() {
   btn.textContent = "Agents working…";
 
   try {
-    const res = await fetch(`/api/companies/${companyId}/run-daily`, { method: "POST" });
+    const res = await api(`/api/companies/${companyId}/run-daily`, { method: "POST" });
     const data = await res.json();
     if (res.status === 402) throw new Error(handleSubscriptionError(data));
     if (!data.success) throw new Error(data.error);
@@ -179,7 +195,7 @@ document.getElementById("chat-form").addEventListener("submit", async (e) => {
   input.value = "";
 
   try {
-    const res = await fetch(`/api/companies/${companyId}/agents/${activeAgent}`, {
+    const res = await api(`/api/companies/${companyId}/agents/${activeAgent}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message }),
@@ -188,12 +204,18 @@ document.getElementById("chat-form").addEventListener("submit", async (e) => {
     if (res.status === 402) throw new Error(handleSubscriptionError(data));
     if (!data.success) throw new Error(data.error);
     respEl.textContent = data.result.content;
-    const logsRes = await fetch(`/api/companies/${companyId}/logs`);
+    const logsRes = await api(`/api/companies/${companyId}/logs`);
     const logsData = await logsRes.json();
     if (logsData.success) renderLogs(logsData.logs);
   } catch (err) {
     respEl.textContent = `Error: ${err.message}`;
   }
+});
+
+document.getElementById("btn-logout")?.addEventListener("click", async () => {
+  await api("/api/auth/logout", { method: "POST" });
+  localStorage.removeItem("pzhisen_company_id");
+  location.href = "/login.html";
 });
 
 renderAgentList();
@@ -202,14 +224,14 @@ loadCompany();
 
 setInterval(async () => {
   if (!companyId) return;
-  const res = await fetch(`/api/companies/${companyId}`);
+  const res = await api(`/api/companies/${companyId}`);
   const data = await res.json();
   if (data.success) updateSubscriptionUi(Boolean(data.subscriptionActive), data.subscription);
 }, 10000);
 
 setInterval(async () => {
   if (!companyId) return;
-  const res = await fetch(`/api/companies/${companyId}/logs`);
+  const res = await api(`/api/companies/${companyId}/logs`);
   const data = await res.json();
   if (data.success) renderLogs(data.logs);
 }, 15000);

@@ -73,6 +73,12 @@ export function findCompanyByEmail(email) {
   return companies.find((c) => c.email === normalized) || null;
 }
 
+export function findCompanyByUserId(userId) {
+  if (!userId) return null;
+  const { companies } = getCompanies();
+  return companies.find((c) => c.userId === userId) || null;
+}
+
 export function appendLog(companyId, entry) {
   const logs = loadJson(`logs-${companyId}.json`, { entries: [] });
   logs.entries.push({ ...entry, at: new Date().toISOString() });

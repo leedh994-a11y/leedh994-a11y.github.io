@@ -1,3 +1,20 @@
+const api = (path, options = {}) => fetch(path, { credentials: "include", ...options });
+
+async function ensureLoggedIn() {
+  const res = await api("/api/auth/me");
+  if (!res.ok) {
+    location.href = "/login.html";
+    return null;
+  }
+  const data = await res.json();
+  const emailEl = document.getElementById("checkout-email");
+  if (data.user?.email && emailEl) {
+    emailEl.value = data.user.email;
+    emailEl.readOnly = true;
+  }
+  return data;
+}
+
 const params = new URLSearchParams(location.search);
 const planId = params.get("plan") || "lifetime";
 const cycle = params.get("cycle") || "lifetime";
@@ -141,7 +158,7 @@ function initPayPalButtons() {
     },
     onApprove: async (data) => {
       if (!pendingPayPalOrder?.orderId) throw new Error("订单未找到，请重试");
-      const cap = await fetch("/api/billing/paypal/capture", {
+      const cap = await api("/api/billing/paypal/capture", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -161,7 +178,7 @@ function initPayPalButtons() {
 }
 
 async function startCheckout(email) {
-  const res = await fetch("/api/billing/checkout", {
+  const res = await api("/api/billing/checkout", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, planId, cycle, provider: selectedProvider }),
@@ -184,7 +201,7 @@ async function pay() {
         showBankPanel(data);
         return;
       }
-      const res = await fetch("/api/billing/bank/confirm", {
+      const res = await api("/api/billing/bank/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: currentBankOrder.orderId }),
@@ -220,3 +237,4 @@ document.getElementById("checkout-email").addEventListener("change", (e) => {
 });
 
 loadPlan();
+ensureLoggedIn();

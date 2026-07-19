@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 / 注册 — Pzhisen</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/pricing.css">
+  <style>
+    .auth-page { padding: 100px 20px 80px; max-width: 440px; margin: 0 auto; }
+    .auth-card { border: 1px solid var(--border); border-radius: 16px; padding: 32px; background: #fff; }
+    .auth-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+    .auth-tabs button { flex: 1; padding: 10px; border: 1px solid var(--border); background: #fff; border-radius: 8px; cursor: pointer; font-weight: 500; }
+    .auth-tabs button.active { background: var(--heading); color: #fff; border-color: var(--heading); }
+    .auth-form { display: flex; flex-direction: column; gap: 16px; }
+    .auth-form label { font-size: 14px; font-weight: 500; color: var(--heading); }
+    .auth-form input, .auth-form textarea {
+      display: block; width: 100%; margin-top: 8px; padding: 0 16px;
+      height: 44px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px;
+    }
+    .auth-form textarea { height: auto; padding: 12px 16px; resize: vertical; }
+    .auth-step { display: none; }
+    .auth-step.active { display: flex; flex-direction: column; gap: 16px; }
+    .otp-input { letter-spacing: 8px; font-size: 24px; text-align: center; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <nav class="site-nav light" aria-label="Main">
+    <a href="/">Pzhisen</a>
+    <a href="/pricing.html" style="margin-right:16px">定价</a>
+  </nav>
+
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button type="button" id="tab-login" class="active">登录</button>
+        <button type="button" id="tab-register">注册</button>
+      </div>
+
+      <!-- Login -->
+      <form class="auth-form auth-step active" id="login-form">
+        <h1 style="margin:0;font-size:1.5rem">登录账号</h1>
+        <p class="checkout-hint" style="margin:0">使用注册邮箱和密码登录，已付费用户无需重复付款。</p>
+        <label>邮箱
+          <input type="email" id="login-email" required autocomplete="email" placeholder="you@company.com">
+        </label>
+        <label>密码
+          <input type="password" id="login-password" required autocomplete="current-password" placeholder="至少 8 位">
+        </label>
+        <button type="submit" class="btn-primary" style="width:100%">登录</button>
+        <p class="checkout-error" id="login-error" hidden></p>
+      </form>
+
+      <!-- Register step 1 -->
+      <form class="auth-form auth-step" id="register-form">
+        <h1 style="margin:0;font-size:1.5rem">注册账号</h1>
+        <p class="checkout-hint" style="margin:0">注册后需验证邮箱收到的 6 位验证码。</p>
+        <label>邮箱
+          <input type="email" id="reg-email" required autocomplete="email" placeholder="you@company.com">
+        </label>
+        <label>密码
+          <input type="password" id="reg-password" required autocomplete="new-password" placeholder="至少 8 位" minlength="8">
+        </label>
+        <label>确认密码
+          <input type="password" id="reg-password2" required autocomplete="new-password" placeholder="再次输入密码">
+        </label>
+        <label>业务想法（可选）
+          <textarea id="reg-idea" rows="2" placeholder="e.g. AI tool for designers..."></textarea>
+        </label>
+        <button type="submit" class="btn-primary" style="width:100%">发送验证码</button>
+        <p class="checkout-error" id="register-error" hidden></p>
+      </form>
+
+      <!-- Register step 2: OTP -->
+      <form class="auth-form auth-step" id="otp-form">
+        <h1 style="margin:0;font-size:1.5rem">验证邮箱</h1>
+        <p class="checkout-hint" id="otp-hint" style="margin:0">请输入发送到您邮箱的 6 位验证码。</p>
+        <label>验证码
+          <input type="text" id="otp-code" class="otp-input" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="000000">
+        </label>
+        <button type="submit" class="btn-primary" style="width:100%">完成注册</button>
+        <button type="button" class="btn-primary" id="btn-resend" style="width:100%;background:transparent;color:var(--heading);border:1px solid var(--border)">重新发送验证码</button>
+        <p class="checkout-error" id="otp-error" hidden></p>
+      </form>
+    </div>
+  </main>
+
+  <script src="js/auth-page.js"></script>
+</body>
+</html>

@@ -22,7 +22,7 @@ function render() {
       <div class="price">¥1<span> / 终身</span></div>
       <p style="font-size:13px;color:var(--muted);margin:0 0 8px">一次付费 · 永久使用 · 海外 PayPal $1</p>
       <ul>${(plan.featuresZh || plan.features).map((f) => `<li>${f}</li>`).join("")}</ul>
-      <a href="/checkout.html?plan=lifetime&cycle=lifetime" class="btn-primary" style="text-align:center;display:block">支付 ¥1 立即开通</a>
+      <a href="/login.html?register=1" class="btn-primary" style="text-align:center;display:block">注册并支付 ¥1 开通</a>
     </article>
   `;
 }

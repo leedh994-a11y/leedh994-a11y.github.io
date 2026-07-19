@@ -1,17 +1,18 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
-import { v4 as uuidv4 } from "uuid";
 import { isAiEnabled, getModels } from "./openrouter.js";
-import { AGENTS, runAgent, runDailyStandup, runCeoOnboarding } from "./agents.js";
+import { AGENTS, runAgent, runDailyStandup } from "./agents.js";
 import {
   upsertCompany,
   getCompany,
   appendLog,
   getLogs,
   getGlobalLogs,
+  findCompanyByEmail,
 } from "./store.js";
 import {
   getBillingConfig,
@@ -25,6 +26,17 @@ import {
   approveBankOrderHandler,
 } from "./billing.js";
 import { isSubscriptionActive, getSubscriptionByEmail } from "./billing-store.js";
+import {
+  registerHandler,
+  verifyOtpHandler,
+  resendOtpHandler,
+  loginHandler,
+  logoutHandler,
+  meHandler,
+  requireAuth,
+  requireCompanyAccess,
+} from "./auth.js";
+import { getUserById, updateUser } from "./auth-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -32,7 +44,8 @@ const PORT = Number(process.env.PORT) || 3000;
 const PUBLIC_URL = process.env.PUBLIC_URL || `http://localhost:${PORT}`;
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
+app.use(cookieParser());
 app.use(express.json({ limit: "1mb" }));
 
 app.use((req, res, next) => {
@@ -56,11 +69,25 @@ app.get("/api/config", (_req, res) => {
   });
 });
 
+// ─── Auth ───
+app.post("/api/auth/register", registerHandler);
+app.post("/api/auth/verify-otp", verifyOtpHandler);
+app.post("/api/auth/resend-otp", resendOtpHandler);
+app.post("/api/auth/login", loginHandler);
+app.post("/api/auth/logout", logoutHandler);
+app.get("/api/auth/me", requireAuth, meHandler);
+
 // ─── Billing / subscriptions ───
 app.get("/api/billing/config", (_req, res) => res.json(getBillingConfig()));
 app.get("/api/billing/plans", getPlansHandler);
-app.get("/api/billing/subscription", getSubscriptionStatus);
-app.post("/api/billing/checkout", checkoutHandler);
+app.get("/api/billing/subscription", requireAuth, (req, res) => {
+  req.query.email = req.user.email;
+  getSubscriptionStatus(req, res);
+});
+app.post("/api/billing/checkout", requireAuth, (req, res) => {
+  req.body = { ...req.body, email: req.user.email };
+  checkoutHandler(req, res);
+});
 app.post("/api/billing/paypal/capture", capturePayPalHandler);
 app.get("/api/billing/order/:orderId", orderStatusHandler);
 app.post("/api/billing/bank/confirm", confirmBankTransferHandler);
@@ -71,59 +98,17 @@ app.get("/api/logs/global", (_req, res) => {
   res.json({ success: true, logs: getGlobalLogs(40) });
 });
 
-app.post("/api/signup", async (req, res) => {
-  try {
-    const { email, idea, name } = req.body || {};
-    if (!email?.includes("@")) {
-      return res.status(400).json({ success: false, error: "Valid email required" });
-    }
-    if (!idea?.trim()) {
-      return res.status(400).json({ success: false, error: "Business idea required" });
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
-    const sub = getSubscriptionByEmail(normalizedEmail);
-    const subActive = isSubscriptionActive(normalizedEmail);
-    const company = {
-      id: uuidv4(),
-      email: normalizedEmail,
-      name: (name || idea.split(" ").slice(0, 3).join(" ")).trim().slice(0, 80),
-      idea: idea.trim().slice(0, 2000),
-      industry: inferIndustry(idea),
-      stage: "idea",
-      createdAt: new Date().toISOString(),
-      status: "active",
-      plan: subActive ? "lifetime" : "trial",
-    };
-
-    upsertCompany(company);
-    appendLog(company.id, { agent: "System", message: `Company "${company.name}" created. Deploying AI team...` });
-
-    const ceoBrief = await runCeoOnboarding(company);
-    appendLog(company.id, {
-      agent: ceoBrief.agentName,
-      message: ceoBrief.content,
-      ai: ceoBrief.ai,
-    });
-
-    res.json({
-      success: true,
-      company,
-      subscriptionActive: subActive,
-      redirectUrl: `/dashboard.html?company=${company.id}`,
-      ceoBrief,
-    });
-  } catch (err) {
-    console.error("signup error:", err);
-    res.status(500).json({ success: false, error: err.message });
-  }
+/** @deprecated Use /api/auth/register + verify-otp */
+app.post("/api/signup", (_req, res) => {
+  res.status(410).json({
+    success: false,
+    error: "请前往 /login.html 注册账号（邮箱 + 密码 + 验证码）",
+  });
 });
 
-app.get("/api/companies/:id", (req, res) => {
-  const company = getCompany(req.params.id);
-  if (!company) return res.status(404).json({ success: false, error: "Company not found" });
+app.get("/api/companies/:id", requireAuth, requireCompanyAccess, (req, res) => {
+  const company = req.company;
   const active = isSubscriptionActive(company.email);
-  const sub = getSubscriptionByEmail(company.email);
   if (active && company.plan !== "lifetime") {
     company.plan = "lifetime";
     upsertCompany(company);
@@ -136,10 +121,9 @@ app.get("/api/companies/:id", (req, res) => {
   });
 });
 
-app.post("/api/companies/:id/run-daily", async (req, res) => {
+app.post("/api/companies/:id/run-daily", requireAuth, requireCompanyAccess, async (req, res) => {
   try {
-    const company = getCompany(req.params.id);
-    if (!company) return res.status(404).json({ success: false, error: "Company not found" });
+    const company = req.company;
     if (!requireSubscription(company, res)) return;
 
     appendLog(company.id, { agent: "System", message: "Daily standup started — all agents reporting..." });
@@ -158,10 +142,9 @@ app.post("/api/companies/:id/run-daily", async (req, res) => {
   }
 });
 
-app.post("/api/companies/:id/agents/:agentId", async (req, res) => {
+app.post("/api/companies/:id/agents/:agentId", requireAuth, requireCompanyAccess, async (req, res) => {
   try {
-    const company = getCompany(req.params.id);
-    if (!company) return res.status(404).json({ success: false, error: "Company not found" });
+    const company = req.company;
     if (!requireSubscription(company, res)) return;
 
     const { message } = req.body || {};
@@ -174,10 +157,8 @@ app.post("/api/companies/:id/agents/:agentId", async (req, res) => {
   }
 });
 
-app.get("/api/companies/:id/logs", (req, res) => {
-  const company = getCompany(req.params.id);
-  if (!company) return res.status(404).json({ success: false, error: "Company not found" });
-  res.json({ success: true, logs: getLogs(company.id, 100) });
+app.get("/api/companies/:id/logs", requireAuth, requireCompanyAccess, (req, res) => {
+  res.json({ success: true, logs: getLogs(req.company.id, 100) });
 });
 
 function subscriptionPayload(email) {
@@ -186,7 +167,7 @@ function subscriptionPayload(email) {
   return {
     subscriptionActive: active,
     subscription: sub,
-    checkoutUrl: `/checkout.html?plan=lifetime&cycle=lifetime&email=${encodeURIComponent(email || "")}`,
+    checkoutUrl: `/checkout.html?plan=lifetime&cycle=lifetime`,
   };
 }
 
@@ -210,15 +191,6 @@ function requireSubscription(company, res) {
     return false;
   }
   return true;
-}
-
-function inferIndustry(idea) {
-  const t = idea.toLowerCase();
-  if (/saas|software|app|platform/.test(t)) return "SaaS";
-  if (/ecommerce|shop|store|retail/.test(t)) return "E-commerce";
-  if (/ai|ml|gpt|agent/.test(t)) return "AI";
-  if (/health|medical/.test(t)) return "Healthcare";
-  return "General";
 }
 
 // ─── Static files ───

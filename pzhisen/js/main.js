@@ -1,8 +1,25 @@
 (function () {
   const nav = document.getElementById("site-nav");
   const navDash = document.getElementById("nav-dashboard");
+  const navLogin = document.getElementById("nav-login");
+
+  async function refreshNav() {
+    try {
+      const res = await fetch("/api/auth/me", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.company?.id && navDash) {
+          navDash.style.display = "inline";
+          navDash.href = `/dashboard.html?company=${data.company.id}`;
+        }
+        if (navLogin) navLogin.textContent = "Dashboard";
+      }
+    } catch { /* ignore */ }
+  }
+  refreshNav();
+
   const savedCompany = localStorage.getItem("pzhisen_company_id");
-  if (savedCompany && navDash) {
+  if (savedCompany && navDash && navDash.style.display !== "inline") {
     navDash.style.display = "inline";
     navDash.href = `/dashboard.html?company=${savedCompany}`;
   }
@@ -97,38 +114,9 @@
     setInterval(loadGlobalLogs, 12000);
   }
 
-  document.getElementById("signup-form")?.addEventListener("submit", async (e) => {
+  document.getElementById("signup-form")?.addEventListener("submit", (e) => {
     e.preventDefault();
-    const email = document.getElementById("signup-email").value.trim();
-    const idea = document.getElementById("signup-idea").value.trim();
-    const btn = e.target.querySelector('button[type="submit"]');
-    if (!email || !idea) return;
-
-    btn.disabled = true;
-    btn.textContent = "Deploying AI team…";
-
-    try {
-      const res = await fetch("/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, idea }),
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Signup failed");
-
-      localStorage.setItem("pzhisen_company_id", data.company.id);
-      localStorage.setItem("pzhisen_email", email);
-
-      if (data.subscriptionActive) {
-        window.location.href = data.redirectUrl || `/dashboard.html?company=${data.company.id}`;
-      } else {
-        window.location.href = `/checkout.html?plan=lifetime&cycle=lifetime&email=${encodeURIComponent(email)}`;
-      }
-    } catch (err) {
-      alert(err.message);
-      btn.disabled = false;
-      btn.textContent = "Get started free";
-    }
+    window.location.href = "/login.html?register=1";
   });
 
   document.querySelectorAll('a[href^="#"]').forEach((link) => {
