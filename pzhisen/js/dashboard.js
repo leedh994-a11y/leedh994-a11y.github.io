@@ -91,7 +91,7 @@ function updateSubscriptionUi(active, subscription) {
     layout?.classList.add("locked");
     const cta = document.getElementById("paywall-cta");
     if (cta) cta.href = checkoutUrl;
-    if (pricingBtn) pricingBtn.textContent = "$99/月 · $999/年";
+    if (pricingBtn) pricingBtn.textContent = "¥699/月 · ¥6999/年";
   }
 }
 
@@ -140,7 +140,7 @@ async function loadCompany() {
 
 async function runDaily() {
   if (!subscriptionActive) {
-    alert("请先订阅月付 $99 或年付 $999 套餐。");
+    alert("请先订阅：月付 ¥699 / 年付 ¥6999（银行卡）或 $99 / $999（PayPal）。");
     location.href = checkoutUrl;
     return;
   }
@@ -172,7 +172,7 @@ document.getElementById("btn-run-all").addEventListener("click", runDaily);
 document.getElementById("chat-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!subscriptionActive) {
-    alert("请先订阅月付 $99 或年付 $999 套餐。");
+    alert("请先订阅：月付 ¥699 / 年付 ¥6999（银行卡）或 $99 / $999（PayPal）。");
     location.href = checkoutUrl;
     return;
   }

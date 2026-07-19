@@ -9,23 +9,36 @@ import {
   getOrders,
 } from "./billing-store.js";
 import { isPayPalConfigured, getPayPalPublicConfig, createPayPalOrder, capturePayPalOrder } from "./paypal.js";
-import { isAdminAuthorized } from "./bank-transfer.js";
+import {
+  getBankAccountConfig,
+  isBankTransferConfigured,
+  makeTransferCode,
+  isAdminAuthorized,
+} from "./bank-transfer.js";
 import { findCompanyByEmail } from "./store.js";
 
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 
+function maskAccount(num) {
+  if (num.length <= 8) return num;
+  return num.slice(0, 4) + " **** **** " + num.slice(-4);
+}
+
 export function getBillingConfig() {
+  const bank = getBankAccountConfig();
   return {
     success: true,
     providers: {
       paypal: isPayPalConfigured(),
-      bankCard: false,
+      bankCard: isBankTransferConfigured(),
     },
     publicUrl: PUBLIC_URL,
     paypal: getPayPalPublicConfig(),
-    bankAccount: null,
-    noteZh: "月付 $99 或年付 $999，PayPal 支付后立即可用。订阅到期后需续费。",
-    noteEn: "Monthly $99 or yearly $999 via PayPal — instant access while subscribed. Renew when your plan expires.",
+    bankAccount: bank.configured
+      ? { bankName: bank.bankName, accountName: bank.accountName, accountNumberMask: maskAccount(bank.accountNumber) }
+      : null,
+    noteZh: "月付 ¥699 / 年付 ¥6999（银行卡转账）或 $99 / $999（PayPal）。确认支付后立即可用，到期需续费。",
+    noteEn: "Monthly ¥699 / yearly ¥6999 (bank transfer) or $99 / $999 (PayPal). Instant access while subscribed.",
   };
 }
 
@@ -99,15 +112,40 @@ export async function checkoutHandler(req, res) {
     }
 
     if (payProvider === "bank" || payProvider === "bankcard") {
-      return res.status(400).json({
-        success: false,
-        error: "Bank transfer is not available. Please pay with PayPal.",
+      if (!isBankTransferConfigured()) {
+        return res.status(503).json({
+          success: false,
+          error: "银行卡收款信息未配置。请在 Render 设置 BANK_ACCOUNT_NAME、BANK_NAME、BANK_ACCOUNT_NUMBER。",
+        });
+      }
+      const { amount, currency } = getAmount(planId, cycle, "cny");
+      const order = createPendingOrder({
+        email, planId, cycle, amount, currency, provider: "bankcard",
+      });
+      const transferCode = makeTransferCode(order.id);
+      updateOrder(order.id, { status: "awaiting_transfer", transferCode });
+
+      const bank = getBankAccountConfig();
+      return res.json({
+        success: true,
+        orderId: order.id,
+        provider: "bankcard",
+        transferCode,
+        amount,
+        currency,
+        bankAccount: {
+          accountName: bank.accountName,
+          bankName: bank.bankName,
+          accountNumber: bank.accountNumber,
+          branch: bank.branch,
+        },
+        instructions: `请转账 ¥${amount} 至以下账户，备注填写：${transferCode}`,
       });
     }
 
     return res.status(400).json({
       success: false,
-      error: "Invalid provider. Use PayPal.",
+      error: "Invalid provider. Use bank (China) or paypal.",
     });
   } catch (err) {
     console.error("checkout error:", err);
@@ -116,7 +154,45 @@ export async function checkoutHandler(req, res) {
 }
 
 export function confirmBankTransferHandler(req, res) {
-  res.status(400).json({ success: false, error: "Bank transfer is not available. Please pay with PayPal." });
+  const { orderId } = req.body || {};
+  const order = getOrder(orderId);
+  if (!order) return res.status(404).json({ success: false, error: "Order not found" });
+  if (order.provider !== "bankcard") {
+    return res.status(400).json({ success: false, error: "Not a bank transfer order" });
+  }
+  if (order.status === "completed") {
+    const sub = getSubscriptionByEmail(order.email);
+    return res.json({
+      success: true,
+      message: "订阅已开通",
+      order,
+      active: true,
+      subscription: sub,
+      ...activationPayload(order.email),
+    });
+  }
+
+  if (!isValidCycle(order.cycle)) {
+    return res.status(400).json({ success: false, error: "Invalid order cycle" });
+  }
+
+  updateOrder(order.id, { status: "paid", confirmedAt: new Date().toISOString() });
+  const sub = activateSubscription({
+    email: order.email,
+    planId: order.planId,
+    cycle: order.cycle,
+    provider: "bankcard",
+    externalId: order.transferCode,
+  });
+  updateOrder(order.id, { status: "completed" });
+  res.json({
+    success: true,
+    message: "订阅已开通，可立即使用全部功能。",
+    order: getOrder(order.id),
+    subscription: sub,
+    active: true,
+    ...activationPayload(order.email),
+  });
 }
 
 export function listPendingBankOrdersHandler(req, res) {

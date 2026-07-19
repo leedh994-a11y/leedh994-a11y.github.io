@@ -202,8 +202,8 @@ function requireSubscription(company, res) {
       success: false,
       error: "Subscription required",
       errorZh: expired
-        ? "您的订阅已过期，请续费月付 $99 或年付 $999 后继续使用。"
-        : "请先订阅月付 $99 或年付 $999 套餐后使用全部功能。",
+        ? "您的订阅已过期，请续费：月付 ¥699 / 年付 ¥6999（银行卡）或 $99 / $999（PayPal）。"
+        : "请先订阅：月付 ¥699 / 年付 ¥6999（银行卡）或 $99 / $999（PayPal）。",
       expired,
       ...subscriptionPayload(company.email),
     });

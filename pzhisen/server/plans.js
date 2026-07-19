@@ -21,6 +21,7 @@ export const PLANS = {
       "按订阅周期使用，到期需续费",
     ],
     priceUsd: { monthly: 99, yearly: 999 },
+    priceCny: { monthly: 699, yearly: 6999 },
   },
 };
 
@@ -44,7 +45,9 @@ export function listPlans() {
       ...plan,
       cycle: "monthly",
       amount: plan.priceUsd.monthly,
+      amountCny: plan.priceCny.monthly,
       priceLabel: "$99",
+      priceLabelCny: "¥699",
       periodLabel: "/ month",
       periodLabelZh: "/ 月",
     },
@@ -52,12 +55,14 @@ export function listPlans() {
       ...plan,
       cycle: "yearly",
       amount: plan.priceUsd.yearly,
+      amountCny: plan.priceCny.yearly,
       priceLabel: "$999",
+      priceLabelCny: "¥6999",
       periodLabel: "/ year",
       periodLabelZh: "/ 年",
       featured: true,
       savings: "Save $189 vs monthly",
-      savingsZh: "比月付节省 $189",
+      savingsZh: "比月付节省 ¥1299",
     },
   ];
 }
@@ -65,11 +70,12 @@ export function listPlans() {
 export function getAmount(planId, cycle = "monthly", currency = "usd") {
   const plan = getPlan(planId);
   if (!plan || !isValidCycle(cycle)) return null;
-  const amount = plan.priceUsd[cycle];
+  const isCny = currency === "cny";
+  const amount = isCny ? plan.priceCny[cycle] : plan.priceUsd[cycle];
   if (amount == null) return null;
   return {
     amount,
-    currency: "USD",
+    currency: isCny ? "CNY" : "USD",
     plan,
     cycle,
   };
