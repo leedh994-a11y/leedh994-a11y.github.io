@@ -31,7 +31,3 @@ services:
         sync: false
       - key: PAYPAL_MODE
         value: sandbox
-      - key: XUNHU_APP_ID
-        sync: false
-      - key: XUNHU_APP_SECRET
-        sync: false

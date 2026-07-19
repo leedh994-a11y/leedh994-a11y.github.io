@@ -37,7 +37,7 @@ Open http://localhost:3000
 | `/api/billing/checkout` | POST | Create payment order |
 | `/api/billing/subscription` | GET | `?email=` subscription status |
 
-See [PAYMENTS.md](./PAYMENTS.md) for WeChat, Alipay, PayPal setup.
+See [PAYMENTS.md](./PAYMENTS.md) for PayPal setup.
 
 ## Independent domain deployment
 

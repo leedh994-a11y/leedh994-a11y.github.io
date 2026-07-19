@@ -2,15 +2,8 @@ const params = new URLSearchParams(location.search);
 const planId = params.get("plan") || "pro";
 const cycle = params.get("cycle") || "monthly";
 
-let selectedProvider = "alipay";
 let billingConfig = null;
 let plan = null;
-
-const METHODS = [
-  { id: "alipay", icon: "💙", name: "支付宝", desc: "支持储蓄卡/信用卡", region: "cn" },
-  { id: "wechat", icon: "💚", name: "微信支付", desc: "微信扫码或 H5", region: "cn" },
-  { id: "paypal", icon: "🅿️", name: "PayPal", desc: "国际信用卡 / PayPal 余额", region: "intl" },
-];
 
 function showError(msg) {
   const el = document.getElementById("checkout-error");
@@ -20,7 +13,7 @@ function showError(msg) {
 
 function setBusy(busy) {
   document.getElementById("btn-pay").disabled = busy;
-  document.getElementById("btn-pay").textContent = busy ? "处理中…" : "立即支付";
+  document.getElementById("btn-pay").textContent = busy ? "Processing…" : "Pay with PayPal";
 }
 
 async function loadPlan() {
@@ -36,72 +29,31 @@ async function loadPlan() {
     return;
   }
   renderSummary();
-  renderMethods();
   document.getElementById("pay-hint").textContent =
-    billingConfig.noteZh || "银行卡请使用支付宝付款。";
-}
+    billingConfig.noteEn || "Pay securely with PayPal.";
 
-function renderSummary() {
-  const cny = plan.priceCny[cycle];
-  const usd = plan.priceUsd[cycle];
-  document.getElementById("checkout-title").textContent = `订阅 ${plan.nameZh || plan.name}`;
-  document.getElementById("checkout-subtitle").textContent = plan.descriptionZh || plan.description;
-  document.getElementById("sum-plan").textContent = plan.nameZh || plan.name;
-  document.getElementById("sum-cycle").textContent = cycle === "yearly" ? "年付" : "月付";
-  document.getElementById("sum-total").textContent =
-    selectedProvider === "paypal" ? `$${usd} USD` : `¥${cny} CNY`;
-}
-
-function renderMethods() {
-  const providers = billingConfig?.providers || {};
-  const container = document.getElementById("pay-methods");
-  const available = METHODS.filter((m) => {
-    if (m.id === "paypal") return providers.paypal;
-    if (m.id === "wechat") return providers.wechat;
-    if (m.id === "alipay") return providers.alipay;
-    return false;
-  });
-
-  if (!available.length) {
-    container.innerHTML = `<p class="checkout-hint">支付尚未配置。请在 Render 环境变量中设置 PayPal 或虎皮椒（XUNHU）密钥。</p>`;
+  if (!billingConfig.providers?.paypal) {
+    showError("PayPal is not configured. Set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET on the server.");
     document.getElementById("btn-pay").disabled = true;
     return;
   }
 
-  if (!available.find((m) => m.id === selectedProvider)) {
-    selectedProvider = available[0].id;
-  }
-
-  container.innerHTML = available.map((m) => `
-    <label class="pay-method ${m.id === selectedProvider ? "selected" : ""}" data-id="${m.id}">
-      <input type="radio" name="pay" value="${m.id}" ${m.id === selectedProvider ? "checked" : ""}>
-      <span class="pay-icon">${m.icon}</span>
-      <span>
-        <strong>${m.name}</strong><br>
-        <small style="color:var(--muted)">${m.desc}</small>
-      </span>
-    </label>
-  `).join("");
-
-  container.querySelectorAll(".pay-method").forEach((el) => {
-    el.addEventListener("click", () => {
-      selectedProvider = el.dataset.id;
-      container.querySelectorAll(".pay-method").forEach((l) => l.classList.remove("selected"));
-      el.classList.add("selected");
-      el.querySelector("input").checked = true;
-      renderSummary();
-      document.getElementById("qr-container").innerHTML = "";
-      document.getElementById("paypal-button-container").innerHTML = "";
-    });
-  });
-
-  if (providers.paypal && billingConfig.paypal?.sdkUrl) {
+  if (billingConfig.paypal?.sdkUrl) {
     loadPayPalSdk(billingConfig.paypal.sdkUrl);
   }
 }
 
+function renderSummary() {
+  const usd = plan.priceUsd[cycle];
+  document.getElementById("checkout-title").textContent = `Subscribe to ${plan.name}`;
+  document.getElementById("checkout-subtitle").textContent = plan.description;
+  document.getElementById("sum-plan").textContent = plan.name;
+  document.getElementById("sum-cycle").textContent = cycle === "yearly" ? "Yearly" : "Monthly";
+  document.getElementById("sum-total").textContent = `$${usd} USD`;
+}
+
 function loadPayPalSdk(url) {
-  if (document.querySelector('script[data-paypal]')) return;
+  if (document.querySelector("script[data-paypal]")) return;
   const s = document.createElement("script");
   s.src = url;
   s.dataset.paypal = "1";
@@ -110,14 +62,14 @@ function loadPayPalSdk(url) {
 }
 
 function initPayPalButtons() {
-  if (!window.paypal || selectedProvider !== "paypal") return;
+  if (!window.paypal) return;
   const container = document.getElementById("paypal-button-container");
   container.innerHTML = "";
   window.paypal.Buttons({
     style: { layout: "vertical", color: "gold", shape: "rect" },
     createOrder: async () => {
       const email = document.getElementById("checkout-email").value.trim();
-      if (!email.includes("@")) throw new Error("请填写有效邮箱");
+      if (!email.includes("@")) throw new Error("Please enter a valid email");
       const data = await startCheckout(email);
       return data.paypalOrderId;
     },
@@ -130,9 +82,9 @@ function initPayPalButtons() {
         body: JSON.stringify({ orderId: orderData.orderId, paypalOrderId: data.orderID }),
       }).then((r) => r.json());
       if (cap.success) location.href = `/checkout-success.html?order=${orderData.orderId}`;
-      else throw new Error(cap.error || "扣款失败");
+      else throw new Error(cap.error || "Payment failed");
     },
-    onError: (err) => showError(err?.message || "PayPal 出错"),
+    onError: (err) => showError(err?.message || "PayPal error"),
   }).render("#paypal-button-container");
 }
 
@@ -140,10 +92,10 @@ async function startCheckout(email) {
   const res = await fetch("/api/billing/checkout", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, planId, cycle, provider: selectedProvider }),
+    body: JSON.stringify({ email, planId, cycle, provider: "paypal" }),
   });
   const data = await res.json();
-  if (!data.success) throw new Error(data.error || "创建订单失败");
+  if (!data.success) throw new Error(data.error || "Could not create order");
   return data;
 }
 
@@ -151,29 +103,18 @@ async function pay() {
   showError("");
   const email = document.getElementById("checkout-email").value.trim();
   if (!email.includes("@")) {
-    showError("请填写有效邮箱");
+    showError("Please enter a valid email");
     return;
   }
 
   setBusy(true);
   try {
     const data = await startCheckout(email);
-
-    if (data.provider === "paypal" && data.approveUrl) {
+    if (data.approveUrl) {
       location.href = data.approveUrl;
       return;
     }
-
-    if (data.payUrl) {
-      const qr = document.getElementById("qr-container");
-      if (data.qrcodeUrl && /MicroMessenger|WeiBo|QQ/i.test(navigator.userAgent) === false) {
-        qr.innerHTML = `<div class="qr-box"><p>请扫码支付</p><img src="${data.qrcodeUrl}" alt="支付二维码"></div>`;
-      }
-      location.href = data.payUrl;
-      return;
-    }
-
-    throw new Error("未获得支付链接");
+    throw new Error("No PayPal payment link received");
   } catch (e) {
     showError(e.message);
   } finally {

@@ -9,7 +9,6 @@ import {
   subscriptionDaysForCycle,
 } from "./billing-store.js";
 import { isPayPalConfigured, getPayPalPublicConfig, createPayPalOrder, capturePayPalOrder } from "./paypal.js";
-import { isXunhuConfigured, createXunhuPayment, verifyXunhuNotify } from "./xunhupay.js";
 
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 
@@ -18,15 +17,11 @@ export function getBillingConfig() {
     success: true,
     providers: {
       paypal: isPayPalConfigured(),
-      wechat: isXunhuConfigured(),
-      alipay: isXunhuConfigured(),
-      bankCard: isXunhuConfigured(), // via Alipay (supports CN bank cards)
     },
     publicUrl: PUBLIC_URL,
     paypal: getPayPalPublicConfig(),
-    xunhu: { configured: isXunhuConfigured() },
-    noteZh: "银行卡请使用支付宝付款（支持储蓄卡/信用卡）",
-    noteEn: "For bank cards in China, pay via Alipay (debit/credit supported).",
+    noteEn: "Pay securely with PayPal — credit card or PayPal balance.",
+    noteZh: "使用 PayPal 安全付款 — 支持信用卡或 PayPal 余额。",
   };
 }
 
@@ -44,7 +39,7 @@ export function getSubscriptionStatus(req, res) {
 
 export async function checkoutHandler(req, res) {
   try {
-    const { email, planId, cycle = "monthly", provider, method } = req.body || {};
+    const { email, planId, cycle = "monthly", provider } = req.body || {};
     if (!email?.includes("@")) {
       return res.status(400).json({ success: false, error: "Valid email required" });
     }
@@ -54,70 +49,36 @@ export async function checkoutHandler(req, res) {
       return res.status(400).json({ success: false, error: "Invalid billing cycle" });
     }
 
-    const payProvider = provider || method;
+    const payProvider = provider || "paypal";
+    if (payProvider !== "paypal") {
+      return res.status(400).json({ success: false, error: "Only PayPal is supported" });
+    }
+    if (!isPayPalConfigured()) {
+      return res.status(503).json({ success: false, error: "PayPal not configured on server" });
+    }
+
     const returnUrl = `${PUBLIC_URL}/checkout-success.html?order=`;
     const cancelUrl = `${PUBLIC_URL}/checkout.html?plan=${planId}&cycle=${cycle}`;
-
-    if (payProvider === "paypal") {
-      if (!isPayPalConfigured()) {
-        return res.status(503).json({ success: false, error: "PayPal not configured on server" });
-      }
-      const { amount, currency } = getAmount(planId, cycle, "usd");
-      const order = createPendingOrder({
-        email, planId, cycle, amount, currency, provider: "paypal",
-      });
-      const desc = `Pzhisen ${plan.name} (${cycle})`;
-      const pp = await createPayPalOrder({
-        orderId: order.id,
-        amount,
-        currency,
-        description: desc,
-        returnUrl: returnUrl + order.id,
-        cancelUrl,
-      });
-      updateOrder(order.id, { externalId: pp.paypalOrderId, approveUrl: pp.approveUrl });
-      return res.json({
-        success: true,
-        orderId: order.id,
-        provider: "paypal",
-        approveUrl: pp.approveUrl,
-        paypalOrderId: pp.paypalOrderId,
-      });
-    }
-
-    if (payProvider === "wechat" || payProvider === "alipay") {
-      if (!isXunhuConfigured()) {
-        return res.status(503).json({
-          success: false,
-          error: "WeChat/Alipay not configured. Set XUNHU_APP_ID and XUNHU_APP_SECRET.",
-        });
-      }
-      const { amount, currency } = getAmount(planId, cycle, "cny");
-      const order = createPendingOrder({
-        email, planId, cycle, amount, currency, provider: payProvider,
-      });
-      const title = `Pzhisen ${plan.nameZh || plan.name} ${cycle === "yearly" ? "年付" : "月付"}`;
-      const xh = await createXunhuPayment({
-        orderId: order.id,
-        amountCny: amount,
-        title,
-        notifyUrl: `${PUBLIC_URL}/api/billing/webhook/xunhu`,
-        returnUrl: returnUrl + order.id,
-        type: payProvider,
-      });
-      updateOrder(order.id, { payUrl: xh.payUrl });
-      return res.json({
-        success: true,
-        orderId: order.id,
-        provider: payProvider,
-        payUrl: xh.payUrl,
-        qrcodeUrl: xh.qrcodeUrl,
-      });
-    }
-
-    return res.status(400).json({
-      success: false,
-      error: "Invalid provider. Use: paypal, wechat, or alipay",
+    const { amount, currency } = getAmount(planId, cycle, "usd");
+    const order = createPendingOrder({
+      email, planId, cycle, amount, currency, provider: "paypal",
+    });
+    const desc = `Pzhisen ${plan.name} (${cycle})`;
+    const pp = await createPayPalOrder({
+      orderId: order.id,
+      amount,
+      currency,
+      description: desc,
+      returnUrl: returnUrl + order.id,
+      cancelUrl,
+    });
+    updateOrder(order.id, { externalId: pp.paypalOrderId, approveUrl: pp.approveUrl });
+    return res.json({
+      success: true,
+      orderId: order.id,
+      provider: "paypal",
+      approveUrl: pp.approveUrl,
+      paypalOrderId: pp.paypalOrderId,
     });
   } catch (err) {
     console.error("checkout error:", err);
@@ -182,35 +143,4 @@ export async function orderStatusHandler(req, res) {
 
   const active = isSubscriptionActive(order.email);
   res.json({ success: true, order, active, subscription: getSubscriptionByEmail(order.email) });
-}
-
-export async function xunhuWebhookHandler(req, res) {
-  try {
-    const body = req.body || {};
-    const verified = verifyXunhuNotify(body);
-    if (!verified.valid) {
-      console.warn("xunhu webhook invalid:", verified.error);
-      return res.status(400).send("fail");
-    }
-    if (!verified.paid) return res.send("success");
-
-    const order = getOrder(verified.orderId);
-    if (!order) return res.send("success");
-    if (order.status === "completed") return res.send("success");
-
-    updateOrder(order.id, { status: "paid", externalId: verified.externalId });
-    activateSubscription({
-      email: order.email,
-      planId: order.planId,
-      cycle: order.cycle,
-      provider: order.provider,
-      externalId: verified.externalId,
-      days: subscriptionDaysForCycle(order.cycle),
-    });
-    updateOrder(order.id, { status: "completed" });
-    res.send("success");
-  } catch (err) {
-    console.error("xunhu webhook error:", err);
-    res.status(500).send("fail");
-  }
 }
