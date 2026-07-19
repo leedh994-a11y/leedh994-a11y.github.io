@@ -9,22 +9,28 @@ async function load() {
 
 function render() {
   const grid = document.getElementById("pricing-grid");
-  const plan = plans[0];
-  if (!plan) {
+  if (!plans.length) {
     grid.innerHTML = "<p>暂无方案</p>";
     return;
   }
 
-  grid.innerHTML = `
-    <article class="pricing-card featured" style="max-width:480px;margin:0 auto;grid-column:1/-1">
-      <h3>${plan.nameZh || plan.name}</h3>
+  grid.innerHTML = plans.map((plan) => `
+    <article class="pricing-card${plan.featured ? " featured" : ""}">
+      ${plan.featured ? '<span class="badge-popular">推荐</span>' : ""}
+      <h3>${plan.nameZh || plan.name} · ${plan.cycle === "yearly" ? "年付" : "月付"}</h3>
       <p style="font-size:14px;color:var(--muted);margin:0">${plan.descriptionZh || plan.description}</p>
-      <div class="price">¥1<span> / 终身</span></div>
-      <p style="font-size:13px;color:var(--muted);margin:0 0 8px">一次付费 · 永久使用 · 海外 $1</p>
+      <div class="price">${plan.priceLabel}<span>${plan.periodLabelZh || plan.periodLabel}</span></div>
+      ${plan.savingsZh ? `<p style="font-size:13px;color:#16a34a;margin:0 0 8px">${plan.savingsZh}</p>` : ""}
       <ul>${(plan.featuresZh || plan.features).map((f) => `<li>${f}</li>`).join("")}</ul>
-      <a href="/checkout.html?plan=lifetime&cycle=lifetime" class="btn-primary" style="text-align:center;display:block">支付 ¥1 立即开通</a>
+      <a href="/checkout.html?plan=pro&cycle=${plan.cycle}" class="btn-primary" style="text-align:center;display:block">
+        订阅 ${plan.priceLabel}${plan.periodLabelZh || plan.periodLabel}
+      </a>
     </article>
-  `;
+  `).join("");
 }
+
+const params = new URLSearchParams(location.search);
+const emailFromUrl = params.get("email");
+if (emailFromUrl) sessionStorage.setItem("pzhisen_checkout_email", emailFromUrl);
 
 load();

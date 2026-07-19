@@ -1,45 +1,32 @@
-import { getPlan, listPlans, getAmount } from "./plans.js";
+import { getPlan, listPlans, getAmount, isValidCycle, CYCLE_LABELS } from "./plans.js";
 import {
   createPendingOrder,
   getOrder,
   updateOrder,
-  activateLifetime,
+  activateSubscription,
   getSubscriptionByEmail,
   isSubscriptionActive,
   getOrders,
 } from "./billing-store.js";
 import { isPayPalConfigured, getPayPalPublicConfig, createPayPalOrder, capturePayPalOrder } from "./paypal.js";
-import {
-  getBankAccountConfig,
-  isBankTransferConfigured,
-  makeTransferCode,
-  isAdminAuthorized,
-} from "./bank-transfer.js";
+import { isAdminAuthorized } from "./bank-transfer.js";
 import { findCompanyByEmail } from "./store.js";
 
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 
 export function getBillingConfig() {
-  const bank = getBankAccountConfig();
   return {
     success: true,
     providers: {
       paypal: isPayPalConfigured(),
-      bankCard: isBankTransferConfigured(),
+      bankCard: false,
     },
     publicUrl: PUBLIC_URL,
     paypal: getPayPalPublicConfig(),
-    bankAccount: bank.configured
-      ? { bankName: bank.bankName, accountName: bank.accountName, accountNumberMask: maskAccount(bank.accountNumber) }
-      : null,
-    noteZh: "仅需支付 ¥1 即可永久使用全部功能。银行卡转账或 PayPal 支付后立即可用。",
-    noteEn: "Pay ¥1 (bank transfer) or $1 (PayPal) once — instant lifetime access worldwide.",
+    bankAccount: null,
+    noteZh: "月付 $99 或年付 $999，PayPal 支付后立即可用。订阅到期后需续费。",
+    noteEn: "Monthly $99 or yearly $999 via PayPal — instant access while subscribed. Renew when your plan expires.",
   };
-}
-
-function maskAccount(num) {
-  if (num.length <= 8) return num;
-  return num.slice(0, 4) + " **** **** " + num.slice(-4);
 }
 
 function activationPayload(email) {
@@ -48,6 +35,12 @@ function activationPayload(email) {
     companyId: company?.id || null,
     dashboardUrl: company ? `/dashboard.html?company=${company.id}` : "/dashboard.html",
   };
+}
+
+function cycleLabel(cycle, lang = "en") {
+  const labels = CYCLE_LABELS[cycle];
+  if (!labels) return cycle;
+  return lang === "zh" ? labels.zh : labels.en;
 }
 
 export function getPlansHandler(_req, res) {
@@ -64,17 +57,17 @@ export function getSubscriptionStatus(req, res) {
 
 export async function checkoutHandler(req, res) {
   try {
-    const { email, planId = "lifetime", cycle = "lifetime", provider, method } = req.body || {};
+    const { email, planId = "pro", cycle = "monthly", provider, method } = req.body || {};
     if (!email?.includes("@")) {
       return res.status(400).json({ success: false, error: "Valid email required" });
     }
+    if (!isValidCycle(cycle)) {
+      return res.status(400).json({ success: false, error: "Invalid cycle. Use monthly or yearly." });
+    }
     const plan = getPlan(planId);
     if (!plan) return res.status(400).json({ success: false, error: "Invalid plan" });
-    if (isSubscriptionActive(email)) {
-      return res.json({ success: true, alreadyActive: true, message: "您已开通终身版", subscription: getSubscriptionByEmail(email) });
-    }
 
-    const payProvider = provider || method;
+    const payProvider = provider || method || "paypal";
     const returnUrl = `${PUBLIC_URL}/checkout-success.html?order=`;
     const cancelUrl = `${PUBLIC_URL}/checkout.html?plan=${planId}&cycle=${cycle}`;
 
@@ -86,7 +79,7 @@ export async function checkoutHandler(req, res) {
       const order = createPendingOrder({
         email, planId, cycle, amount, currency, provider: "paypal",
       });
-      const desc = `Pzhisen Lifetime — one-time payment`;
+      const desc = `Pzhisen Pro — ${cycleLabel(cycle)} ($${amount})`;
       const pp = await createPayPalOrder({
         orderId: order.id,
         amount,
@@ -106,40 +99,15 @@ export async function checkoutHandler(req, res) {
     }
 
     if (payProvider === "bank" || payProvider === "bankcard") {
-      if (!isBankTransferConfigured()) {
-        return res.status(503).json({
-          success: false,
-          error: "银行卡收款信息未配置。请在 Render 设置 BANK_ACCOUNT_NAME、BANK_NAME、BANK_ACCOUNT_NUMBER。",
-        });
-      }
-      const { amount, currency } = getAmount(planId, cycle, "cny");
-      const order = createPendingOrder({
-        email, planId, cycle, amount, currency, provider: "bankcard",
-      });
-      const transferCode = makeTransferCode(order.id);
-      updateOrder(order.id, { status: "awaiting_transfer", transferCode });
-
-      const bank = getBankAccountConfig();
-      return res.json({
-        success: true,
-        orderId: order.id,
-        provider: "bankcard",
-        transferCode,
-        amount,
-        currency,
-        bankAccount: {
-          accountName: bank.accountName,
-          bankName: bank.bankName,
-          accountNumber: bank.accountNumber,
-          branch: bank.branch,
-        },
-        instructions: `请转账 ¥${amount} 至以下账户，备注填写：${transferCode}`,
+      return res.status(400).json({
+        success: false,
+        error: "Bank transfer is not available. Please pay with PayPal.",
       });
     }
 
     return res.status(400).json({
       success: false,
-      error: "Invalid provider. Use: bank (China) or paypal (international)",
+      error: "Invalid provider. Use PayPal.",
     });
   } catch (err) {
     console.error("checkout error:", err);
@@ -148,40 +116,7 @@ export async function checkoutHandler(req, res) {
 }
 
 export function confirmBankTransferHandler(req, res) {
-  const { orderId } = req.body || {};
-  const order = getOrder(orderId);
-  if (!order) return res.status(404).json({ success: false, error: "Order not found" });
-  if (order.provider !== "bankcard") {
-    return res.status(400).json({ success: false, error: "Not a bank transfer order" });
-  }
-  if (order.status === "completed") {
-    const sub = getSubscriptionByEmail(order.email);
-    return res.json({
-      success: true,
-      message: "订阅已开通",
-      order,
-      active: true,
-      subscription: sub,
-      ...activationPayload(order.email),
-    });
-  }
-
-  updateOrder(order.id, { status: "paid", confirmedAt: new Date().toISOString() });
-  const sub = activateLifetime({
-    email: order.email,
-    planId: order.planId,
-    provider: "bankcard",
-    externalId: order.transferCode,
-  });
-  updateOrder(order.id, { status: "completed" });
-  res.json({
-    success: true,
-    message: "订阅已开通，可立即使用全部功能。",
-    order: getOrder(order.id),
-    subscription: sub,
-    active: true,
-    ...activationPayload(order.email),
-  });
+  res.status(400).json({ success: false, error: "Bank transfer is not available. Please pay with PayPal." });
 }
 
 export function listPendingBankOrdersHandler(req, res) {
@@ -209,10 +144,15 @@ export function approveBankOrderHandler(req, res) {
     return res.json({ success: true, subscription: getSubscriptionByEmail(order.email) });
   }
 
+  if (!isValidCycle(order.cycle)) {
+    return res.status(400).json({ success: false, error: "Invalid order cycle" });
+  }
+
   updateOrder(order.id, { status: "paid" });
-  const sub = activateLifetime({
+  const sub = activateSubscription({
     email: order.email,
     planId: order.planId,
+    cycle: order.cycle,
     provider: "bankcard",
     externalId: order.transferCode,
   });
@@ -239,9 +179,10 @@ export async function capturePayPalHandler(req, res) {
     }
 
     updateOrder(order.id, { status: "paid", captureId: cap.captureId });
-    const sub = activateLifetime({
+    const sub = activateSubscription({
       email: order.email,
       planId: order.planId,
+      cycle: order.cycle,
       provider: "paypal",
       externalId: cap.captureId,
     });
@@ -268,9 +209,10 @@ export async function orderStatusHandler(req, res) {
       const cap = await capturePayPalOrder(order.externalId);
       if (cap.success) {
         updateOrder(order.id, { status: "paid", captureId: cap.captureId });
-        const sub = activateLifetime({
+        const sub = activateSubscription({
           email: order.email,
           planId: order.planId,
+          cycle: order.cycle,
           provider: "paypal",
           externalId: cap.captureId,
         });

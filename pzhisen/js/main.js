@@ -119,10 +119,11 @@
       localStorage.setItem("pzhisen_company_id", data.company.id);
       localStorage.setItem("pzhisen_email", email);
 
-      if (data.company.plan === "lifetime") {
+      if (data.subscriptionActive) {
         window.location.href = data.redirectUrl || `/dashboard.html?company=${data.company.id}`;
       } else {
-        window.location.href = `/checkout.html?plan=lifetime&cycle=lifetime&email=${encodeURIComponent(email)}`;
+        sessionStorage.setItem("pzhisen_checkout_email", email);
+        window.location.href = `/pricing.html?email=${encodeURIComponent(email)}`;
       }
     } catch (err) {
       alert(err.message);

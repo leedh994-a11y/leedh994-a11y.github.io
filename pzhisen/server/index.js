@@ -82,6 +82,8 @@ app.post("/api/signup", async (req, res) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    const sub = getSubscriptionByEmail(normalizedEmail);
+    const subActive = isSubscriptionActive(normalizedEmail);
     const company = {
       id: uuidv4(),
       email: normalizedEmail,
@@ -91,7 +93,7 @@ app.post("/api/signup", async (req, res) => {
       stage: "idea",
       createdAt: new Date().toISOString(),
       status: "active",
-      plan: isSubscriptionActive(normalizedEmail) ? "lifetime" : "trial",
+      plan: subActive ? (sub?.cycle || "pro") : "trial",
     };
 
     upsertCompany(company);
@@ -107,6 +109,7 @@ app.post("/api/signup", async (req, res) => {
     res.json({
       success: true,
       company,
+      subscriptionActive: subActive,
       redirectUrl: `/dashboard.html?company=${company.id}`,
       ceoBrief,
     });
@@ -120,8 +123,9 @@ app.get("/api/companies/:id", (req, res) => {
   const company = getCompany(req.params.id);
   if (!company) return res.status(404).json({ success: false, error: "Company not found" });
   const active = isSubscriptionActive(company.email);
-  if (active && company.plan !== "lifetime") {
-    company.plan = "lifetime";
+  const sub = getSubscriptionByEmail(company.email);
+  if (active && sub?.cycle && company.plan !== sub.cycle) {
+    company.plan = sub.cycle;
     upsertCompany(company);
   }
   res.json({
@@ -178,10 +182,11 @@ app.get("/api/companies/:id/logs", (req, res) => {
 
 function subscriptionPayload(email) {
   const active = isSubscriptionActive(email);
+  const sub = getSubscriptionByEmail(email);
   return {
     subscriptionActive: active,
-    subscription: active ? getSubscriptionByEmail(email) : null,
-    checkoutUrl: `/checkout.html?plan=lifetime&cycle=lifetime&email=${encodeURIComponent(email || "")}`,
+    subscription: sub,
+    checkoutUrl: `/pricing.html?email=${encodeURIComponent(email || "")}`,
   };
 }
 
@@ -191,10 +196,15 @@ function requireSubscription(company, res) {
     return false;
   }
   if (!isSubscriptionActive(company.email)) {
+    const sub = getSubscriptionByEmail(company.email);
+    const expired = sub && new Date(sub.expiresAt) <= new Date();
     res.status(402).json({
       success: false,
       error: "Subscription required",
-      errorZh: "请先支付 ¥1（或 PayPal $1）开通终身版后使用全部功能。",
+      errorZh: expired
+        ? "您的订阅已过期，请续费月付 $99 或年付 $999 后继续使用。"
+        : "请先订阅月付 $99 或年付 $999 套餐后使用全部功能。",
+      expired,
       ...subscriptionPayload(company.email),
     });
     return false;

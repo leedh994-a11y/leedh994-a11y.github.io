@@ -13,7 +13,7 @@ const AGENTS = [
 let activeAgent = "ceo";
 let company = null;
 let subscriptionActive = false;
-let checkoutUrl = "/checkout.html?plan=lifetime&cycle=lifetime";
+let checkoutUrl = "/pricing.html";
 
 function formatTime(iso) {
   if (!iso) return "--:--";
@@ -68,7 +68,12 @@ function renderAgentList() {
   });
 }
 
-function updateSubscriptionUi(active) {
+function formatExpiry(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString();
+}
+
+function updateSubscriptionUi(active, subscription) {
   subscriptionActive = active;
   const banner = document.getElementById("paywall-banner");
   const layout = document.querySelector(".dashboard-layout");
@@ -77,13 +82,16 @@ function updateSubscriptionUi(active) {
   if (active) {
     banner.hidden = true;
     layout?.classList.remove("locked");
-    if (pricingBtn) pricingBtn.textContent = "✓ Lifetime";
+    const cycle = subscription?.cycle === "yearly" ? "年付" : "月付";
+    if (pricingBtn) {
+      pricingBtn.textContent = `✓ ${cycle} · 至 ${formatExpiry(subscription?.expiresAt)}`;
+    }
   } else {
     banner.hidden = false;
     layout?.classList.add("locked");
     const cta = document.getElementById("paywall-cta");
     if (cta) cta.href = checkoutUrl;
-    if (pricingBtn) pricingBtn.textContent = "¥1 / $1 Lifetime";
+    if (pricingBtn) pricingBtn.textContent = "$99/月 · $999/年";
   }
 }
 
@@ -127,12 +135,12 @@ async function loadCompany() {
   localStorage.setItem("pzhisen_company_id", company.id);
   if (company.email) localStorage.setItem("pzhisen_email", company.email);
   renderLogs(data.logs);
-  updateSubscriptionUi(Boolean(data.subscriptionActive));
+  updateSubscriptionUi(Boolean(data.subscriptionActive), data.subscription);
 }
 
 async function runDaily() {
   if (!subscriptionActive) {
-    alert("请先支付 ¥1（银行卡）或 $1（PayPal）开通终身版。");
+    alert("请先订阅月付 $99 或年付 $999 套餐。");
     location.href = checkoutUrl;
     return;
   }
@@ -164,7 +172,7 @@ document.getElementById("btn-run-all").addEventListener("click", runDaily);
 document.getElementById("chat-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!subscriptionActive) {
-    alert("请先支付 ¥1（银行卡）或 $1（PayPal）开通终身版。");
+    alert("请先订阅月付 $99 或年付 $999 套餐。");
     location.href = checkoutUrl;
     return;
   }
@@ -204,7 +212,7 @@ setInterval(async () => {
   if (!companyId) return;
   const res = await fetch(`/api/companies/${companyId}`);
   const data = await res.json();
-  if (data.success) updateSubscriptionUi(Boolean(data.subscriptionActive));
+  if (data.success) updateSubscriptionUi(Boolean(data.subscriptionActive), data.subscription);
 }, 10000);
 
 setInterval(async () => {

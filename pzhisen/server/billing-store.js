@@ -1,4 +1,5 @@
 import { loadJson, saveJson, updateCompaniesPlanByEmail } from "./store.js";
+import { isValidCycle } from "./plans.js";
 
 function ordersFile() {
   return "orders.json";
@@ -61,24 +62,47 @@ export function updateOrder(orderId, patch) {
   return data.orders[idx];
 }
 
-export function activateLifetime({ email, planId, provider, externalId }) {
+function addPeriod(fromDate, cycle) {
+  const d = new Date(fromDate);
+  if (cycle === "monthly") d.setMonth(d.getMonth() + 1);
+  else if (cycle === "yearly") d.setFullYear(d.getFullYear() + 1);
+  return d.toISOString();
+}
+
+export function activateSubscription({ email, planId, cycle, provider, externalId }) {
+  if (!isValidCycle(cycle)) throw new Error("Invalid subscription cycle");
+
+  const normalized = email.trim().toLowerCase();
+  const existing = getSubscriptionByEmail(normalized);
+  const now = new Date();
+  let base = now;
+  if (existing?.status === "active" && new Date(existing.expiresAt) > now) {
+    base = new Date(existing.expiresAt);
+  }
+
   const sub = {
-    email: email.trim().toLowerCase(),
-    planId: planId || "lifetime",
-    cycle: "lifetime",
+    email: normalized,
+    planId: planId || "pro",
+    cycle,
     provider,
     externalId: externalId || null,
     status: "active",
-    activatedAt: new Date().toISOString(),
-    expiresAt: "2099-12-31T23:59:59.000Z",
+    activatedAt: now.toISOString(),
+    expiresAt: addPeriod(base, cycle),
   };
+
   const data = getSubscriptions();
-  const idx = data.subscriptions.findIndex((s) => s.email === sub.email);
+  const idx = data.subscriptions.findIndex((s) => s.email === normalized);
   if (idx >= 0) data.subscriptions[idx] = { ...data.subscriptions[idx], ...sub };
   else data.subscriptions.push(sub);
   saveSubscriptions(data);
-  updateCompaniesPlanByEmail(sub.email, "lifetime");
+  updateCompaniesPlanByEmail(normalized, cycle);
   return sub;
+}
+
+/** @deprecated Use activateSubscription */
+export function activateLifetime(args) {
+  return activateSubscription({ ...args, cycle: args.cycle || "yearly" });
 }
 
 export function getSubscriptionByEmail(email) {

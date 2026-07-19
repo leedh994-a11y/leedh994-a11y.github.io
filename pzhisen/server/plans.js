@@ -1,47 +1,76 @@
-/** Single lifetime plan — ¥1 one-time payment for permanent access. */
+/** Pro plan — monthly ($99) or yearly ($999) subscription. */
 export const PLANS = {
-  lifetime: {
-    id: "lifetime",
-    name: "Lifetime",
-    nameZh: "终身版",
-    description: "Pay once (¥1), use all features forever.",
-    descriptionZh: "仅需支付 1 元，永久使用全部功能。",
+  pro: {
+    id: "pro",
+    name: "Pro",
+    nameZh: "专业版",
+    description: "Full access to all features while your subscription is active.",
+    descriptionZh: "订阅有效期内可使用全部功能。",
     features: [
       "All 6 AI agents",
       "Unlimited daily standups",
       "Unlimited agent chats",
       "Full dashboard access",
-      "Lifetime access — pay once",
+      "Cancel anytime — access until period ends",
     ],
     featuresZh: [
       "全部 6 个 AI Agent",
       "无限每日站会",
       "无限 Agent 对话",
       "完整 Dashboard 功能",
-      "一次付费，终身使用",
+      "按订阅周期使用，到期需续费",
     ],
-    priceCny: { lifetime: 1 },
-    priceUsd: { lifetime: 1 },
-    lifetime: true,
+    priceUsd: { monthly: 99, yearly: 999 },
   },
 };
 
+export const CYCLE_LABELS = {
+  monthly: { en: "Monthly", zh: "月付", suffix: "/ month" },
+  yearly: { en: "Yearly", zh: "年付", suffix: "/ year" },
+};
+
 export function getPlan(planId) {
-  return PLANS[planId] || PLANS.lifetime;
+  return PLANS[planId] || PLANS.pro;
+}
+
+export function isValidCycle(cycle) {
+  return cycle === "monthly" || cycle === "yearly";
 }
 
 export function listPlans() {
-  return [PLANS.lifetime];
+  const plan = PLANS.pro;
+  return [
+    {
+      ...plan,
+      cycle: "monthly",
+      amount: plan.priceUsd.monthly,
+      priceLabel: "$99",
+      periodLabel: "/ month",
+      periodLabelZh: "/ 月",
+    },
+    {
+      ...plan,
+      cycle: "yearly",
+      amount: plan.priceUsd.yearly,
+      priceLabel: "$999",
+      periodLabel: "/ year",
+      periodLabelZh: "/ 年",
+      featured: true,
+      savings: "Save $189 vs monthly",
+      savingsZh: "比月付节省 $189",
+    },
+  ];
 }
 
-export function getAmount(planId, cycle = "lifetime", currency = "cny") {
+export function getAmount(planId, cycle = "monthly", currency = "usd") {
   const plan = getPlan(planId);
-  if (!plan) return null;
-  const amount = currency === "cny" ? plan.priceCny.lifetime : plan.priceUsd.lifetime;
+  if (!plan || !isValidCycle(cycle)) return null;
+  const amount = plan.priceUsd[cycle];
+  if (amount == null) return null;
   return {
     amount,
-    currency: currency === "cny" ? "CNY" : "USD",
+    currency: "USD",
     plan,
-    cycle: "lifetime",
+    cycle,
   };
 }
