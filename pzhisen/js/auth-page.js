@@ -8,6 +8,20 @@ function showError(el, msg) {
   el.textContent = msg || "";
 }
 
+const params = new URLSearchParams(location.search);
+const checkoutPlan = params.get("plan") || "pro";
+const checkoutCycle = params.get("cycle") === "annual" ? "annual" : "monthly";
+
+function checkoutRedirectUrl(data) {
+  if (data.checkoutUrl && !data.subscriptionActive) {
+    const url = new URL(data.checkoutUrl, location.origin);
+    if (checkoutPlan) url.searchParams.set("plan", checkoutPlan);
+    if (checkoutCycle) url.searchParams.set("cycle", checkoutCycle);
+    return url.pathname + url.search;
+  }
+  return data.checkoutUrl || `/checkout.html?plan=${checkoutPlan}&cycle=${checkoutCycle}`;
+}
+
 function afterAuth(data) {
   if (data.company?.id) {
     localStorage.setItem("pzhisen_company_id", data.company.id);
@@ -18,7 +32,7 @@ function afterAuth(data) {
   if (data.subscriptionActive && data.redirectUrl) {
     location.href = data.redirectUrl;
   } else {
-    location.href = data.checkoutUrl || "/checkout.html?plan=lifetime&cycle=lifetime";
+    location.href = checkoutRedirectUrl(data);
   }
 }
 
@@ -182,5 +196,4 @@ api("/api/auth/me").then(async (res) => {
   }
 });
 
-const params = new URLSearchParams(location.search);
 if (params.get("register") === "1") tabRegister.click();

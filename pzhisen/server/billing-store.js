@@ -1,4 +1,5 @@
 import { loadJson, saveJson, updateCompaniesPlanByEmail } from "./store.js";
+import { getCycle, isValidCycle } from "./plans.js";
 
 function ordersFile() {
   return "orders.json";
@@ -61,29 +62,54 @@ export function updateOrder(orderId, patch) {
   return data.orders[idx];
 }
 
-export function activateLifetime({ email, planId, provider, externalId }) {
+function computeExpiresAt(cycle, existingSub = null) {
+  const meta = getCycle(cycle);
+  const days = meta?.days || 30;
+  const now = Date.now();
+  let base = now;
+  if (existingSub?.expiresAt) {
+    const current = new Date(existingSub.expiresAt).getTime();
+    if (current > now) base = current;
+  }
+  return new Date(base + days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+export function activateSubscription({ email, planId, cycle, provider, externalId }) {
+  const normalized = email.trim().toLowerCase();
+  const validCycle = isValidCycle(cycle) ? cycle : "monthly";
+  const existing = getSubscriptionByEmail(normalized);
+  const expiresAt = computeExpiresAt(validCycle, existing);
+
   const sub = {
-    email: email.trim().toLowerCase(),
-    planId: planId || "lifetime",
-    cycle: "lifetime",
+    email: normalized,
+    planId: planId || "pro",
+    cycle: validCycle,
     provider,
     externalId: externalId || null,
     status: "active",
-    activatedAt: new Date().toISOString(),
-    expiresAt: "2099-12-31T23:59:59.000Z",
+    activatedAt: existing?.activatedAt || new Date().toISOString(),
+    renewedAt: new Date().toISOString(),
+    expiresAt,
   };
+
   const data = getSubscriptions();
-  const idx = data.subscriptions.findIndex((s) => s.email === sub.email);
+  const idx = data.subscriptions.findIndex((s) => s.email === normalized);
   if (idx >= 0) data.subscriptions[idx] = { ...data.subscriptions[idx], ...sub };
   else data.subscriptions.push(sub);
   saveSubscriptions(data);
-  updateCompaniesPlanByEmail(sub.email, "lifetime");
+  updateCompaniesPlanByEmail(normalized, validCycle);
   return sub;
 }
 
-/** Alias for payment handlers */
-export function activateSubscription({ email, planId, cycle, provider, externalId }) {
-  return activateLifetime({ email, planId: planId || "lifetime", provider, externalId });
+/** @deprecated Legacy lifetime activations — kept for old data reads only */
+export function activateLifetime({ email, planId, provider, externalId }) {
+  return activateSubscription({
+    email,
+    planId: planId || "pro",
+    cycle: "annual",
+    provider,
+    externalId,
+  });
 }
 
 export function getSubscriptionByEmail(email) {

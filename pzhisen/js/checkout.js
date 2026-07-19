@@ -16,8 +16,9 @@ async function ensureLoggedIn() {
 }
 
 const params = new URLSearchParams(location.search);
-const planId = params.get("plan") || "lifetime";
-const cycle = params.get("cycle") || "lifetime";
+const planId = params.get("plan") || "pro";
+let cycle = params.get("cycle") || "monthly";
+if (cycle !== "monthly" && cycle !== "annual") cycle = "monthly";
 
 const isChinaUser = () =>
   navigator.language?.startsWith("zh") ||
@@ -30,10 +31,37 @@ let plan = null;
 let currentBankOrder = null;
 let pendingPayPalOrder = null;
 
-const METHODS = [
-  { id: "bank", icon: "🏦", name: "银行卡转账", desc: "¥1 · 转账后确认，立即开通", providerKey: "bankCard" },
-  { id: "paypal", icon: "🅿️", name: "PayPal", desc: "$1 · 支付后立即可用", providerKey: "paypal" },
-];
+function cycleLabelZh(c) {
+  return c === "annual" ? "年付" : "月付";
+}
+
+function getPrices() {
+  if (!plan) return { cny: 0, usd: 0 };
+  return {
+    cny: plan.priceCny?.[cycle] ?? 0,
+    usd: plan.priceUsd?.[cycle] ?? 0,
+  };
+}
+
+function buildMethods() {
+  const { cny, usd } = getPrices();
+  return [
+    {
+      id: "bank",
+      icon: "🏦",
+      name: "银行卡转账",
+      desc: `¥${cny} · 手机银行/网银转账，中国内地用户`,
+      providerKey: "bankCard",
+    },
+    {
+      id: "paypal",
+      icon: "🅿️",
+      name: "PayPal",
+      desc: `$${usd} · 信用卡/借记卡，全球用户`,
+      providerKey: "paypal",
+    },
+  ];
+}
 
 function showError(msg) {
   const el = document.getElementById("checkout-error");
@@ -66,18 +94,24 @@ async function loadPlan() {
 }
 
 function renderSummary() {
-  document.getElementById("checkout-title").textContent = "支付 ¥1 开通终身版";
+  const { cny, usd } = getPrices();
+  document.getElementById("checkout-title").textContent =
+    selectedProvider === "bank"
+      ? `支付 ¥${cny} 开通${cycleLabelZh(cycle)}`
+      : `Pay $${usd} — ${cycle === "annual" ? "Annual" : "Monthly"} Pro`;
   document.getElementById("checkout-subtitle").textContent = plan.descriptionZh || plan.description;
   document.getElementById("sum-plan").textContent = plan.nameZh || plan.name;
-  document.getElementById("sum-cycle").textContent = "终身（一次付费）";
+  document.getElementById("sum-cycle").textContent =
+    cycle === "annual" ? "年付（365 天）" : "月付（30 天）";
   document.getElementById("sum-total").textContent =
-    selectedProvider === "paypal" ? "$1 USD" : "¥1 CNY";
+    selectedProvider === "paypal" ? `$${usd} USD` : `¥${cny} CNY`;
   setBusy(false);
 }
 
 function renderMethods() {
   const providers = billingConfig?.providers || {};
   const container = document.getElementById("pay-methods");
+  const METHODS = buildMethods();
   const available = METHODS.filter((m) => providers[m.providerKey]);
 
   if (!available.length) {
@@ -129,7 +163,7 @@ function showBankPanel(data) {
       <div class="checkout-line"><span>金额</span><strong style="color:#dc2626">¥${data.amount}</strong></div>
       <div class="checkout-line total"><span>转账备注（必填）</span><strong style="color:#dc2626">${data.transferCode}</strong></div>
     </div>
-    <p class="checkout-hint">转账时务必填写备注 <strong>${data.transferCode}</strong>。完成转账后点击下方按钮，即可立即开通终身版。</p>
+    <p class="checkout-hint">转账时务必填写备注 <strong>${data.transferCode}</strong>。完成转账后点击下方按钮开通${cycleLabelZh(cycle)}订阅（${cycle === "annual" ? "365" : "30"} 天）。到期后需续费方可继续使用。</p>
   `;
   setBusy(false);
 }
@@ -224,6 +258,22 @@ async function pay() {
 }
 
 document.getElementById("btn-pay").addEventListener("click", pay);
+
+document.querySelectorAll(".cycle-switch button").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    cycle = btn.dataset.cycle;
+    document.querySelectorAll(".cycle-switch button").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentBankOrder = null;
+    document.getElementById("bank-panel").hidden = true;
+    const url = new URL(location.href);
+    url.searchParams.set("cycle", cycle);
+    history.replaceState(null, "", url);
+    renderSummary();
+    renderMethods();
+  });
+  if (btn.dataset.cycle === cycle) btn.classList.add("active");
+});
 
 const saved = localStorage.getItem("pzhisen_email");
 const emailFromUrl = params.get("email");

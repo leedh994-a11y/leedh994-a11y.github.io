@@ -32,7 +32,13 @@
       if (data.companyId) localStorage.setItem("pzhisen_company_id", data.companyId);
 
       title.textContent = "支付成功！";
-      msg.textContent = "您的终身版已激活，正在跳转到 Dashboard，全部功能已永久解锁。";
+      const exp = data.subscription?.expiresAt || data.expiresAt;
+      const expLabel = exp
+        ? new Date(exp).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })
+        : "";
+      msg.textContent = expLabel
+        ? `您的专业版订阅已激活，有效期至 ${expLabel}。正在跳转到 Dashboard…`
+        : "您的专业版订阅已激活，正在跳转到 Dashboard…";
       const url = dashboardUrl(data);
       btnDash.href = url;
       btnDash.textContent = "立即使用全部功能";

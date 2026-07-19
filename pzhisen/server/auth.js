@@ -17,6 +17,7 @@ import {
 import { sendOtpEmail, isMailConfigured } from "./mail.js";
 import { validateEmail } from "./email-validator.js";
 import { isSubscriptionActive, getSubscriptionByEmail } from "./billing-store.js";
+import { DEFAULT_PLAN_ID, DEFAULT_CYCLE } from "./plans.js";
 import { upsertCompany, getCompany, appendLog, findCompanyByEmail, findCompanyByUserId } from "./store.js";
 import { runCeoOnboarding } from "./agents.js";
 
@@ -88,6 +89,7 @@ function inferIndustry(idea) {
 }
 
 async function createCompanyForUser(user, idea) {
+  const sub = getSubscriptionByEmail(user.email);
   const subActive = isSubscriptionActive(user.email);
   const company = {
     id: uuidv4(),
@@ -99,7 +101,7 @@ async function createCompanyForUser(user, idea) {
     stage: "idea",
     createdAt: new Date().toISOString(),
     status: "active",
-    plan: subActive ? "lifetime" : "trial",
+    plan: subActive ? (sub?.cycle || "pro") : "trial",
   };
   upsertCompany(company);
   appendLog(company.id, { agent: "System", message: `Company "${company.name}" created. Deploying AI team...` });
@@ -133,7 +135,7 @@ function authPayload(user) {
     subscriptionActive,
     subscription: getSubscriptionByEmail(fresh.email),
     redirectUrl: company ? `/dashboard.html?company=${company.id}` : null,
-    checkoutUrl: `/checkout.html?plan=lifetime&cycle=lifetime`,
+    checkoutUrl: `/checkout.html?plan=${DEFAULT_PLAN_ID}&cycle=${DEFAULT_CYCLE}`,
   };
 }
 

@@ -15,7 +15,18 @@ const AGENTS = [
 let activeAgent = "ceo";
 let company = null;
 let subscriptionActive = false;
-let checkoutUrl = "/checkout.html?plan=lifetime&cycle=lifetime";
+let checkoutUrl = "/checkout.html?plan=pro&cycle=monthly";
+
+function formatExpiry(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("zh-CN", { year: "numeric", month: "short", day: "numeric" });
+}
+
+function subscriptionLabel(sub) {
+  if (!sub) return "专业版";
+  const cycle = sub.cycle === "annual" ? "年付" : "月付";
+  return `✓ ${cycle} · 至 ${formatExpiry(sub.expiresAt)}`;
+}
 
 function formatTime(iso) {
   if (!iso) return "--:--";
@@ -79,13 +90,13 @@ function updateSubscriptionUi(active, subscription) {
   if (active) {
     banner.hidden = true;
     layout?.classList.remove("locked");
-    if (pricingBtn) pricingBtn.textContent = "✓ 终身版";
+    if (pricingBtn) pricingBtn.textContent = subscriptionLabel(subscription);
   } else {
     banner.hidden = false;
     layout?.classList.add("locked");
     const cta = document.getElementById("paywall-cta");
     if (cta) cta.href = checkoutUrl;
-    if (pricingBtn) pricingBtn.textContent = "¥1 终身版";
+    if (pricingBtn) pricingBtn.textContent = "订阅专业版";
   }
 }
 
@@ -148,7 +159,7 @@ async function loadCompany() {
 
 async function runDaily() {
   if (!subscriptionActive) {
-    alert("请先支付 ¥1（银行卡）或 $1（PayPal）开通终身版。");
+    alert("请先订阅专业版（月付或年付）后使用全部功能。");
     location.href = checkoutUrl;
     return;
   }
@@ -180,7 +191,7 @@ document.getElementById("btn-run-all").addEventListener("click", runDaily);
 document.getElementById("chat-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!subscriptionActive) {
-    alert("请先支付 ¥1（银行卡）或 $1（PayPal）开通终身版。");
+    alert("请先订阅专业版（月付或年付）后使用全部功能。");
     location.href = checkoutUrl;
     return;
   }

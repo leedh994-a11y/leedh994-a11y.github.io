@@ -26,6 +26,7 @@ import {
   approveBankOrderHandler,
 } from "./billing.js";
 import { isSubscriptionActive, getSubscriptionByEmail } from "./billing-store.js";
+import { DEFAULT_PLAN_ID, DEFAULT_CYCLE } from "./plans.js";
 import {
   registerHandler,
   verifyOtpHandler,
@@ -113,9 +114,16 @@ app.post("/api/signup", (_req, res) => {
 app.get("/api/companies/:id", requireAuth, requireCompanyAccess, (req, res) => {
   const company = req.company;
   const active = isSubscriptionActive(company.email);
-  if (active && company.plan !== "lifetime") {
-    company.plan = "lifetime";
-    upsertCompany(company);
+  if (active) {
+    const sub = getSubscriptionByEmail(company.email);
+    const planLabel = sub?.cycle || "pro";
+    if (company.plan !== planLabel && company.plan !== "lifetime") {
+      company.plan = planLabel;
+      upsertCompany(company);
+    } else if (company.plan === "trial") {
+      company.plan = planLabel;
+      upsertCompany(company);
+    }
   }
   res.json({
     success: true,
@@ -168,10 +176,11 @@ app.get("/api/companies/:id/logs", requireAuth, requireCompanyAccess, (req, res)
 function subscriptionPayload(email) {
   const active = isSubscriptionActive(email);
   const sub = getSubscriptionByEmail(email);
+  const cycle = sub?.cycle || DEFAULT_CYCLE;
   return {
     subscriptionActive: active,
     subscription: sub,
-    checkoutUrl: `/checkout.html?plan=lifetime&cycle=lifetime`,
+    checkoutUrl: `/checkout.html?plan=${DEFAULT_PLAN_ID}&cycle=${cycle}`,
   };
 }
 
@@ -187,8 +196,8 @@ function requireSubscription(company, res) {
       success: false,
       error: "Subscription required",
       errorZh: expired
-        ? "您的终身版已失效，请重新支付 ¥1（或 PayPal $1）开通。"
-        : "请先支付 ¥1（银行卡）或 PayPal $1 开通终身版后使用全部功能。",
+        ? "您的订阅已到期，请续费月付（¥699 / $99）或年付（¥6999 / $999）后继续使用。"
+        : "请先订阅专业版（月付或年付）后使用全部功能。中国内地可用银行卡转账，海外用户可用 PayPal。",
       expired,
       ...subscriptionPayload(company.email),
     });
