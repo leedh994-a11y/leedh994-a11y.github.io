@@ -1,0 +1,3 @@
+# Custom domain for Pzhisen (GitHub Pages static mirror — optional)
+# For full AI backend, use Render/Fly/Docker with the same domain + DNS A/CNAME to your host.
+pzhisen.com

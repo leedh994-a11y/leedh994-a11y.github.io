@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>定价方案 - Sitp GPT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/pricing.css">
+  <link rel="stylesheet" href="../css/resources.css">
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x0r5cbb7p5");
+  </script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?09c617d7b704bf771069f0d8e48fde65";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="https://yoursite.asia/zh/" class="logo"><span class="logo-icon">◆</span> Sitp GPT</a>
+      <nav class="nav-links">
+        <a href="https://yoursite.asia/zh/">工具</a>
+        <a href="pricing.html">定价</a>
+        <a href="https://yoursite.asia/zh/account.html">我的订阅</a>
+        <a href="../index.html" class="lang-switch">English</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="pricing-hero">
+      <div class="container">
+        <span class="hero-badge">Pricing</span>
+        <h1>定价方案</h1>
+        <p>节省客服时间，投资即刻回本 — 无论初创还是企业，都有适合您的方案。</p>
+        <div class="billing-toggle">
+          <label><input type="radio" name="cycle" id="cycle-monthly" checked> 按月付费</label>
+          <label><input type="radio" name="cycle" id="cycle-yearly"> 按年付费 <span class="save-badge" id="save-badge" style="display:none">省 40%</span></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="container openrouter-section" id="openrouter-advisor">
+      <div class="tool-panel openrouter-panel">
+        <span class="hero-badge">OpenRouter AI</span>
+        <h2 style="margin:12px 0 8px">AI 选方案助手</h2>
+        <p class="hint" style="margin-bottom:16px">
+          由 OpenRouter 驱动，根据您的团队规模与用量，推荐最合适的 Sitp GPT 订阅方案。
+        </p>
+        <div id="openrouter-status" class="hint" style="margin-bottom:12px"></div>
+        <div class="openrouter-chat" id="openrouter-messages" aria-live="polite"></div>
+        <form id="openrouter-form" class="openrouter-form">
+          <textarea id="openrouter-input" rows="2" placeholder="例如：小团队每月约 5000 条客服消息，该选哪个方案？" maxlength="2000"></textarea>
+          <button type="submit" class="btn btn-primary" id="openrouter-send">询问 AI</button>
+        </form>
+        <p class="hint" style="margin-top:12px;font-size:0.8rem">API 密钥保存在服务器端，不会暴露给浏览器。</p>
+      </div>
+    </section>
+
+    <section class="container paypal-login-section">
+      <div class="tool-panel paypal-login-panel">
+        <span class="hero-badge">PayPal</span>
+        <h2 style="margin:12px 0 8px">使用 PayPal 登录</h2>
+        <p class="hint" style="margin-bottom:12px">登录后可关联订阅与付款；授权完成后将返回本站结账流程。</p>
+        <div class="paypal-login-wrap">
+          <span id="AUrJIWxY7dAh_eYG-kShzcV0fQNMCX2pV0mNM54sJlOw7LPBT1hf8RtYJCrk4pmspw_0IVxwSYUPuWzQ"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="container" id="fc-comfyui">
+      <div class="tool-panel" style="margin-bottom:32px;border:2px solid var(--accent,#0d9488)">
+        <span class="hero-badge">FC 3.0 · ComfyUI</span>
+        <h2 style="margin:12px 0 8px">函数计算 ComfyUI 工作流</h2>
+        <p class="hint" style="margin-bottom:16px">
+          已接入阿里云函数计算 FC 3.0。Sitp GPT 订阅与 PayPal 在本页完成；ComfyUI 算力与定价在 FC 控制台运行。
+        </p>
+        <div class="btn-row" style="flex-wrap:wrap;gap:12px">
+          <a id="fc-pricing-link" href="https://yoursite.asia/fc/pricing" class="btn btn-primary" target="_blank" rel="noopener">打开 FC ComfyUI 定价页</a>
+          <a id="fc-app-link" href="https://yoursite.asia/fc/comfyui" class="btn btn-secondary" target="_blank" rel="noopener">打开 ComfyUI 控制台</a>
+          <a href="https://yoursite.asia/checkout.html?plan=growth&amp;cycle=monthly" class="btn btn-secondary">Sitp GPT 订阅结账 (PayPal)</a>
+        </div>
+        <p id="fc-url-hint" class="hint" style="margin-top:12px;word-break:break-all"></p>
+      </div>
+
+      <div class="pricing-grid" id="pricing-grid">
+        <article class="price-card free-tier" data-plan="free">
+          <h2>免费版</h2>
+          <p class="desc">零成本体验 AI 客服</p>
+          <div class="price-amount">$0</div>
+          <p class="price-period">/月</p>
+          <p class="price-billed">永久免费</p>
+          <ul class="price-features">
+            <li>10 次 AI 客服测试</li>
+            <li>1 个知识库</li>
+            <li>100 页网站训练</li>
+            <li>60+ 免费 SEO 工具</li>
+            <li>输出含 Powered by Sitp GPT</li>
+          </ul>
+          <a href="/zh/" class="btn btn-secondary">免费开始</a>
+        </article>
+
+        <article class="price-card" data-plan="starter">
+          <h2>Starter</h2>
+          <p class="desc">适合个人站长与小团队入门</p>
+          <div class="price-amount">$39</div>
+          <p class="price-period">/月</p>
+          <p class="price-billed">按月计费</p>
+          <ul class="price-features">
+            <li>1 个 AI 聊天机器人</li>
+            <li>每月最多 4,000 条消息</li>
+            <li>最多 1,000 个页面</li>
+            <li>手动刷新训练数据</li>
+            <li>1 名团队成员</li>
+            <li>无限客服 AI 回答</li>
+            <li>自动更新网站内容</li>
+            <li>WhatsApp / Slack 接入</li>
+            <li>收集客户邮箱</li>
+            <li>企业分析报告</li>
+          </ul>
+          <a href="https://yoursite.asia/checkout.html?plan=starter&amp;cycle=monthly" class="btn btn-primary checkout-link">开始 7 天免费试用</a>
+        </article>
+
+        <article class="price-card popular" data-plan="growth">
+          <span class="popular-tag">最受欢迎</span>
+          <h2>Growth</h2>
+          <p class="desc">适合需要自动化与协作的成长型企业</p>
+          <div class="price-amount">$79</div>
+          <p class="price-period">/月</p>
+          <p class="price-billed">按月计费</p>
+          <ul class="price-features">
+            <li>最多 2 个聊天机器人</li>
+            <li>每月最多 10,000 条消息</li>
+            <li>最多 10,000 个页面</li>
+            <li>最多 4 名团队成员</li>
+            <li>API 访问 · 每月自动刷新</li>
+            <li>无限客服 AI 回答</li>
+            <li>自动更新网站内容</li>
+            <li>WhatsApp / Slack 接入</li>
+            <li>收集客户邮箱</li>
+            <li>企业分析报告</li>
+          </ul>
+          <a href="https://yoursite.asia/checkout.html?plan=growth&amp;cycle=monthly" class="btn btn-primary checkout-link">开始 7 天免费试用</a>
+        </article>
+
+        <article class="price-card" data-plan="scale">
+          <h2>Scale</h2>
+          <p class="desc">适合需要更多机器人与自动化的大型团队</p>
+          <div class="price-amount">$259</div>
+          <p class="price-period">/月</p>
+          <p class="price-billed">按月计费</p>
+          <ul class="price-features">
+            <li>最多 3 个聊天机器人</li>
+            <li>每月最多 40,000 条消息</li>
+            <li>最多 50,000 个页面</li>
+            <li>Webhook · 每周自动刷新</li>
+            <li>最多 10 名团队成员</li>
+            <li>无限客服 AI 回答</li>
+            <li>自动更新网站内容</li>
+            <li>WhatsApp / Slack 接入</li>
+            <li>收集客户邮箱</li>
+            <li>企业分析报告</li>
+          </ul>
+          <a href="https://yoursite.asia/checkout.html?plan=scale&amp;cycle=monthly" class="btn btn-primary checkout-link">开始 7 天免费试用</a>
+        </article>
+
+        <article class="price-card enterprise">
+          <h2>Enterprise</h2>
+          <p class="desc">自定义容量、合规与支持</p>
+          <div class="price-amount">定制</div>
+          <p class="price-billed">按需求报价</p>
+          <ul class="price-features">
+            <li>可定制消息量与页面数</li>
+            <li>优先支持 · 定制集成</li>
+            <li>HIPAA 合规 · DPA/BAA</li>
+          </ul>
+          <a href="mailto:sales@example.com" class="btn btn-secondary">联系我们</a>
+        </article>
+      </div>
+
+      <section class="installation-banner" id="installation">
+        <div class="installation-inner">
+          <div>
+            <span class="hero-badge" style="background:rgba(255,255,255,0.2);color:#fff;">一次性套餐</span>
+            <h2>AI 客服安装服务 — $599</h2>
+            <p>包含所有付费版功能，另加：</p>
+            <ul>
+              <li>帮企业训练 AI</li>
+              <li>安装网站机器人</li>
+              <li>设置 FAQ</li>
+              <li>优化客服流程</li>
+            </ul>
+          </div>
+          <div>
+            <div class="price-amount" style="font-size:3rem;font-weight:800;">$599</div>
+            <p>一次性 · 含全部 Pro 功能配置</p>
+            <a href="/checkout.html?plan=installation" class="btn">PayPal 支付 $599</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="addons-section">
+        <h2>附加组件</h2>
+        <div class="addons-grid">
+          <div class="addon-card" data-addon="remove-branding">
+            <div><strong>移除品牌标识</strong><br><span class="hint addon-price">+$39/月</span></div>
+          </div>
+          <div class="addon-card" data-addon="extra-messages">
+            <div><strong>额外 5,000 条消息</strong><br><span class="hint addon-price">+$39/月</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="calculator-section">
+        <h2>消息额度计算器</h2>
+        <p class="hint">GPT-4.1-mini 比 GPT-4.1 便宜约 10 倍，拖动滑块分配额度。</p>
+        <div class="calc-row calc-plans">
+          <button type="button" data-plan="starter">Starter</button>
+          <button type="button" data-plan="growth">Growth</button>
+          <button type="button" data-plan="scale">Scale</button>
+        </div>
+        <div class="calc-row">
+          <label id="slider-label">50% GPT-4.1 · 50% GPT-4.1-mini</label>
+          <input type="range" id="model-slider" class="calc-slider" min="0" max="100" value="50">
+        </div>
+        <div class="calc-results">
+          <div class="calc-stat"><div class="val" id="calc-gpt41">500</div><div class="lbl">GPT-4.1 消息</div></div>
+          <div class="calc-stat"><div class="val" id="calc-mini">5,000</div><div class="lbl">GPT-4.1-mini 消息</div></div>
+          <div class="calc-stat"><div class="val" id="calc-total">5,500</div><div class="lbl">合计 / 月</div></div>
+        </div>
+        <a id="calc-cta" href="https://yoursite.asia/checkout.html?plan=growth&amp;cycle=monthly" class="btn btn-primary" style="margin-top:20px">免费试用 Growth · <span id="calc-cta-price">$79/月</span></a>
+      </section>
+
+      <section class="faq-section">
+        <h2>常见问题</h2>
+        <details class="faq-item"><summary>免费试用如何计费？</summary><p>7 天免费试用期间不扣费。试用结束后按所选方案通过 PayPal 扣款。</p></details>
+        <details class="faq-item"><summary>可以随时取消吗？</summary><p>可以。在「我的订阅」页面随时取消，当前周期结束前仍可使用。</p></details>
+        <details class="faq-item"><summary>支持哪些支付方式？</summary><p>通过 PayPal 支付（Sandbox 测试环境可用测试账号）。</p></details>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="container"><p><a href="../index.html">返回首页</a> · <a href="https://x.com/XZZ13340061411" class="social-x-link" title="Follow @XZZ13340061411 on X" target="_blank" rel="noopener noreferrer"><svg class="social-x-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>@XZZ13340061411</a></p></div></footer>
+  <script src="../js/pricing.js"></script>
+  <script src="../js/pricing-openrouter.js"></script>
+  <script src="../js/pricing-fc.js"></script>
+  <script src="https://www.paypalobjects.com/js/external/api.js"></script>
+  <script src="../js/pricing-paypal-login.js"></script>
+</body>
+</html>

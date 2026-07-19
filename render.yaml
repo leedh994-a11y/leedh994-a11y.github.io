@@ -1,0 +1,31 @@
+# Render Blueprint — deploy from repo root (monorepo)
+# Dashboard: New > Blueprint > connect this repo
+
+services:
+  - type: web
+    name: pzhisen
+    runtime: docker
+    rootDir: pzhisen
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: PUBLIC_URL
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: openai/gpt-4o-mini
+      - key: OPENROUTER_CEO_MODEL
+        value: anthropic/claude-sonnet-4
+      - key: OPENROUTER_SITE_URL
+        sync: false
+      - key: OPENROUTER_SITE_NAME
+        value: Pzhisen
+      - key: DATA_DIR
+        value: /tmp/pzhisen-data

@@ -1,0 +1,20 @@
+{
+  "name": "pzhisen",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pzhisen — AI employee team platform",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "uuid": "^10.0.0"
+  }
+}

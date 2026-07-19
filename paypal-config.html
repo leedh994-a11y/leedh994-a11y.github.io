@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PayPal 配置 - Sitp GPT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x0r5cbb7p5");
+  </script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?09c617d7b704bf771069f0d8e48fde65";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo"><span class="logo-icon">◆</span> Sitp GPT</a>
+      <nav class="nav-links">
+        <a href="/">全部工具</a>
+        <a href="/paypal.html">PayPal 支付</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <span class="hero-badge">Configuration</span>
+        <h1>PayPal 集成配置</h1>
+        <p>配置 Sandbox 或 Live 环境凭证。全球用户请使用公网地址 <strong id="public-site-url">加载中…</strong> 访问与支付。</p>
+      </div>
+    </section>
+
+    <section class="container">
+      <div class="tool-panel">
+        <h2>当前状态</h2>
+        <div id="status-output" class="raw-content" style="background:var(--bg);color:var(--text);min-height:120px;">加载中...</div>
+        <button type="button" class="btn btn-primary" id="test-btn" style="margin-top:16px;">测试连接</button>
+      </div>
+
+      <div class="tool-panel" style="margin-top:24px">
+        <h2>配置方式（任选其一）</h2>
+
+        <h3>方式 1：Access Token（与 mcp.json 相同）</h3>
+        <p class="hint">适合快速测试，支持「前往 PayPal 付款」链接流程。</p>
+        <pre class="raw-content" style="background:#1e1e2e;color:#cdd6f4"># PowerShell — 从 mcp.json 导入
+.\setup-paypal.ps1 -FromMcp
+
+# 或手动设置
+[Environment]::SetEnvironmentVariable("PAYPAL_ACCESS_TOKEN", "你的Token", "User")
+[Environment]::SetEnvironmentVariable("PAYPAL_ENVIRONMENT", "SANDBOX", "User")</pre>
+
+        <h3>方式 2：Client ID + Secret（推荐，支持 PayPal 按钮）</h3>
+        <p class="hint">在 <a href="https://developer.paypal.com/dashboard/applications/sandbox" target="_blank" rel="noopener">PayPal Developer</a> 创建 Sandbox App 获取。</p>
+        <pre class="raw-content" style="background:#1e1e2e;color:#cdd6f4">.\setup-paypal.ps1 `
+  -ClientId "你的Client-ID" `
+  -ClientSecret "你的Secret" `
+  -Environment "sandbox"</pre>
+
+        <h3>方式 3：项目 .env 文件</h3>
+        <p class="hint">复制 <code>.env.example</code> 为 <code>.env</code> 并填写，重启服务即可。</p>
+
+        <h3>重启服务</h3>
+        <pre class="raw-content" style="background:#1e1e2e;color:#cdd6f4">cd "项目目录"
+npm start</pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container"><p><a href="/paypal.html">前往支付页</a> · <a href="https://x.com/XZZ13340061411" class="social-x-link" title="Follow @XZZ13340061411 on X" target="_blank" rel="noopener noreferrer"><svg class="social-x-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>@XZZ13340061411</a></p></div>
+  </footer>
+
+  <script>
+    async function refresh() {
+      const [cfg, st, site] = await Promise.all([
+        fetch("/api/paypal/config").then((r) => r.json()),
+        fetch("/api/paypal/status").then((r) => r.json()),
+        fetch("/api/site").then((r) => r.json()).catch(() => ({})),
+      ]);
+      if (site.publicUrl) {
+        const el = document.getElementById("public-site-url");
+        el.innerHTML = `<a href="${site.publicUrl}" target="_blank" rel="noopener">${site.publicUrl}</a>`;
+      }
+      document.getElementById("status-output").textContent = JSON.stringify({ site, config: cfg, connection: st }, null, 2);
+    }
+    document.getElementById("test-btn").addEventListener("click", refresh);
+    refresh();
+  </script>
+</body>
+</html>

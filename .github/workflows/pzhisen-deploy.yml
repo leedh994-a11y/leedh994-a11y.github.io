@@ -1,0 +1,29 @@
+name: Deploy Pzhisen
+
+on:
+  push:
+    branches: [main, cursor/pzhisen-landing-fd54]
+    paths:
+      - "pzhisen/**"
+  workflow_dispatch:
+
+jobs:
+  deploy-render:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trigger Render deploy
+        run: |
+          echo "Deploy pzhisen/ to Render using render.yaml"
+          echo "Set RENDER_DEPLOY_HOOK_URL secret for auto-deploy"
+        # Uncomment when Render deploy hook is configured:
+        # curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        working-directory: pzhisen
+        run: docker build -t pzhisen:latest .
