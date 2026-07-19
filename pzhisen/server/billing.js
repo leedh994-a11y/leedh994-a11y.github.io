@@ -25,8 +25,8 @@ export function getBillingConfig() {
     publicUrl: PUBLIC_URL,
     paypal: getPayPalPublicConfig(),
     xunhu: { configured: isXunhuConfigured() },
-    noteZh: "银行卡请使用支付宝付款（支持储蓄卡/信用卡）",
-    noteEn: "For bank cards in China, pay via Alipay (debit/credit supported).",
+    noteZh: "支持全国银行卡（工行/建行/农行/中行/招商/交通等），请选「银行卡支付」或支付宝；款项结算至您的国内收款账户。",
+    noteEn: "China bank cards (all major banks) supported via Alipay. Funds settle to your domestic merchant account.",
   };
 }
 
@@ -85,16 +85,17 @@ export async function checkoutHandler(req, res) {
       });
     }
 
-    if (payProvider === "wechat" || payProvider === "alipay") {
+    if (payProvider === "wechat" || payProvider === "alipay" || payProvider === "bank" || payProvider === "bankcard") {
       if (!isXunhuConfigured()) {
         return res.status(503).json({
           success: false,
-          error: "WeChat/Alipay not configured. Set XUNHU_APP_ID and XUNHU_APP_SECRET.",
+          error: "国内支付未配置。请在 Render 设置 XUNHU_APP_ID 和 XUNHU_APP_SECRET。",
         });
       }
       const { amount, currency } = getAmount(planId, cycle, "cny");
+      const cnProvider = payProvider === "wechat" ? "wechat" : "alipay";
       const order = createPendingOrder({
-        email, planId, cycle, amount, currency, provider: payProvider,
+        email, planId, cycle, amount, currency, provider: cnProvider,
       });
       const title = `Pzhisen ${plan.nameZh || plan.name} ${cycle === "yearly" ? "年付" : "月付"}`;
       const xh = await createXunhuPayment({
@@ -103,13 +104,13 @@ export async function checkoutHandler(req, res) {
         title,
         notifyUrl: `${PUBLIC_URL}/api/billing/webhook/xunhu`,
         returnUrl: returnUrl + order.id,
-        type: payProvider,
+        type: cnProvider,
       });
       updateOrder(order.id, { payUrl: xh.payUrl });
       return res.json({
         success: true,
         orderId: order.id,
-        provider: payProvider,
+        provider: cnProvider,
         payUrl: xh.payUrl,
         qrcodeUrl: xh.qrcodeUrl,
       });
@@ -117,7 +118,7 @@ export async function checkoutHandler(req, res) {
 
     return res.status(400).json({
       success: false,
-      error: "Invalid provider. Use: paypal, wechat, or alipay",
+      error: "Invalid provider. Use: paypal, wechat, alipay, or bank",
     });
   } catch (err) {
     console.error("checkout error:", err);

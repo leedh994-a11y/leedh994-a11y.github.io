@@ -2,14 +2,49 @@ const params = new URLSearchParams(location.search);
 const planId = params.get("plan") || "pro";
 const cycle = params.get("cycle") || "monthly";
 
-let selectedProvider = "alipay";
+const isChinaUser = () =>
+  navigator.language?.startsWith("zh") ||
+  Intl.DateTimeFormat().resolvedOptions().timeZone?.includes("Shanghai") ||
+  Intl.DateTimeFormat().resolvedOptions().timeZone?.includes("Chongqing") ||
+  Intl.DateTimeFormat().resolvedOptions().timeZone?.includes("Urumqi");
+
+let selectedProvider = isChinaUser() ? "bank" : "paypal";
 let billingConfig = null;
 let plan = null;
 
 const METHODS = [
-  { id: "alipay", icon: "💙", name: "支付宝", desc: "支持储蓄卡/信用卡", region: "cn" },
-  { id: "wechat", icon: "💚", name: "微信支付", desc: "微信扫码或 H5", region: "cn" },
-  { id: "paypal", icon: "🅿️", name: "PayPal", desc: "国际信用卡 / PayPal 余额", region: "intl" },
+  {
+    id: "bank",
+    icon: "🏦",
+    name: "银行卡支付",
+    desc: "支持全国所有银行储蓄卡/信用卡（工行·建行·农行·中行·招商等）",
+    region: "cn",
+    providerKey: "bankCard",
+  },
+  {
+    id: "alipay",
+    icon: "💙",
+    name: "支付宝",
+    desc: "支付宝余额或绑定的银行卡",
+    region: "cn",
+    providerKey: "alipay",
+  },
+  {
+    id: "wechat",
+    icon: "💚",
+    name: "微信支付",
+    desc: "微信扫码或 H5 支付",
+    region: "cn",
+    providerKey: "wechat",
+  },
+  {
+    id: "paypal",
+    icon: "🅿️",
+    name: "PayPal",
+    desc: "国际信用卡 / PayPal 余额",
+    region: "intl",
+    providerKey: "paypal",
+  },
 ];
 
 function showError(msg) {
@@ -38,7 +73,7 @@ async function loadPlan() {
   renderSummary();
   renderMethods();
   document.getElementById("pay-hint").textContent =
-    billingConfig.noteZh || "银行卡请使用支付宝付款。";
+    billingConfig.noteZh || "支持全国银行卡支付，款项进入您的国内收款账户。";
 }
 
 function renderSummary() {
@@ -55,15 +90,10 @@ function renderSummary() {
 function renderMethods() {
   const providers = billingConfig?.providers || {};
   const container = document.getElementById("pay-methods");
-  const available = METHODS.filter((m) => {
-    if (m.id === "paypal") return providers.paypal;
-    if (m.id === "wechat") return providers.wechat;
-    if (m.id === "alipay") return providers.alipay;
-    return false;
-  });
+  const available = METHODS.filter((m) => providers[m.providerKey]);
 
   if (!available.length) {
-    container.innerHTML = `<p class="checkout-hint">支付尚未配置。请在 Render 环境变量中设置 PayPal 或虎皮椒（XUNHU）密钥。</p>`;
+    container.innerHTML = `<p class="checkout-hint">支付尚未配置。国内支付请设置虎皮椒（XUNHU）密钥；海外请设置 PayPal 密钥。</p>`;
     document.getElementById("btn-pay").disabled = true;
     return;
   }
@@ -92,6 +122,7 @@ function renderMethods() {
       renderSummary();
       document.getElementById("qr-container").innerHTML = "";
       document.getElementById("paypal-button-container").innerHTML = "";
+      if (selectedProvider === "paypal") initPayPalButtons();
     });
   });
 
@@ -101,7 +132,10 @@ function renderMethods() {
 }
 
 function loadPayPalSdk(url) {
-  if (document.querySelector('script[data-paypal]')) return;
+  if (document.querySelector("script[data-paypal]")) {
+    if (selectedProvider === "paypal") initPayPalButtons();
+    return;
+  }
   const s = document.createElement("script");
   s.src = url;
   s.dataset.paypal = "1";
@@ -166,8 +200,12 @@ async function pay() {
 
     if (data.payUrl) {
       const qr = document.getElementById("qr-container");
-      if (data.qrcodeUrl && /MicroMessenger|WeiBo|QQ/i.test(navigator.userAgent) === false) {
-        qr.innerHTML = `<div class="qr-box"><p>请扫码支付</p><img src="${data.qrcodeUrl}" alt="支付二维码"></div>`;
+      if (data.qrcodeUrl) {
+        qr.innerHTML = `<div class="qr-box"><p>请使用手机扫码完成支付</p><img src="${data.qrcodeUrl}" alt="支付二维码"><p class="checkout-hint" style="margin-top:12px">也可<a href="${data.payUrl}">点击此处</a>跳转支付页面</p></div>`;
+        if (/MicroMessenger/i.test(navigator.userAgent)) {
+          location.href = data.payUrl;
+        }
+        return;
       }
       location.href = data.payUrl;
       return;
