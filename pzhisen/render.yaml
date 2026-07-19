@@ -25,3 +25,13 @@ services:
         value: Pzhisen
       - key: DATA_DIR
         value: /tmp/pzhisen-data
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_MODE
+        value: sandbox
+      - key: XUNHU_APP_ID
+        sync: false
+      - key: XUNHU_APP_SECRET
+        sync: false

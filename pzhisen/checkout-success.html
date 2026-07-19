@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>支付成功 — Pzhisen</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/pricing.css">
+</head>
+<body>
+  <main class="success-page container">
+    <h1 id="status-title">处理中…</h1>
+    <p id="status-msg">正在确认您的付款，请稍候。</p>
+    <a href="/dashboard.html" class="btn-primary" id="btn-dash" style="display:inline-flex;margin-top:24px">进入 Dashboard</a>
+  </main>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const orderId = params.get("order");
+    const title = document.getElementById("status-title");
+    const msg = document.getElementById("status-msg");
+
+    async function check() {
+      if (!orderId) {
+        title.textContent = "订单未找到";
+        msg.textContent = "请返回定价页重新下单。";
+        return;
+      }
+      try {
+        const res = await fetch(`/api/billing/order/${orderId}`);
+        const data = await res.json();
+        if (data.active || data.order?.status === "completed" || data.order?.status === "paid") {
+          title.textContent = "支付成功！";
+          msg.textContent = `您的 ${data.subscription?.planId || ""} 订阅已激活，到期日：${(data.subscription?.expiresAt || "").slice(0, 10)}`;
+          return;
+        }
+        if (data.order?.status === "pending") {
+          title.textContent = "等待付款确认";
+          msg.textContent = "如已完成支付，请稍等几秒后刷新页面。";
+          setTimeout(check, 3000);
+          return;
+        }
+        title.textContent = "付款未完成";
+        msg.textContent = "请返回结账页重试。";
+      } catch (e) {
+        title.textContent = "确认失败";
+        msg.textContent = e.message;
+      }
+    }
+    check();
+  </script>
+</body>
+</html>

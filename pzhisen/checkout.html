@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>结账 — Pzhisen</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/pricing.css">
+</head>
+<body>
+  <nav class="site-nav light" aria-label="Main">
+    <a href="/">Pzhisen</a>
+    <a href="/pricing.html" style="margin-right:16px">定价</a>
+  </nav>
+
+  <main class="checkout-page">
+    <div class="checkout-card">
+      <h1 id="checkout-title">完成订阅</h1>
+      <p id="checkout-subtitle" class="checkout-hint"></p>
+
+      <div class="checkout-summary" id="summary">
+        <div class="checkout-line"><span>方案</span><strong id="sum-plan">—</strong></div>
+        <div class="checkout-line"><span>周期</span><strong id="sum-cycle">—</strong></div>
+        <div class="checkout-line total"><span>应付金额</span><strong id="sum-total">—</strong></div>
+      </div>
+
+      <label style="display:block;font-size:14px;font-weight:500;margin-bottom:8px">
+        邮箱（用于开通订阅）
+        <input type="email" id="checkout-email" required placeholder="you@company.com"
+          style="display:block;width:100%;height:44px;margin-top:8px;padding:0 16px;border:1px solid var(--border);border-radius:8px;font-size:16px;">
+      </label>
+
+      <p style="font-size:14px;font-weight:600;margin:24px 0 12px">选择支付方式</p>
+      <div class="pay-methods" id="pay-methods"></div>
+
+      <button type="button" class="btn-primary" id="btn-pay" style="width:100%;margin-top:8px">立即支付</button>
+      <div id="paypal-button-container"></div>
+      <div id="qr-container"></div>
+      <p class="checkout-hint" id="pay-hint"></p>
+      <p class="checkout-error" id="checkout-error" hidden></p>
+    </div>
+  </main>
+
+  <script src="js/checkout.js"></script>
+</body>
+</html>

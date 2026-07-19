@@ -33,6 +33,11 @@ Open http://localhost:3000
 | `/api/companies/:id/run-daily` | POST | Run all agents |
 | `/api/companies/:id/agents/:agentId` | POST | `{ message }` → agent reply |
 | `/api/logs/global` | GET | Public activity feed for homepage |
+| `/api/billing/plans` | GET | Subscription plans |
+| `/api/billing/checkout` | POST | Create payment order |
+| `/api/billing/subscription` | GET | `?email=` subscription status |
+
+See [PAYMENTS.md](./PAYMENTS.md) for WeChat, Alipay, PayPal setup.
 
 ## Independent domain deployment
 
