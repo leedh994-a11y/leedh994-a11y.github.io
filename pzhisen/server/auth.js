@@ -21,6 +21,8 @@ import { isGrandfatheredLifetimeEmail } from "./lifetime-grants.js";
 import { DEFAULT_PLAN_ID, DEFAULT_CYCLE } from "./plans.js";
 import { upsertCompany, getCompany, appendLog, findCompanyByEmail, findCompanyByUserId } from "./store.js";
 import { runCeoOnboarding } from "./agents.js";
+import { isAdminAuthorized } from "./bank-transfer.js";
+import { activateLifetime } from "./billing-store.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || "change-me-in-production";
 const COOKIE_NAME = "pzhisen_token";
@@ -279,6 +281,62 @@ export function logoutHandler(_req, res) {
 export function meHandler(req, res) {
   ensureLifetimeForEmail(req.user.email);
   res.json({ success: true, ...authPayload(req.user) });
+}
+
+/** Admin: restore lifetime access and optionally reset password for a user. */
+export async function adminRestoreUserHandler(req, res) {
+  const key = req.query.key || req.body?.key || req.headers["x-admin-key"];
+  if (!isAdminAuthorized(key)) {
+    return res.status(401).json({ success: false, error: "Unauthorized" });
+  }
+
+  const emailCheck = validateEmail(req.body?.email);
+  if (!emailCheck.ok) {
+    return res.status(400).json({ success: false, error: emailCheck.error });
+  }
+  const normalized = emailCheck.email;
+  const user = getUserByEmail(normalized);
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      error: "该邮箱未注册。请让用户先用此邮箱注册，系统会自动开通终身权限。",
+    });
+  }
+
+  const sub = activateLifetime({
+    email: normalized,
+    provider: "admin_restore",
+    note: "Admin restored lifetime access",
+  });
+
+  let passwordReset = false;
+  const newPassword = req.body?.newPassword || req.body?.password;
+  if (newPassword) {
+    const pwdErr = validatePassword(newPassword);
+    if (pwdErr) return res.status(400).json({ success: false, error: pwdErr });
+    await updateUser(user.id, { passwordHash: await bcrypt.hash(newPassword, 10) });
+    passwordReset = true;
+  }
+
+  const company = findCompanyByEmail(normalized) || findCompanyByUserId(user.id);
+  if (company) {
+    company.plan = "lifetime";
+    upsertCompany(company);
+  }
+
+  res.json({
+    success: true,
+    message: passwordReset
+      ? `已为 ${normalized} 恢复终身权限并重置密码`
+      : `已为 ${normalized} 恢复终身权限（密码未改动，用户仍用原密码登录）`,
+    email: normalized,
+    subscription: sub,
+    subscriptionActive: true,
+    lifetimeMember: true,
+    passwordReset,
+    companyId: company?.id || null,
+  });
 }
 
 export function requireCompanyAccess(req, res, next) {
