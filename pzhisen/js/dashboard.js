@@ -17,7 +17,7 @@ let company = null;
 let subscriptionActive = false;
 let checkoutUrl = "/checkout.html?plan=pro&cycle=monthly";
 const chatImages = [];
-const MAX_CHAT_IMAGES = 4;
+const MAX_CHAT_IMAGES = 10;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
 

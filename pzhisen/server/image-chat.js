@@ -1,7 +1,7 @@
 /** Validate and normalize chat image attachments (base64 data URLs). */
 
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
-const MAX_IMAGES = 4;
+const MAX_IMAGES = 10;
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB per image (decoded)
 
 function parseDataUrl(dataUrl) {

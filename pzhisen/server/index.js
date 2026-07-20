@@ -48,7 +48,7 @@ const PUBLIC_URL = process.env.PUBLIC_URL || `http://localhost:${PORT}`;
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
 app.use(cookieParser());
-app.use(express.json({ limit: "12mb" }));
+app.use(express.json({ limit: "70mb" }));
 
 app.use((req, res, next) => {
   res.setHeader("X-Powered-By", "Pzhisen");
