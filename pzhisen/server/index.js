@@ -115,6 +115,7 @@ app.post("/api/signup", (_req, res) => {
 
 app.get("/api/companies/:id", requireAuth, requireCompanyAccess, (req, res) => {
   const company = req.company;
+  if (company.email) ensureLifetimeForEmail(company.email);
   const active = isSubscriptionActive(company.email);
   if (active) {
     const sub = getSubscriptionByEmail(company.email);

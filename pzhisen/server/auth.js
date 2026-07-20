@@ -18,6 +18,7 @@ import { sendOtpEmail, isMailConfigured } from "./mail.js";
 import { validateEmail } from "./email-validator.js";
 import { isSubscriptionActive, getSubscriptionByEmail, ensureLifetimeForEmail } from "./billing-store.js";
 import { isGrandfatheredLifetimeEmail } from "./lifetime-grants.js";
+import { DEFAULT_PLAN_ID, DEFAULT_CYCLE } from "./plans.js";
 import { upsertCompany, getCompany, appendLog, findCompanyByEmail, findCompanyByUserId } from "./store.js";
 import { runCeoOnboarding } from "./agents.js";
 
@@ -129,10 +130,12 @@ function authPayload(user) {
   }
   const fresh = getUserById(user.id);
   const subscriptionActive = isSubscriptionActive(fresh.email);
+  const lifetimeMember = isGrandfatheredLifetimeEmail(fresh.email);
   return {
     user: publicUser(fresh),
     company,
     subscriptionActive,
+    lifetimeMember,
     subscription: getSubscriptionByEmail(fresh.email),
     redirectUrl: company ? `/dashboard.html?company=${company.id}` : null,
     checkoutUrl: `/checkout.html?plan=${DEFAULT_PLAN_ID}&cycle=${DEFAULT_CYCLE}`,
