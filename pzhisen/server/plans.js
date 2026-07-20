@@ -26,7 +26,7 @@ export const PLANS = {
       "Unlimited daily standups",
       "Unlimited agent chats",
       "Full dashboard access",
-      "Renew monthly or annually",
+      "Zero-cost organic promotion ($0 ad spend)",
     ],
     featuresZh: [
       "全部 6 个 AI Agent",

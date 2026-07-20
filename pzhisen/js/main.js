@@ -32,7 +32,7 @@
     "CEO Agent: reviewing daily strategy...",
     "Engineering Agent: deploying feature branch...",
     "Marketing Agent: scheduling social posts...",
-    "Ads Agent: optimizing Meta campaign...",
+    "Growth Agent: zero-cost organic promotion...",
     "Support Agent: resolving inbox queue...",
   ];
   let taskIdx = 0;
