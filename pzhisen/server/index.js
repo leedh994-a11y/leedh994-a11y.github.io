@@ -45,6 +45,14 @@ import {
   marketingListHandler,
   marketingGetHandler,
 } from "./marketing-routes.js";
+import {
+  videoChatHandler,
+  videoProjectsListHandler,
+  videoProjectGetHandler,
+  videoPublishHandler,
+} from "./video-routes.js";
+import { getVideoPreviewPath } from "./video-studio.js";
+import fs from "fs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -202,6 +210,30 @@ app.get("/api/companies/:id/marketing/campaigns/:campaignId", requireAuth, requi
 app.post("/api/companies/:id/marketing/generate", requireAuth, requireCompanyAccess, async (req, res) => {
   if (!requireSubscription(req.company, res)) return;
   await marketingGenerateHandler(req, res);
+});
+
+app.post("/api/companies/:id/video/chat", requireAuth, requireCompanyAccess, async (req, res) => {
+  if (!requireSubscription(req.company, res)) return;
+  await videoChatHandler(req, res);
+});
+app.get("/api/companies/:id/video/projects", requireAuth, requireCompanyAccess, (req, res) => {
+  if (!requireSubscription(req.company, res)) return;
+  videoProjectsListHandler(req, res);
+});
+app.get("/api/companies/:id/video/projects/:projectId", requireAuth, requireCompanyAccess, (req, res) => {
+  if (!requireSubscription(req.company, res)) return;
+  videoProjectGetHandler(req, res);
+});
+app.post("/api/companies/:id/video/projects/:projectId/publish", requireAuth, requireCompanyAccess, (req, res) => {
+  if (!requireSubscription(req.company, res)) return;
+  videoPublishHandler(req, res);
+});
+
+app.get("/video-preview/:companyId/:file", (req, res) => {
+  const projectId = req.params.file.replace(/\.html$/i, "");
+  const filePath = getVideoPreviewPath(req.params.companyId, projectId);
+  if (!fs.existsSync(filePath)) return res.status(404).send("Preview not found");
+  res.sendFile(filePath);
 });
 
 function subscriptionPayload(email) {

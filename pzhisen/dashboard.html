@@ -79,6 +79,50 @@
         <div id="mkt-results" class="marketing-results" hidden></div>
       </section>
 
+      <section class="video-marketing-chat" id="video-marketing-chat">
+        <div class="video-marketing-chat__header">
+          <h3>🎬 AI 视频推广智能体</h3>
+          <p class="checkout-hint">在对话框输入指令，AI 全自动生成推广营销视频，并一键发布到 YouTube · TikTok · X · Facebook · 微信视频号 · 抖音 · 快手 · 小红书 · 腾讯视频 · QQ</p>
+        </div>
+
+        <div class="video-chat-platforms">
+          <span class="video-platform-tag">YouTube</span>
+          <span class="video-platform-tag">TikTok</span>
+          <span class="video-platform-tag">X</span>
+          <span class="video-platform-tag">Facebook</span>
+          <span class="video-platform-tag">微信视频号</span>
+          <span class="video-platform-tag">抖音</span>
+          <span class="video-platform-tag">快手</span>
+          <span class="video-platform-tag">小红书</span>
+          <span class="video-platform-tag">腾讯视频</span>
+          <span class="video-platform-tag">QQ</span>
+        </div>
+
+        <div class="video-chat-box">
+          <div class="video-chat-messages" id="video-chat-messages"></div>
+          <form class="video-chat-form" id="video-chat-form">
+            <div class="video-chat-compose">
+              <textarea id="video-chat-input" rows="2" placeholder="输入指令，例如：帮我做一个30秒新品推广视频，发布到抖音、快手、小红书、YouTube…" autocomplete="off"></textarea>
+              <button type="submit" class="btn-primary" id="btn-video-chat-send">发送指令</button>
+            </div>
+            <div class="video-chat-options">
+              <label class="video-auto-publish-label">
+                <input type="checkbox" id="video-auto-publish" checked>
+                生成后自动加入各平台发布队列
+              </label>
+              <div class="video-quick-cmds">
+                <button type="button" class="video-quick-cmd" data-cmd="帮我做一个30秒竖屏推广视频，发布到抖音、快手、小红书">快速：抖音+快手+小红书</button>
+                <button type="button" class="video-quick-cmd" data-cmd="生成英文推广视频并发布到 YouTube、TikTok、X、Facebook">快速：海外四平台</button>
+                <button type="button" class="video-quick-cmd" data-cmd="生成全平台推广视频并一键发布">快速：全平台发布</button>
+              </div>
+            </div>
+          </form>
+          <p class="checkout-hint" id="video-chat-status"></p>
+        </div>
+
+        <div id="video-project-panel" class="video-project-panel" hidden></div>
+      </section>
+
       <section class="chat-panel">
         <h3 id="chat-title">Ask CEO Agent</h3>
         <form class="chat-form" id="chat-form">
@@ -102,6 +146,7 @@
   </div>
 
   <script type="module" src="js/marketing-studio.js"></script>
+  <script type="module" src="js/video-marketing-chat.js"></script>
   <script src="js/dashboard.js"></script>
 </body>
 </html>
