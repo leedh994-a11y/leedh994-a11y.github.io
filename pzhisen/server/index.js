@@ -159,9 +159,18 @@ app.post("/api/companies/:id/agents/:agentId", requireAuth, requireCompanyAccess
     const company = req.company;
     if (!requireSubscription(company, res)) return;
 
-    const { message, images } = req.body || {};
-    const result = await runAgent(req.params.agentId, company, message || null, images);
-    appendLog(company.id, { agent: result.agentName, message: result.content, ai: result.ai });
+    const { message, images, imageNames } = req.body || {};
+    const result = await runAgent(req.params.agentId, company, message || null, images, {
+      imageNames: imageNames || [],
+    });
+    const deployNote = result.deployed?.deployedImages
+      ? ` [Deployed ${result.deployed.deployedImages} image(s) to ${result.agentName} backend]`
+      : "";
+    appendLog(company.id, {
+      agent: result.agentName,
+      message: result.content + deployNote,
+      ai: result.ai,
+    });
 
     res.json({ success: true, result });
   } catch (err) {

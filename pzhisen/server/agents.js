@@ -1,5 +1,6 @@
 import { chatCompletion, getModels } from "./openrouter.js";
 import { normalizeChatImages, buildVisionUserContent, getVisionModel } from "./image-chat.js";
+import { deployChatToAgent, getAgentDeployContext } from "./agent-instructions.js";
 
 export const AGENTS = {
   ceo: {
@@ -17,7 +18,8 @@ Be decisive, numbered, and actionable. Max 200 words unless asked for more.`,
     icon: "⌘",
     modelKey: "default",
     system: `You are the Engineering Agent at Pzhisen. You ship code, fix bugs, and improve the product.
-Output: specific technical tasks, file/feature suggestions, and deployment steps. Be practical for a small team.`,
+Output: specific technical tasks, file/feature suggestions, and deployment steps. Be practical for a small team.
+When the user deploys reference images via dashboard chat, treat them as design specs: output concrete HTML/CSS/JS or framework code snippets that implement the UI shown in the images.`,
   },
   marketing: {
     id: "marketing",
@@ -25,7 +27,8 @@ Output: specific technical tasks, file/feature suggestions, and deployment steps
     icon: "✦",
     modelKey: "default",
     system: `You are the Marketing Agent at Pzhisen. You create SEO content, social posts, cold emails, and outreach.
-Output: ready-to-use copy snippets, channel recommendations, and a weekly content calendar outline.`,
+Output: ready-to-use copy snippets, channel recommendations, and a weekly content calendar outline.
+Use deployed reference images as creative direction for copy and visual campaigns.`,
   },
   ads: {
     id: "ads",
@@ -33,7 +36,8 @@ Output: ready-to-use copy snippets, channel recommendations, and a weekly conten
     icon: "▶",
     modelKey: "default",
     system: `You are the Ads Agent at Pzhisen. You run Meta/Facebook/Instagram ad campaigns.
-Output: ad angles, headline/body copy, audience targeting, daily budget split, and optimization rules.`,
+Output: ad angles, headline/body copy, audience targeting, daily budget split, and optimization rules.
+Align ad creative recommendations with deployed reference images from the user.`,
   },
   support: {
     id: "support",
@@ -76,7 +80,30 @@ const TEMPLATE_RESPONSES = {
     `[Ops] Stack checklist: domain DNS ✓, Stripe test mode, SendGrid sender, Plausible analytics. GitHub repo: ${c.name.toLowerCase().replace(/\s+/g, "-")}.`,
 };
 
-export async function runAgent(agentId, company, userMessage = null, images = []) {
+function buildAgentSystemPrompt(agent, deployCtx) {
+  let system = agent.system;
+  if (deployCtx.deployedImageCount > 0 || deployCtx.instructionText) {
+    system += `\n\nBackend deployed program instructions are active for this company. You MUST follow all deployed dashboard directives and use the attached reference images when producing code, copy, or plans.`;
+  }
+  if (agent.id === "engineering" && deployCtx.deployedImageCount > 0) {
+    system += `\nFor Engineering: translate deployed images into implementable code (components, styles, assets paths). Include file names and code blocks ready to paste into the repo.`;
+  }
+  return system;
+}
+
+function mergeVisionImages(deployedUrls, chatImages) {
+  const seen = new Set();
+  const merged = [];
+  for (const url of [...deployedUrls, ...chatImages]) {
+    const key = url.slice(0, 80);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(url);
+  }
+  return merged.slice(0, 10);
+}
+
+export async function runAgent(agentId, company, userMessage = null, images = [], options = {}) {
   const agent = AGENTS[agentId];
   if (!agent) throw new Error("Unknown agent");
 
@@ -84,45 +111,79 @@ export async function runAgent(agentId, company, userMessage = null, images = []
     userMessage ||
     `Run your daily work for this company. Summarize what you accomplished today and your top 3 next actions.`;
 
+  let deployMeta = null;
+  if (options.deploy !== false && company?.id) {
+    deployMeta = deployChatToAgent(company.id, agentId, {
+      message: prompt,
+      images: normalizeChatImages(images),
+      imageNames: options.imageNames || [],
+    });
+  }
+
+  const deployCtx = company?.id ? getAgentDeployContext(company.id, agentId) : { instructionText: "", imageDataUrls: [], deployedImageCount: 0 };
   const chatImages = normalizeChatImages(images);
+  const allImages = mergeVisionImages(deployCtx.imageDataUrls, chatImages);
+
   const models = getModels();
-  const model = chatImages.length
+  const model = allImages.length
     ? getVisionModel()
     : (models[agent.modelKey] || models.default);
 
-  const userContent = buildVisionUserContent(
-    `${companyContext(company)}\n\nTask: ${prompt}`,
-    chatImages
-  );
+  const taskParts = [companyContext(company)];
+  if (deployCtx.instructionText) {
+    taskParts.push("", deployCtx.instructionText);
+  }
+  taskParts.push("", `Current task: ${prompt}`);
+
+  const userContent = buildVisionUserContent(taskParts.join("\n"), allImages);
+  const systemPrompt = buildAgentSystemPrompt(agent, deployCtx);
 
   try {
     const { content, ai } = await chatCompletion({
       model,
       messages: [
-        { role: "system", content: agent.system },
+        { role: "system", content: systemPrompt },
         { role: "user", content: userContent },
       ],
-      maxTokens: 800,
+      maxTokens: 1200,
     });
 
     if (ai && content) {
-      return { agentId, agentName: agent.name, content, ai: true };
+      return {
+        agentId,
+        agentName: agent.name,
+        content,
+        ai: true,
+        deployed: deployMeta,
+        deployedImageCount: deployCtx.deployedImageCount,
+      };
     }
   } catch (err) {
     console.error(`Agent ${agentId} AI error:`, err.message);
   }
 
   const template = TEMPLATE_RESPONSES[agentId]?.(company) || `[${agent.name}] Task queued for ${company.name}.`;
-  const imageNote = chatImages.length
+  const imageNote = allImages.length
+    ? ` ${allImages.length} image(s) deployed to agent backend instructions.`
+    : "";
+  const aiNote = allImages.length
     ? " Image analysis requires OPENROUTER_API_KEY and a vision-capable model."
     : "";
-  return { agentId, agentName: agent.name, content: template, ai: false, note: `AI offline — template response.${imageNote} Set OPENROUTER_API_KEY for live agents.` };
+  return {
+    agentId,
+    agentName: agent.name,
+    content: template + imageNote,
+    ai: false,
+    deployed: deployMeta,
+    deployedImageCount: deployCtx.deployedImageCount,
+    note: `AI offline — template response.${aiNote} Set OPENROUTER_API_KEY for live agents.`,
+  };
 }
 
 export async function runDailyStandup(company) {
   const results = [];
   for (const id of Object.keys(AGENTS)) {
-    const result = await runAgent(id, company, "Execute your daily autonomous tasks. Be specific and brief.");
+    const result = await runAgent(id, company, "Execute your daily autonomous tasks. Be specific and brief.", [], { deploy: false });
     results.push(result);
   }
   return results;
@@ -135,6 +196,8 @@ export async function runCeoOnboarding(company) {
     `A new founder just signed up. Analyze their business idea and produce:
 1) One-paragraph company vision
 2) 7-day launch plan
-3) Which agents to activate first and why`
+3) Which agents to activate first and why`,
+    [],
+    { deploy: false }
   );
 }

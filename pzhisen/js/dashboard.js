@@ -287,6 +287,7 @@ document.getElementById("chat-form").addEventListener("submit", async (e) => {
   respEl.classList.add("visible");
   respEl.textContent = chatImages.length ? "Analyzing image(s)…" : "Thinking…";
   const imagesToSend = chatImages.map((img) => img.dataUrl);
+  const imageNames = chatImages.map((img) => img.name);
   input.value = "";
   clearChatImages();
 
@@ -294,12 +295,16 @@ document.getElementById("chat-form").addEventListener("submit", async (e) => {
     const res = await api(`/api/companies/${companyId}/agents/${activeAgent}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, images: imagesToSend }),
+      body: JSON.stringify({ message, images: imagesToSend, imageNames }),
     });
     const data = await res.json();
     if (res.status === 402) throw new Error(handleSubscriptionError(data));
     if (!data.success) throw new Error(data.error);
-    respEl.textContent = data.result.content;
+    let reply = data.result.content;
+    if (data.result.deployed?.deployedImages) {
+      reply += `\n\n— 已部署 ${data.result.deployed.deployedImages} 张图片到 ${data.result.agentName} 后台指令（累计 ${data.result.deployed.totalImages} 张）`;
+    }
+    respEl.textContent = reply;
     const logsRes = await api(`/api/companies/${companyId}/logs`);
     const logsData = await logsRes.json();
     if (logsData.success) renderLogs(logsData.logs);

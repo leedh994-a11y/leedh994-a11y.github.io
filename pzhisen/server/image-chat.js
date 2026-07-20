@@ -4,11 +4,21 @@ const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "image/gif", "image/web
 const MAX_IMAGES = 10;
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB per image (decoded)
 
-function parseDataUrl(dataUrl) {
+export function parseDataUrl(dataUrl) {
   if (typeof dataUrl !== "string") return null;
   const match = dataUrl.match(/^data:(image\/[a-z+]+);base64,(.+)$/i);
   if (!match) return null;
   return { mime: match[1].toLowerCase(), base64: match[2] };
+}
+
+export function mimeToExtension(mime) {
+  const map = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/gif": "gif",
+    "image/webp": "webp",
+  };
+  return map[mime] || "bin";
 }
 
 function base64ByteLength(base64) {
