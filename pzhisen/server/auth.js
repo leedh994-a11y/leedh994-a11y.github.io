@@ -17,7 +17,7 @@ import {
 import { sendOtpEmail, isMailConfigured } from "./mail.js";
 import { validateEmail } from "./email-validator.js";
 import { isSubscriptionActive, getSubscriptionByEmail, ensureLifetimeForEmail } from "./billing-store.js";
-import { DEFAULT_PLAN_ID, DEFAULT_CYCLE } from "./plans.js";
+import { isGrandfatheredLifetimeEmail } from "./lifetime-grants.js";
 import { upsertCompany, getCompany, appendLog, findCompanyByEmail, findCompanyByUserId } from "./store.js";
 import { runCeoOnboarding } from "./agents.js";
 
@@ -224,6 +224,7 @@ export async function verifyOtpHandler(req, res) {
     });
 
     const company = await createCompanyForUser(user, entry.idea);
+    ensureLifetimeForEmail(normalized);
     const freshUser = getUserById(user.id);
     setAuthCookie(res, freshUser);
 
