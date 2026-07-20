@@ -49,6 +49,36 @@
         </div>
       </section>
 
+      <section class="marketing-studio" id="marketing-studio">
+        <div class="marketing-studio__header">
+          <h3>全自动推广中心</h3>
+          <p class="checkout-hint">AI 一键生成推文、视频脚本、邮件文案，覆盖 YouTube · TikTok · X · Facebook · 视频号 · 抖音 · 快手 · 小红书 · 腾讯视频 · QQ · 全球邮箱</p>
+        </div>
+
+        <div class="marketing-studio__form">
+          <label class="studio-field">
+            推广主题 / 产品卖点
+            <input type="text" id="mkt-topic" placeholder="例如：新品上线、限时活动、品牌故事…">
+          </label>
+
+          <div class="studio-field">
+            <span>内容类型</span>
+            <div class="studio-chips" id="mkt-content-types"></div>
+          </div>
+
+          <div class="studio-field">
+            <span>发布平台（可多选）</span>
+            <div class="studio-platforms" id="mkt-platforms"></div>
+            <button type="button" class="studio-link-btn" id="mkt-select-all">全选平台</button>
+          </div>
+
+          <button type="button" class="btn-primary" id="btn-mkt-generate" style="width:100%">🚀 全自动生成推广内容</button>
+          <p class="checkout-hint" id="mkt-status"></p>
+        </div>
+
+        <div id="mkt-results" class="marketing-results" hidden></div>
+      </section>
+
       <section class="chat-panel">
         <h3 id="chat-title">Ask CEO Agent</h3>
         <form class="chat-form" id="chat-form">
@@ -71,6 +101,7 @@
     </main>
   </div>
 
+  <script type="module" src="js/marketing-studio.js"></script>
   <script src="js/dashboard.js"></script>
 </body>
 </html>
