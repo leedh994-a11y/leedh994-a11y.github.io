@@ -7,7 +7,7 @@ const AGENTS = [
   { id: "ceo", name: "CEO Agent", icon: "◆" },
   { id: "engineering", name: "Engineering Agent", icon: "⌘" },
   { id: "marketing", name: "Marketing Agent", icon: "✦" },
-  { id: "ads", name: "Ads Agent", icon: "▶" },
+  { id: "ads", name: "Growth Agent", icon: "▶" },
   { id: "support", name: "Support Agent", icon: "◎" },
   { id: "ops", name: "Ops Agent", icon: "⚡" },
 ];

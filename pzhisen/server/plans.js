@@ -33,7 +33,7 @@ export const PLANS = {
       "无限每日站会",
       "无限 Agent 对话",
       "完整 Dashboard 功能",
-      "按月或按年续费使用",
+      "零成本推广营销（无需广告投放费用）",
     ],
     priceCny: { monthly: 699, annual: 6999 },
     priceUsd: { monthly: 99, annual: 999 },
