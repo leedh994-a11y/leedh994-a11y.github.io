@@ -5,6 +5,10 @@ import { fileURLToPath } from "url";
 import { loadJson, saveJson, appendLog } from "./store.js";
 import { MARKETING_PLATFORMS } from "./platforms.js";
 import { ZERO_COST_MARKETING_POLICY } from "./marketing-policy.js";
+import { queueProjectMp4Render, ensureProjectMp4 } from "./video-render.js";
+import { publishToPlatform } from "./platform-publishers/index.js";
+import { isPlatformOAuthConfigured } from "./oauth-config.js";
+import { getPlatformConnection } from "./oauth-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "..", "data");
@@ -151,6 +155,9 @@ export function createVideoProject(company, { title, topic, video, platforms, us
     })),
     status: "generated",
     previewUrl: null,
+    mp4Status: "pending",
+    mp4Url: null,
+    mp4Error: null,
     createdAt: new Date().toISOString(),
   };
 
@@ -160,6 +167,8 @@ export function createVideoProject(company, { title, topic, video, platforms, us
   data.projects.unshift(project);
   if (data.projects.length > 20) data.projects = data.projects.slice(0, 20);
   saveProjects(company.id, data);
+
+  queueProjectMp4Render(company.id, project);
 
   return project;
 }
@@ -191,27 +200,46 @@ function buildPlatformCopy(platformId, title, topic, company) {
   return `${title || topic}\n\n${topic}\n\n${company.idea}\n\n${tags}`;
 }
 
-export function publishVideoProject(companyId, projectId, platformIds = null) {
+export async function publishVideoProject(companyId, projectId, platformIds = null) {
   const data = getProjects(companyId);
-  const project = data.projects.find((p) => p.id === projectId);
+  let project = data.projects.find((p) => p.id === projectId);
   if (!project) return null;
+
+  project = (await ensureProjectMp4(companyId, projectId)) || project;
 
   const now = new Date().toISOString();
   const targets = platformIds
     ? project.platforms.filter((p) => platformIds.includes(p.id))
     : project.platforms;
 
+  const published = [];
   for (const plat of targets) {
-    plat.status = "published";
+    const oauthReady = isPlatformOAuthConfigured(plat.id) && getPlatformConnection(companyId, plat.id);
+    const result = await publishToPlatform(companyId, plat.id, project, plat);
+    plat.status = result.success ? "published" : "failed";
     plat.publishedAt = now;
-    plat.publishNote = `已加入自动发布队列 — 请在上传页粘贴文案并上传视频（${plat.publishUrl || "手动发布"}）`;
+    plat.uploadMode = result.mode;
+    plat.remoteUrl = result.url || null;
+    plat.remoteId = result.remoteId || null;
+    plat.publishNote = result.message;
+    if (result.error) plat.publishError = result.error;
+    if (oauthReady && result.mode === "oauth" && result.success) {
+      plat.publishNote = `✅ OAuth 自动上传成功 — ${result.message}`;
+    } else if (project.mp4Url) {
+      plat.publishNote = `${result.message}。视频下载：${project.mp4Url}`;
+    }
+    published.push(plat);
   }
 
-  project.status = targets.length === project.platforms.length ? "published" : "partial";
+  project.status = published.every((p) => p.status === "published")
+    ? "published"
+    : published.some((p) => p.status === "published")
+      ? "partial"
+      : "failed";
   project.publishedAt = now;
   saveProjects(companyId, data);
 
-  return { project, published: targets };
+  return { project, published };
 }
 
 export function listVideoProjects(companyId) {
@@ -220,6 +248,15 @@ export function listVideoProjects(companyId) {
 
 export function getVideoProject(companyId, projectId) {
   return getProjects(companyId).projects.find((p) => p.id === projectId) || null;
+}
+
+export function updateVideoProject(companyId, projectId, patch) {
+  const data = getProjects(companyId);
+  const idx = data.projects.findIndex((p) => p.id === projectId);
+  if (idx < 0) return null;
+  data.projects[idx] = { ...data.projects[idx], ...patch, updatedAt: new Date().toISOString() };
+  saveProjects(companyId, data);
+  return data.projects[idx];
 }
 
 export function getOrCreateSession(companyId, sessionId) {

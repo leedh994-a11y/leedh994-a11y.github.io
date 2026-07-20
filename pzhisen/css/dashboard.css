@@ -801,3 +801,56 @@
   opacity: 0.55;
   pointer-events: none;
 }
+
+.video-oauth-panel {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.video-oauth-panel__head strong {
+  color: #f8fafc;
+  font-size: 14px;
+}
+
+.video-oauth-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.oauth-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.oauth-badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #334155;
+  color: #cbd5e1;
+}
+
+.oauth-badge--on {
+  background: #064e3b;
+  color: #6ee7b7;
+}
+
+.oauth-badge--off {
+  background: #450a0a;
+  color: #fca5a5;
+}
+
+.video-mp4-player {
+  width: min(320px, 100%);
+  border-radius: 12px;
+  margin: 12px 0 16px;
+  background: #000;
+}

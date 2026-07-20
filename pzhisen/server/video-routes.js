@@ -11,6 +11,7 @@ import {
   getOrCreateSession,
   VIDEO_PLATFORM_IDS,
 } from "./video-studio.js";
+import { ensureProjectMp4 } from "./video-render.js";
 
 function parseAiJson(content) {
   if (!content) return null;
@@ -100,7 +101,7 @@ export async function videoChatHandler(req, res) {
       });
 
       if (autoPublish && (parsed.action === "generate_and_publish" || parsed.action === "publish" || /发布|publish/i.test(message))) {
-        publishResult = publishVideoProject(company.id, project.id);
+        publishResult = await publishVideoProject(company.id, project.id);
         project = publishResult.project;
       }
 
@@ -139,14 +140,31 @@ export function videoProjectGetHandler(req, res) {
   res.json({ success: true, project });
 }
 
-export function videoPublishHandler(req, res) {
-  const { platformIds } = req.body || {};
-  const result = publishVideoProject(req.company.id, req.params.projectId, platformIds);
-  if (!result) return res.status(404).json({ success: false, error: "Project not found" });
-  appendLog(req.company.id, {
-    agent: "Video Agent",
-    message: `Published video to ${result.published.length} platform(s)`,
-    ai: true,
-  });
-  res.json({ success: true, ...result });
+export async function videoPublishHandler(req, res) {
+  try {
+    const { platformIds } = req.body || {};
+    const result = await publishVideoProject(req.company.id, req.params.projectId, platformIds);
+    if (!result) return res.status(404).json({ success: false, error: "Project not found" });
+    appendLog(req.company.id, {
+      agent: "Video Agent",
+      message: `Published video to ${result.published.length} platform(s)`,
+      ai: true,
+    });
+    res.json({ success: true, ...result });
+  } catch (err) {
+    console.error("video publish:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function videoRenderHandler(req, res) {
+  try {
+    const project = getVideoProject(req.company.id, req.params.projectId);
+    if (!project) return res.status(404).json({ success: false, error: "Project not found" });
+    const updated = await ensureProjectMp4(req.company.id, req.params.projectId);
+    res.json({ success: true, project: updated });
+  } catch (err) {
+    console.error("video render:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 }

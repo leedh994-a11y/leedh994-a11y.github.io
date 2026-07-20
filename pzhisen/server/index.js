@@ -50,8 +50,16 @@ import {
   videoProjectsListHandler,
   videoProjectGetHandler,
   videoPublishHandler,
+  videoRenderHandler,
 } from "./video-routes.js";
 import { getVideoPreviewPath } from "./video-studio.js";
+import { getVideoMp4Path } from "./video-render.js";
+import {
+  oauthStatusHandler,
+  oauthConnectHandler,
+  oauthCallbackHandler,
+  oauthDisconnectHandler,
+} from "./oauth-routes.js";
 import fs from "fs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -224,15 +232,41 @@ app.get("/api/companies/:id/video/projects/:projectId", requireAuth, requireComp
   if (!requireSubscription(req.company, res)) return;
   videoProjectGetHandler(req, res);
 });
-app.post("/api/companies/:id/video/projects/:projectId/publish", requireAuth, requireCompanyAccess, (req, res) => {
+app.post("/api/companies/:id/video/projects/:projectId/publish", requireAuth, requireCompanyAccess, async (req, res) => {
   if (!requireSubscription(req.company, res)) return;
-  videoPublishHandler(req, res);
+  await videoPublishHandler(req, res);
 });
+app.post("/api/companies/:id/video/projects/:projectId/render", requireAuth, requireCompanyAccess, async (req, res) => {
+  if (!requireSubscription(req.company, res)) return;
+  await videoRenderHandler(req, res);
+});
+
+app.get("/api/companies/:id/oauth/status", requireAuth, requireCompanyAccess, (req, res) => {
+  if (!requireSubscription(req.company, res)) return;
+  oauthStatusHandler(req, res);
+});
+app.post("/api/companies/:id/oauth/:platform/connect", requireAuth, requireCompanyAccess, (req, res) => {
+  if (!requireSubscription(req.company, res)) return;
+  oauthConnectHandler(req, res);
+});
+app.delete("/api/companies/:id/oauth/:platform", requireAuth, requireCompanyAccess, (req, res) => {
+  if (!requireSubscription(req.company, res)) return;
+  oauthDisconnectHandler(req, res);
+});
+app.get("/api/oauth/callback/:platform", oauthCallbackHandler);
 
 app.get("/video-preview/:companyId/:file", (req, res) => {
   const projectId = req.params.file.replace(/\.html$/i, "");
   const filePath = getVideoPreviewPath(req.params.companyId, projectId);
   if (!fs.existsSync(filePath)) return res.status(404).send("Preview not found");
+  res.sendFile(filePath);
+});
+
+app.get("/video-file/:companyId/:file", (req, res) => {
+  const projectId = req.params.file.replace(/\.mp4$/i, "");
+  const filePath = getVideoMp4Path(req.params.companyId, projectId);
+  if (!fs.existsSync(filePath)) return res.status(404).send("Video not found");
+  res.setHeader("Content-Type", "video/mp4");
   res.sendFile(filePath);
 });
 
