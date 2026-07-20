@@ -48,7 +48,7 @@ const PUBLIC_URL = process.env.PUBLIC_URL || `http://localhost:${PORT}`;
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
 app.use(cookieParser());
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "12mb" }));
 
 app.use((req, res, next) => {
   res.setHeader("X-Powered-By", "Pzhisen");
@@ -118,11 +118,9 @@ app.get("/api/companies/:id", requireAuth, requireCompanyAccess, (req, res) => {
   const active = isSubscriptionActive(company.email);
   if (active) {
     const sub = getSubscriptionByEmail(company.email);
-    const planLabel = sub?.cycle || "pro";
-    if (company.plan !== planLabel && company.plan !== "lifetime") {
-      company.plan = planLabel;
-      upsertCompany(company);
-    } else if (company.plan === "trial") {
+    const planLabel =
+      sub?.cycle === "lifetime" || sub?.planId === "lifetime" ? "lifetime" : (sub?.cycle || "pro");
+    if (company.plan !== planLabel) {
       company.plan = planLabel;
       upsertCompany(company);
     }
@@ -161,8 +159,8 @@ app.post("/api/companies/:id/agents/:agentId", requireAuth, requireCompanyAccess
     const company = req.company;
     if (!requireSubscription(company, res)) return;
 
-    const { message } = req.body || {};
-    const result = await runAgent(req.params.agentId, company, message || null);
+    const { message, images } = req.body || {};
+    const result = await runAgent(req.params.agentId, company, message || null, images);
     appendLog(company.id, { agent: result.agentName, message: result.content, ai: result.ai });
 
     res.json({ success: true, result });

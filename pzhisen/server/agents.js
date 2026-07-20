@@ -1,4 +1,5 @@
 import { chatCompletion, getModels } from "./openrouter.js";
+import { normalizeChatImages, buildVisionUserContent, getVisionModel } from "./image-chat.js";
 
 export const AGENTS = {
   ceo: {
@@ -75,7 +76,7 @@ const TEMPLATE_RESPONSES = {
     `[Ops] Stack checklist: domain DNS ✓, Stripe test mode, SendGrid sender, Plausible analytics. GitHub repo: ${c.name.toLowerCase().replace(/\s+/g, "-")}.`,
 };
 
-export async function runAgent(agentId, company, userMessage = null) {
+export async function runAgent(agentId, company, userMessage = null, images = []) {
   const agent = AGENTS[agentId];
   if (!agent) throw new Error("Unknown agent");
 
@@ -83,18 +84,23 @@ export async function runAgent(agentId, company, userMessage = null) {
     userMessage ||
     `Run your daily work for this company. Summarize what you accomplished today and your top 3 next actions.`;
 
+  const chatImages = normalizeChatImages(images);
   const models = getModels();
-  const model = models[agent.modelKey] || models.default;
+  const model = chatImages.length
+    ? getVisionModel()
+    : (models[agent.modelKey] || models.default);
+
+  const userContent = buildVisionUserContent(
+    `${companyContext(company)}\n\nTask: ${prompt}`,
+    chatImages
+  );
 
   try {
     const { content, ai } = await chatCompletion({
       model,
       messages: [
         { role: "system", content: agent.system },
-        {
-          role: "user",
-          content: `${companyContext(company)}\n\nTask: ${prompt}`,
-        },
+        { role: "user", content: userContent },
       ],
       maxTokens: 800,
     });
@@ -107,7 +113,10 @@ export async function runAgent(agentId, company, userMessage = null) {
   }
 
   const template = TEMPLATE_RESPONSES[agentId]?.(company) || `[${agent.name}] Task queued for ${company.name}.`;
-  return { agentId, agentName: agent.name, content: template, ai: false, note: "AI offline — template response. Set OPENROUTER_API_KEY for live agents." };
+  const imageNote = chatImages.length
+    ? " Image analysis requires OPENROUTER_API_KEY and a vision-capable model."
+    : "";
+  return { agentId, agentName: agent.name, content: template, ai: false, note: `AI offline — template response.${imageNote} Set OPENROUTER_API_KEY for live agents.` };
 }
 
 export async function runDailyStandup(company) {
