@@ -3,6 +3,7 @@ import { getCycle, isValidCycle } from "./plans.js";
 import {
   getGrandfatheredLifetimeEmails,
   isLifetimeSubscription,
+  isGrandfatheredLifetimeEmail,
   lifetimeExpiresAt,
 } from "./lifetime-grants.js";
 
@@ -132,16 +133,29 @@ export function activateSubscription({ email, planId, cycle, provider, externalI
   return sub;
 }
 
+export function ensureLifetimeForEmail(email) {
+  if (!isGrandfatheredLifetimeEmail(email)) return null;
+  const normalized = email.trim().toLowerCase();
+  const existing = getSubscriptionByEmail(normalized);
+  if (
+    existing?.status === "active" &&
+    existing?.cycle === "lifetime" &&
+    existing?.planId === "lifetime"
+  ) {
+    return existing;
+  }
+  return activateLifetime({
+    email: normalized,
+    provider: "grandfather_restore",
+    note: "Restored grandfathered lifetime access",
+  });
+}
+
 export function ensureGrandfatheredLifetimeAccess() {
   const restored = [];
   for (const email of getGrandfatheredLifetimeEmails()) {
-    const existing = getSubscriptionByEmail(email);
-    if (isLifetimeSubscription(existing)) continue;
-    restored.push(activateLifetime({
-      email,
-      provider: "grandfather_restore",
-      note: "Auto-restored lifetime access on server start",
-    }));
+    const sub = ensureLifetimeForEmail(email);
+    if (sub) restored.push(sub);
   }
   return restored;
 }
@@ -154,7 +168,13 @@ export function getSubscriptionByEmail(email) {
 }
 
 export function isSubscriptionActive(email) {
-  const sub = getSubscriptionByEmail(email);
+  if (!email) return false;
+  const normalized = email.trim().toLowerCase();
+  if (isGrandfatheredLifetimeEmail(normalized)) {
+    ensureLifetimeForEmail(normalized);
+    return true;
+  }
+  const sub = getSubscriptionByEmail(normalized);
   if (!sub || sub.status !== "active") return false;
   if (isLifetimeSubscription(sub)) return true;
   return new Date(sub.expiresAt) > new Date();

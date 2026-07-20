@@ -16,7 +16,7 @@ import {
 } from "./otp-store.js";
 import { sendOtpEmail, isMailConfigured } from "./mail.js";
 import { validateEmail } from "./email-validator.js";
-import { isSubscriptionActive, getSubscriptionByEmail } from "./billing-store.js";
+import { isSubscriptionActive, getSubscriptionByEmail, ensureLifetimeForEmail } from "./billing-store.js";
 import { DEFAULT_PLAN_ID, DEFAULT_CYCLE } from "./plans.js";
 import { upsertCompany, getCompany, appendLog, findCompanyByEmail, findCompanyByUserId } from "./store.js";
 import { runCeoOnboarding } from "./agents.js";
@@ -257,6 +257,8 @@ export async function loginHandler(req, res) {
       return res.status(401).json({ success: false, error: "邮箱或密码错误" });
     }
 
+    ensureLifetimeForEmail(normalized);
+
     setAuthCookie(res, user);
     res.json({ success: true, message: "登录成功", ...authPayload(user) });
   } catch (err) {
@@ -271,6 +273,7 @@ export function logoutHandler(_req, res) {
 }
 
 export function meHandler(req, res) {
+  ensureLifetimeForEmail(req.user.email);
   res.json({ success: true, ...authPayload(req.user) });
 }
 
