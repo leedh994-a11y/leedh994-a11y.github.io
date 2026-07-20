@@ -20,6 +20,22 @@
       </label>
       <button type="button" class="btn-primary" id="btn-load" style="width:100%">加载待确认订单</button>
 
+      <hr style="margin:32px 0;border:none;border-top:1px solid var(--border)">
+      <h2 style="margin:0 0 8px;font-size:1.1rem">恢复终身用户</h2>
+      <p class="checkout-hint">为已购终身版用户恢复权限。邮箱 <code>ddb1520@outlook.com</code> 已在系统自动白名单中，登录后会自动开通。若用户忘记密码，可在此重置。</p>
+      <label style="display:block;margin:12px 0">
+        用户邮箱
+        <input type="email" id="restore-email" value="ddb1520@outlook.com"
+          style="display:block;width:100%;height:44px;margin-top:8px;padding:0 16px;border:1px solid var(--border);border-radius:8px;">
+      </label>
+      <label style="display:block;margin:12px 0">
+        新密码（可选，仅当用户忘记原密码时填写，至少 8 位）
+        <input type="password" id="restore-password" placeholder="留空则不修改密码"
+          style="display:block;width:100%;height:44px;margin-top:8px;padding:0 16px;border:1px solid var(--border);border-radius:8px;">
+      </label>
+      <button type="button" class="btn-primary" id="btn-restore" style="width:100%">恢复终身权限</button>
+      <p class="checkout-hint" id="restore-result" hidden style="margin-top:12px"></p>
+
       <div id="orders-list" style="margin-top:24px"></div>
       <p class="checkout-error" id="admin-error" hidden></p>
     </div>
@@ -73,6 +89,25 @@
       });
     }
     document.getElementById("btn-load").addEventListener("click", loadOrders);
+
+    document.getElementById("btn-restore").addEventListener("click", async () => {
+      const key = keyInput.value.trim();
+      const email = document.getElementById("restore-email").value.trim();
+      const newPassword = document.getElementById("restore-password").value;
+      const resultEl = document.getElementById("restore-result");
+      if (!key) return alert("请输入管理密钥");
+      if (!email) return alert("请输入邮箱");
+      sessionStorage.setItem("pzhisen_admin_key", key);
+      const r = await fetch("/api/auth/admin/restore-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Admin-Key": key },
+        body: JSON.stringify({ email, newPassword: newPassword || undefined, key }),
+      });
+      const d = await r.json();
+      resultEl.hidden = false;
+      resultEl.textContent = d.success ? d.message : (d.error || "失败");
+      resultEl.style.color = d.success ? "#16a34a" : "#dc2626";
+    });
   </script>
 </body>
 </html>

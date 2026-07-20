@@ -22,7 +22,6 @@ import { DEFAULT_PLAN_ID, DEFAULT_CYCLE } from "./plans.js";
 import { upsertCompany, getCompany, appendLog, findCompanyByEmail, findCompanyByUserId } from "./store.js";
 import { runCeoOnboarding } from "./agents.js";
 import { isAdminAuthorized } from "./bank-transfer.js";
-import { activateLifetime } from "./billing-store.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || "change-me-in-production";
 const COOKIE_NAME = "pzhisen_token";
@@ -304,11 +303,7 @@ export async function adminRestoreUserHandler(req, res) {
     });
   }
 
-  const sub = activateLifetime({
-    email: normalized,
-    provider: "admin_restore",
-    note: "Admin restored lifetime access",
-  });
+  const sub = ensureLifetimeForEmail(normalized);
 
   let passwordReset = false;
   const newPassword = req.body?.newPassword || req.body?.password;
