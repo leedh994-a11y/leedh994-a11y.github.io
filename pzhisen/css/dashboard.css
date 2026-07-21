@@ -404,108 +404,7 @@
   gap: 12px;
 }
 
-/* ─── Marketing Studio ─── */
-.marketing-studio {
-  background: var(--bg);
-  border: 1px solid var(--divider);
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 24px;
-}
-
-.marketing-studio__header h3 {
-  margin: 0 0 8px;
-  font-size: 18px;
-  color: var(--heading);
-}
-
-.marketing-studio__form {
-  margin-top: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.studio-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.studio-field input[type="text"] {
-  height: 44px;
-  padding: 0 16px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 400;
-}
-
-.studio-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.studio-chip {
-  border: 1px solid var(--border);
-  background: #fff;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.studio-chip.active {
-  background: var(--heading);
-  color: #fff;
-  border-color: var(--heading);
-}
-
-.studio-platforms {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 8px;
-}
-
-.studio-platform {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 400;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: #fff;
-  cursor: pointer;
-}
-
-.studio-link-btn {
-  align-self: flex-start;
-  background: none;
-  border: none;
-  color: var(--primary-600);
-  font-size: 13px;
-  cursor: pointer;
-  padding: 0;
-}
-
-.marketing-results {
-  margin-top: 24px;
-}
-
-.mkt-summary {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 16px;
-  font-size: 14px;
-}
-
+/* ─── Shared marketing card styles (video studio) ─── */
 .mkt-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -556,13 +455,6 @@
   margin: 8px 0;
   max-height: 200px;
   overflow: auto;
-}
-
-.mkt-steps {
-  font-size: 13px;
-  color: var(--muted);
-  padding-left: 20px;
-  margin: 8px 0;
 }
 
 .studio-copy-btn {
@@ -795,11 +687,6 @@
 .mkt-badge--done {
   background: #064e3b;
   color: #6ee7b7;
-}
-
-.dashboard-layout.locked .video-marketing-chat {
-  opacity: 0.55;
-  pointer-events: none;
 }
 
 .video-oauth-panel {

@@ -40,12 +40,6 @@ import {
   requireCompanyAccess,
 } from "./auth.js";
 import {
-  marketingConfigHandler,
-  marketingGenerateHandler,
-  marketingListHandler,
-  marketingGetHandler,
-} from "./marketing-routes.js";
-import {
   videoChatHandler,
   videoProjectsListHandler,
   videoProjectGetHandler,
@@ -204,20 +198,6 @@ app.post("/api/companies/:id/agents/:agentId", requireAuth, requireCompanyAccess
 
 app.get("/api/companies/:id/logs", requireAuth, requireCompanyAccess, (req, res) => {
   res.json({ success: true, logs: getLogs(req.company.id, 100) });
-});
-
-app.get("/api/marketing/config", marketingConfigHandler);
-app.get("/api/companies/:id/marketing/campaigns", requireAuth, requireCompanyAccess, (req, res) => {
-  if (!requireSubscription(req.company, res)) return;
-  marketingListHandler(req, res);
-});
-app.get("/api/companies/:id/marketing/campaigns/:campaignId", requireAuth, requireCompanyAccess, (req, res) => {
-  if (!requireSubscription(req.company, res)) return;
-  marketingGetHandler(req, res);
-});
-app.post("/api/companies/:id/marketing/generate", requireAuth, requireCompanyAccess, async (req, res) => {
-  if (!requireSubscription(req.company, res)) return;
-  await marketingGenerateHandler(req, res);
 });
 
 app.post("/api/companies/:id/video/chat", requireAuth, requireCompanyAccess, async (req, res) => {
