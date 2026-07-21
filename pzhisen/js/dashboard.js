@@ -16,10 +16,6 @@ let activeAgent = "ceo";
 let company = null;
 let subscriptionActive = false;
 let checkoutUrl = "/checkout.html?plan=pro&cycle=monthly";
-const chatImages = [];
-const MAX_CHAT_IMAGES = 10;
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
 
 function formatExpiry(iso) {
   if (!iso) return "";
@@ -195,82 +191,6 @@ async function runDaily() {
 document.getElementById("btn-run-daily").addEventListener("click", runDaily);
 document.getElementById("btn-run-all").addEventListener("click", runDaily);
 
-function renderChatImagePreview() {
-  const preview = document.getElementById("chat-image-preview");
-  if (!chatImages.length) {
-    preview.hidden = true;
-    preview.innerHTML = "";
-    return;
-  }
-  preview.hidden = false;
-  preview.innerHTML = chatImages
-    .map(
-      (img, idx) => `
-    <div class="chat-image-chip">
-      <img src="${img.dataUrl}" alt="${escapeHtml(img.name)}">
-      <button type="button" data-remove-image="${idx}" aria-label="移除图片">×</button>
-    </div>`
-    )
-    .join("");
-
-  preview.querySelectorAll("[data-remove-image]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      chatImages.splice(Number(btn.dataset.removeImage), 1);
-      renderChatImagePreview();
-    });
-  });
-}
-
-function readImageFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("读取图片失败"));
-    reader.readAsDataURL(file);
-  });
-}
-
-async function addChatImages(fileList) {
-  const files = [...fileList];
-  const errors = [];
-
-  for (const file of files) {
-    if (chatImages.length >= MAX_CHAT_IMAGES) {
-      errors.push(`最多只能添加 ${MAX_CHAT_IMAGES} 张图片`);
-      break;
-    }
-    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-      errors.push(`${file.name}：仅支持 JPG、PNG、GIF、WebP`);
-      continue;
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      errors.push(`${file.name}：超过 5MB 限制`);
-      continue;
-    }
-    try {
-      const dataUrl = await readImageFile(file);
-      chatImages.push({ name: file.name, dataUrl });
-    } catch {
-      errors.push(`${file.name}：读取失败`);
-    }
-  }
-
-  renderChatImagePreview();
-  if (errors.length) alert(errors.join("\n"));
-}
-
-function clearChatImages() {
-  chatImages.length = 0;
-  renderChatImagePreview();
-  const fileInput = document.getElementById("chat-image-input");
-  if (fileInput) fileInput.value = "";
-}
-
-document.getElementById("chat-image-input")?.addEventListener("change", async (e) => {
-  if (e.target.files?.length) await addChatImages(e.target.files);
-  e.target.value = "";
-});
-
 document.getElementById("chat-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!subscriptionActive) {
@@ -281,30 +201,23 @@ document.getElementById("chat-form").addEventListener("submit", async (e) => {
 
   const input = document.getElementById("chat-input");
   const message = input.value.trim();
-  if ((!message && !chatImages.length) || !companyId) return;
+  if (!message || !companyId) return;
 
   const respEl = document.getElementById("chat-response");
   respEl.classList.add("visible");
-  respEl.textContent = chatImages.length ? "Analyzing image(s)…" : "Thinking…";
-  const imagesToSend = chatImages.map((img) => img.dataUrl);
-  const imageNames = chatImages.map((img) => img.name);
+  respEl.textContent = "Thinking…";
   input.value = "";
-  clearChatImages();
 
   try {
     const res = await api(`/api/companies/${companyId}/agents/${activeAgent}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, images: imagesToSend, imageNames }),
+      body: JSON.stringify({ message }),
     });
     const data = await res.json();
     if (res.status === 402) throw new Error(handleSubscriptionError(data));
     if (!data.success) throw new Error(data.error);
-    let reply = data.result.content;
-    if (data.result.deployed?.deployedImages) {
-      reply += `\n\n— 已部署 ${data.result.deployed.deployedImages} 张图片到 ${data.result.agentName} 后台指令（累计 ${data.result.deployed.totalImages} 张）`;
-    }
-    respEl.textContent = reply;
+    respEl.textContent = data.result.content;
     const logsRes = await api(`/api/companies/${companyId}/logs`);
     const logsData = await logsRes.json();
     if (logsData.success) renderLogs(logsData.logs);
