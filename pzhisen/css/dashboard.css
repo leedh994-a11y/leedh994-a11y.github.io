@@ -54,8 +54,7 @@
 
 .dashboard-layout.locked .sidebar button,
 .dashboard-layout.locked .btn-row button,
-.dashboard-layout.locked .chat-form,
-.dashboard-layout.locked .marketing-studio {
+.dashboard-layout.locked .chat-form {
   opacity: 0.45;
   pointer-events: none;
 }
