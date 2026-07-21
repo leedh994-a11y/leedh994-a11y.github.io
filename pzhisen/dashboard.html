@@ -50,20 +50,14 @@
       </section>
 
       <section class="chat-panel">
-        <h3 id="chat-title">Ask CEO Agent</h3>
+        <h3 id="chat-title">全自动AI智能体对话</h3>
+        <p class="chat-panel__hint checkout-hint">输入指令与 AI 智能体对话，系统将全自动分析并执行任务（仅支持文字，不支持上传图片）</p>
         <form class="chat-form" id="chat-form">
           <div class="chat-compose">
             <div class="chat-compose__row">
-              <label class="chat-attach-btn" for="chat-image-input" title="添加图片">
-                <span aria-hidden="true">🖼️</span>
-                <span class="sr-only">添加图片</span>
-              </label>
-              <input type="file" id="chat-image-input" accept="image/jpeg,image/png,image/gif,image/webp" multiple hidden>
-              <input type="text" id="chat-input" placeholder="e.g. What should we prioritize this week?" autocomplete="off">
-              <button type="submit" class="btn-primary">Send</button>
+              <input type="text" id="chat-input" placeholder="输入指令，例如：本周应优先推进哪些工作？" autocomplete="off">
+              <button type="submit" class="btn-primary">发送</button>
             </div>
-            <div class="chat-image-preview" id="chat-image-preview" hidden></div>
-            <p class="chat-image-hint" id="chat-image-hint">支持 JPG、PNG、GIF、WebP，最多 10 张，每张不超过 5MB。发送后图片将部署到当前 Agent 后台指令，用于代码与方案生成。</p>
           </div>
         </form>
         <div class="chat-response" id="chat-response"></div>
