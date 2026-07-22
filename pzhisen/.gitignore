@@ -6,3 +6,4 @@ data/
 
 promo/frames/
 promo/frames-*/
+__pycache__/

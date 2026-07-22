@@ -14,6 +14,10 @@ Landscape (1920×1080) and vertical (1080×1920) for each language.
 | Voice | `zh-CN-YunyangNeural` |
 | Rebuild | `python3 make_narration_zh.py` then `python3 build_video_zh_v2.py` |
 
+Vertical captions use a proper ASS file (`assets/narration-zh-vertical.ass`) with
+`PlayRes 1080×1920`, modest font size (~34), bottom alignment (`MarginV≈88`),
+and short 1–2 line wraps so talking-head remains easy to watch.
+
 ## English
 
 | | |
