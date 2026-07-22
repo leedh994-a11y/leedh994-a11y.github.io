@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pzhisen 推广视频 — AI 智能体全年 24 小时帮你推广营销</title>
+  <meta name="description" content="观看中国成功创业者陈总详解如何用 pzhisen.online 的 AI 智能体全自动推广营销。横版 + 竖版，中文旁白与烧录中文字幕。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    :root {
+      --font-sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    .promo-page {
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 80% 50% at 15% 0%, rgba(15, 23, 42, 0.08), transparent 55%),
+        radial-gradient(ellipse 50% 40% at 95% 5%, rgba(14, 165, 233, 0.08), transparent 50%),
+        linear-gradient(180deg, #f8fafc 0%, #eef2f7 50%, #f8fafc 100%);
+      color: var(--heading);
+      padding: 96px 24px 64px;
+    }
+    .promo-wrap { max-width: 1100px; margin: 0 auto; }
+    .promo-kicker {
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--primary-600);
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .promo-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.15;
+      margin: 0 0 12px;
+    }
+    .promo-sub {
+      font-size: 1.05rem;
+      color: var(--body);
+      max-width: 720px;
+      line-height: 1.75;
+      margin: 0 0 28px;
+    }
+    .video-shell {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #0f172a;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+      aspect-ratio: 16 / 9;
+    }
+    .video-shell.vertical {
+      aspect-ratio: 9 / 16;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+    .video-shell video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #0f172a;
+    }
+    .formats {
+      display: grid;
+      gap: 40px;
+      margin-top: 8px;
+    }
+    @media (min-width: 900px) {
+      .formats.with-vertical {
+        grid-template-columns: 1.4fr 0.6fr;
+        align-items: start;
+      }
+    }
+    .format-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--caption);
+      margin: 0 0 12px;
+    }
+    .promo-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+    .promo-meta {
+      margin-top: 20px;
+      font-size: 0.9rem;
+      color: var(--caption);
+    }
+    .promo-meta a { color: var(--primary-600); }
+    .site-nav.promo-nav {
+      position: fixed;
+      top: 0; right: 0; left: 0;
+      padding: 18px 28px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 18px;
+      background: rgba(248, 250, 252, 0.88);
+      backdrop-filter: blur(10px);
+      z-index: 20;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    .site-nav.promo-nav a {
+      color: var(--body);
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+    }
+    .site-nav.promo-nav a:hover { color: var(--primary-600); }
+  </style>
+</head>
+<body>
+  <nav class="site-nav promo-nav" aria-label="主导航">
+    <a href="/promo-video.html">English</a>
+    <a href="/">首页</a>
+    <a href="/pricing.html">方案</a>
+    <a href="/login.html">登录</a>
+  </nav>
+
+  <main class="promo-page">
+    <div class="promo-wrap">
+      <p class="promo-kicker">官方推广视频 · 中文 · 横版 + 竖版</p>
+      <h1 class="promo-title">AI 智能体全年 24 小时，帮你推广营销</h1>
+      <p class="promo-sub">
+        中国成功创业者「陈总」多角度讲解：
+        <a href="https://pzhisen.online">pzhisen.online</a>
+        的 AI 智能体如何全自动制作推文与视频、群发邮箱、自动客服、分析市场销售，
+        并发布到 YouTube、TikTok、抖音、小红书等平台。含网站与控制台 B-roll，烧录中文字幕。
+      </p>
+
+      <div class="formats with-vertical">
+        <div>
+          <p class="format-label">横版 · 1920×1080</p>
+          <div class="video-shell">
+            <video
+              controls
+              playsinline
+              preload="metadata"
+              poster="promo/assets/zh-talk-front.png"
+              title="Pzhisen 中文推广视频（横版）">
+              <source src="promo/pzhisen-promo-zh.mp4" type="video/mp4">
+              <track kind="subtitles" src="promo/assets/narration-zh.vtt" srclang="zh" label="中文" default>
+              您的浏览器不支持 video 标签。
+              <a href="promo/pzhisen-promo-zh.mp4">下载 MP4</a>
+            </video>
+          </div>
+        </div>
+        <div>
+          <p class="format-label">竖版 · 1080×1920</p>
+          <div class="video-shell vertical">
+            <video
+              controls
+              playsinline
+              preload="metadata"
+              poster="promo/assets/zh-talk-front.png"
+              title="Pzhisen 中文推广视频（竖版）">
+              <source src="promo/pzhisen-promo-zh-vertical.mp4" type="video/mp4">
+              您的浏览器不支持 video 标签。
+              <a href="promo/pzhisen-promo-zh-vertical.mp4">下载竖版 MP4</a>
+            </video>
+          </div>
+        </div>
+      </div>
+
+      <div class="promo-actions">
+        <a class="btn-primary" href="/login.html?register=1">立即开始</a>
+        <a class="btn-get-started" href="promo/pzhisen-promo-zh.mp4" download>下载横版</a>
+        <a class="btn-get-started" href="promo/pzhisen-promo-zh-vertical.mp4" download>下载竖版</a>
+      </div>
+      <p class="promo-meta">
+        约 2:01 · 中文旁白 · 烧录中文字幕 · 适合抖音 / 视频号 ·
+        <a href="https://pzhisen.online">pzhisen.online</a>
+      </p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 Pzhisen. Independent product — not affiliated with Polsia or any third-party brand.</p>
+    </div>
+  </footer>
+</body>
+</html>
