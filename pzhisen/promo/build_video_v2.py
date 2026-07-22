@@ -7,7 +7,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageEnhance, ImageFont
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 
 ROOT = Path(__file__).resolve().parent
 ASSETS = ROOT / "assets"
@@ -102,7 +102,7 @@ def cover_resize(img: Image.Image, tw: int, th: int) -> Image.Image:
 
 def contain_blur_bg(img: Image.Image, tw: int, th: int) -> Image.Image:
     """Fit image into frame with blurred cover background (good for vertical UI shots)."""
-    bg = cover_resize(img, tw, th).filter(__import__("PIL.ImageFilter", fromlist=["ImageFilter"]).ImageFilter.GaussianBlur(28))
+    bg = cover_resize(img, tw, th).filter(ImageFilter.GaussianBlur(28))
     bg = ImageEnhance.Brightness(bg).enhance(0.45)
     scale = min(tw / img.width, th / img.height) * 0.92
     nw, nh = max(1, int(img.width * scale)), max(1, int(img.height * scale))
@@ -279,16 +279,20 @@ def encode(frames_dir: Path, outfile: Path, vertical: bool = False) -> None:
 
 
 def main() -> None:
+    import sys
+
     # Ensure UI B-roll exists
     ui = SHOTS / "ui-dashboard.png"
     if not ui.exists():
         subprocess.run(["python3", str(ROOT / "make_ui_broll.py")], check=True)
 
-    frames = render(vertical=False)
-    encode(frames, OUT_DIR / "pzhisen-promo-en.mp4", vertical=False)
-
-    frames_v = render(vertical=True)
-    encode(frames_v, OUT_DIR / "pzhisen-promo-en-vertical.mp4", vertical=True)
+    only = sys.argv[1] if len(sys.argv) > 1 else "all"
+    if only in ("all", "landscape"):
+        frames = render(vertical=False)
+        encode(frames, OUT_DIR / "pzhisen-promo-en.mp4", vertical=False)
+    if only in ("all", "vertical"):
+        frames_v = render(vertical=True)
+        encode(frames_v, OUT_DIR / "pzhisen-promo-en-vertical.mp4", vertical=True)
 
 
 if __name__ == "__main__":

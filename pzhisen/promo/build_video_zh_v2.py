@@ -306,17 +306,21 @@ def encode(frames_dir: Path, outfile: Path, vertical: bool = False) -> None:
 
 
 def main() -> None:
+    import sys
+
     if not (SHOTS / "ui-dashboard.png").exists():
         subprocess.run(["python3", str(ROOT / "make_ui_broll.py")], check=True)
     duration = load_duration()
     scenes = build_scenes(duration)
     print(f"ZH duration: {duration:.3f}s")
 
-    frames = render(scenes, duration, vertical=False)
-    encode(frames, OUT_DIR / "pzhisen-promo-zh.mp4", vertical=False)
-
-    frames_v = render(scenes, duration, vertical=True)
-    encode(frames_v, OUT_DIR / "pzhisen-promo-zh-vertical.mp4", vertical=True)
+    only = sys.argv[1] if len(sys.argv) > 1 else "all"
+    if only in ("all", "landscape"):
+        frames = render(scenes, duration, vertical=False)
+        encode(frames, OUT_DIR / "pzhisen-promo-zh.mp4", vertical=False)
+    if only in ("all", "vertical"):
+        frames_v = render(scenes, duration, vertical=True)
+        encode(frames_v, OUT_DIR / "pzhisen-promo-zh-vertical.mp4", vertical=True)
 
 
 if __name__ == "__main__":
