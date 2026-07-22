@@ -1,0 +1,47 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,WenQuanYi Micro Hei,34,&H00FFFFFF,&H000000FF,&H64000000,&H64000000,0,0,0,0,100,100,0,0,1,2,0,2,40,40,88,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.05,0:00:03.92,Default,,0,0,0,,您好，\N我是陈总——一位在中国和全球
+Dialogue: 0,0:00:03.92,0:00:07.78,Default,,0,0,0,,市场创办并规模化多家企业的成\N功创业者。
+Dialogue: 0,0:00:07.96,0:00:11.10,Default,,0,0,0,,今天我想向大家详细讲解一个彻\N底改变我营销与运营方式的平台
+Dialogue: 0,0:00:11.10,0:00:14.25,Default,,0,0,0,,：Pzhisen，\N网址就是 pzhisen.
+Dialogue: 0,0:00:14.25,0:00:17.39,Default,,0,0,0,,online。
+Dialogue: 0,0:00:17.57,0:00:20.98,Default,,0,0,0,,使用非常便捷、迅速、\N快捷。
+Dialogue: 0,0:00:21.16,0:00:24.58,Default,,0,0,0,,打开网站，\N告诉它你的商业想法，
+Dialogue: 0,0:00:24.58,0:00:27.99,Default,,0,0,0,,几分钟就能部署你的 AI 智\N能体团队——无需复杂配置，
+Dialogue: 0,0:00:27.99,0:00:31.41,Default,,0,0,0,,开始使用也无需绑定信用卡。
+Dialogue: 0,0:00:31.59,0:00:34.74,Default,,0,0,0,,智能体上线后，\N全年三百六十五天、
+Dialogue: 0,0:00:34.74,0:00:37.90,Default,,0,0,0,,每天二十四小时不间断为你工作\N。
+Dialogue: 0,0:00:38.08,0:00:39.71,Default,,0,0,0,,从不睡觉。
+Dialogue: 0,0:00:39.89,0:00:41.67,Default,,0,0,0,,从不休息。
+Dialogue: 0,0:00:41.85,0:00:43.62,Default,,0,0,0,,永不下班。
+Dialogue: 0,0:00:43.80,0:00:46.92,Default,,0,0,0,,有了 Pzhisen，\N专业 AI 智能体可以全自动
+Dialogue: 0,0:00:46.92,0:00:50.04,Default,,0,0,0,,制作推广营销推文文案。
+Dialogue: 0,0:00:50.22,0:00:53.75,Default,,0,0,0,,可以全自动制作推广营销视频。
+Dialogue: 0,0:00:53.93,0:00:58.31,Default,,0,0,0,,可以制作推广营销文案，\N并发送到全球主流邮箱——
+Dialogue: 0,0:00:58.31,0:01:02.69,Default,,0,0,0,,Gmail、Outlook、\NQQ 邮箱、163 等等。
+Dialogue: 0,0:01:02.87,0:01:08.03,Default,,0,0,0,,可以自动回复客服消息，\N让客户白天夜晚都能得到帮助。
+Dialogue: 0,0:01:08.21,0:01:13.80,Default,,0,0,0,,可以自动分析市场竞争力、\N销售数据，以及实时市场行情。
+Dialogue: 0,0:01:13.98,0:01:18.40,Default,,0,0,0,,可以自动调研市场，\N分析未来世界各行业走向。
+Dialogue: 0,0:01:18.58,0:01:22.05,Default,,0,0,0,,然后帮你发布到全球各大社交平\N台：YouTube、
+Dialogue: 0,0:01:22.05,0:01:25.53,Default,,0,0,0,,TikTok、X、\NFacebook、
+Dialogue: 0,0:01:25.53,0:01:29.00,Default,,0,0,0,,腾讯视频号、中国抖音、\N腾讯视频、快手、小红书，
+Dialogue: 0,0:01:29.00,0:01:32.47,Default,,0,0,0,,以及更多主流平台。
+Dialogue: 0,0:01:32.65,0:01:35.53,Default,,0,0,0,,无论你是个人网站还是企业网站\N，
+Dialogue: 0,0:01:35.53,0:01:38.41,Default,,0,0,0,,Pzhisen 都能帮助全球\N任何人，
+Dialogue: 0,0:01:38.41,0:01:41.29,Default,,0,0,0,,全自动推广营销你的线上业务。
+Dialogue: 0,0:01:41.47,0:01:45.10,Default,,0,0,0,,最重要的是：\NPzhisen 已经帮助全球
+Dialogue: 0,0:01:45.10,0:01:48.74,Default,,0,0,0,,数千位个人和企业，\N通过 AI 智能体推广营销，
+Dialogue: 0,0:01:48.74,0:01:52.37,Default,,0,0,0,,在一个月内赚到了总计一百万美\N元的收益。
+Dialogue: 0,0:01:52.55,0:01:56.78,Default,,0,0,0,,如果你也准备好让 AI 团队\N替你昼夜不停地工作，
+Dialogue: 0,0:01:56.78,0:02:01.02,Default,,0,0,0,,现在就打开 pzhisen.\Nonline，今晚就开始。
