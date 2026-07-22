@@ -4,30 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pzhisen Promo Video — AI That Runs Your Company While You Sleep</title>
-  <meta name="description" content="Watch how Pzhisen AI agents market, support, and grow your business 24/7. English narration with subtitles.">
+  <meta name="description" content="Watch how Pzhisen AI agents market, support, and grow your business 24/7. English narration with burned-in subtitles. Landscape and vertical versions.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/main.css">
   <style>
+    :root { --font-sans: "DM Sans", system-ui, sans-serif; }
     .promo-page {
       min-height: 100vh;
       background:
-        radial-gradient(ellipse 80% 50% at 20% 0%, rgba(99, 102, 241, 0.12), transparent 55%),
-        radial-gradient(ellipse 60% 40% at 90% 10%, rgba(15, 23, 42, 0.06), transparent 50%),
-        linear-gradient(180deg, #f8fafc 0%, #eef2ff 45%, #f8fafc 100%);
+        radial-gradient(ellipse 80% 50% at 15% 0%, rgba(15, 23, 42, 0.08), transparent 55%),
+        radial-gradient(ellipse 50% 40% at 95% 5%, rgba(14, 165, 233, 0.08), transparent 50%),
+        linear-gradient(180deg, #f8fafc 0%, #eef2f7 50%, #f8fafc 100%);
       color: var(--heading);
       padding: 96px 24px 64px;
     }
-    .promo-wrap {
-      max-width: 1080px;
-      margin: 0 auto;
-    }
+    .promo-wrap { max-width: 1100px; margin: 0 auto; }
     .promo-kicker {
       font-family: var(--font-sans);
-      font-size: 0.8rem;
-      letter-spacing: 0.12em;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--primary-600);
       font-weight: 600;
@@ -42,7 +40,7 @@
     .promo-sub {
       font-size: 1.05rem;
       color: var(--body);
-      max-width: 640px;
+      max-width: 680px;
       line-height: 1.65;
       margin: 0 0 28px;
     }
@@ -54,11 +52,35 @@
       box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
       aspect-ratio: 16 / 9;
     }
+    .video-shell.vertical {
+      aspect-ratio: 9 / 16;
+      max-width: 360px;
+      margin: 0 auto;
+    }
     .video-shell video {
       width: 100%;
       height: 100%;
       display: block;
       background: #0f172a;
+    }
+    .formats {
+      display: grid;
+      gap: 40px;
+      margin-top: 8px;
+    }
+    @media (min-width: 900px) {
+      .formats.with-vertical {
+        grid-template-columns: 1.4fr 0.6fr;
+        align-items: start;
+      }
+    }
+    .format-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--caption);
+      margin: 0 0 12px;
     }
     .promo-actions {
       display: flex;
@@ -79,7 +101,7 @@
       display: flex;
       justify-content: flex-end;
       gap: 18px;
-      background: rgba(248, 250, 252, 0.85);
+      background: rgba(248, 250, 252, 0.88);
       backdrop-filter: blur(10px);
       z-index: 20;
       border-bottom: 1px solid rgba(226, 232, 240, 0.8);
@@ -103,35 +125,55 @@
 
   <main class="promo-page">
     <div class="promo-wrap">
-      <p class="promo-kicker">Official promo · English</p>
+      <p class="promo-kicker">Official promo · English · Landscape + Vertical</p>
       <h1 class="promo-title">AI That Runs Your Company While You Sleep</h1>
       <p class="promo-sub">
-        An American founder walks through how Pzhisen AI agents create marketing content,
-        emails, support replies, market analysis, and publish across global platforms — 24/7.
-        English narration with burned-in English subtitles.
-        Prefer Chinese? Watch the <a href="/promo-video-zh.html">中文推广视频</a>.
+        Founder narration with multi-angle talking-head cuts, live site and dashboard B-roll,
+        and burned-in English subtitles. Prefer Chinese? Watch the
+        <a href="/promo-video-zh.html">中文推广视频</a>.
       </p>
 
-      <div class="video-shell">
-        <video
-          controls
-          playsinline
-          preload="metadata"
-          poster="promo/assets/businessman-hero.png"
-          title="Pzhisen promotional video in English">
-          <source src="promo/pzhisen-promo-en.mp4" type="video/mp4">
-          <track kind="subtitles" src="promo/assets/narration.vtt" srclang="en" label="English" default>
-          Your browser does not support the video tag.
-          <a href="promo/pzhisen-promo-en.mp4">Download the MP4</a>
-        </video>
+      <div class="formats with-vertical">
+        <div>
+          <p class="format-label">Landscape · 1920×1080</p>
+          <div class="video-shell">
+            <video
+              controls
+              playsinline
+              preload="metadata"
+              poster="promo/assets/talk-front-a.png"
+              title="Pzhisen promotional video in English (landscape)">
+              <source src="promo/pzhisen-promo-en.mp4" type="video/mp4">
+              <track kind="subtitles" src="promo/assets/narration.vtt" srclang="en" label="English" default>
+              Your browser does not support the video tag.
+              <a href="promo/pzhisen-promo-en.mp4">Download the MP4</a>
+            </video>
+          </div>
+        </div>
+        <div>
+          <p class="format-label">Vertical · 1080×1920</p>
+          <div class="video-shell vertical">
+            <video
+              controls
+              playsinline
+              preload="metadata"
+              poster="promo/assets/talk-front-a.png"
+              title="Pzhisen promotional video in English (vertical)">
+              <source src="promo/pzhisen-promo-en-vertical.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+              <a href="promo/pzhisen-promo-en-vertical.mp4">Download vertical MP4</a>
+            </video>
+          </div>
+        </div>
       </div>
 
       <div class="promo-actions">
         <a class="btn-primary" href="/login.html?register=1">Get started</a>
-        <a class="btn-get-started" href="promo/pzhisen-promo-en.mp4" download>Download MP4</a>
+        <a class="btn-get-started" href="promo/pzhisen-promo-en.mp4" download>Download landscape</a>
+        <a class="btn-get-started" href="promo/pzhisen-promo-en-vertical.mp4" download>Download vertical</a>
       </div>
       <p class="promo-meta">
-        Duration ~2:08 · 1920×1080 ·
+        ~2:08 · English narration · burned-in subtitles ·
         <a href="https://pzhisen.online">pzhisen.online</a>
       </p>
     </div>
