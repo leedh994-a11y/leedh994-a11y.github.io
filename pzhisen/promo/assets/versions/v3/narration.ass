@@ -1,0 +1,31 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,DejaVu Sans,32,&H00FFFFFF,&H000000FF,&H78000000,&H64000000,0,0,0,0,100,100,0,0,3,2,0,2,52,52,110,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.05,0:00:06.48,Default,,0,0,0,,I'm James — a product founder based in\Nthe United States, building and shipping\Nevery day.
+Dialogue: 0,0:00:06.64,0:00:15.35,Default,,0,0,0,,Let me break down exactly how to use\NPzhisen — pzhisen.online — so AI agents\Nhandle your entire marketing stack.
+Dialogue: 0,0:00:15.51,0:00:20.34,Default,,0,0,0,,Getting started is incredibly simple,\Nfast, and convenient.
+Dialogue: 0,0:00:20.50,0:00:31.06,Default,,0,0,0,,You open the site, share your business idea, and\Ndeploy your AI employee team in minutes — no\Ncomplicated setup, no credit card required to\Nbegin.
+Dialogue: 0,0:00:31.22,0:00:39.81,Default,,0,0,0,,Once your agents are live, they work for you\Ntwenty-four hours a day, seven days a week,\Nthree hundred sixty-five days a year.
+Dialogue: 0,0:00:39.97,0:00:42.06,Default,,0,0,0,,They never sleep.
+Dialogue: 0,0:00:42.22,0:00:44.62,Default,,0,0,0,,They never take a break.
+Dialogue: 0,0:00:44.78,0:00:47.03,Default,,0,0,0,,They never clock out.
+Dialogue: 0,0:00:47.19,0:00:55.38,Default,,0,0,0,,With Pzhisen, specialized AI agents\Nautomatically create promotional marketing\Ntweets and social copy for your brand.
+Dialogue: 0,0:00:55.54,0:01:00.03,Default,,0,0,0,,They produce promotional marketing\Nvideos ready for distribution.
+Dialogue: 0,0:01:00.19,0:01:08.49,Default,,0,0,0,,They write promotional marketing emails\Nand send them to mainstream inboxes\Nworldwide — Gmail, Outlook, and more.
+Dialogue: 0,0:01:08.65,0:01:15.78,Default,,0,0,0,,They automatically reply to customer\Nservice messages, so your clients always\Nget help — day or night.
+Dialogue: 0,0:01:15.94,0:01:23.28,Default,,0,0,0,,They automatically analyze your market\Ncompetitiveness, your sales data, and\Nreal-time market conditions.
+Dialogue: 0,0:01:23.44,0:01:29.63,Default,,0,0,0,,They research industry trends and help\Nyou understand where the world's major\Nsectors are heading next.
+Dialogue: 0,0:01:29.79,0:01:43.35,Default,,0,0,0,,Then they publish for you across the world's\Nbiggest platforms: YouTube, TikTok, X, Facebook,\NWeChat Channels, Douyin, Tencent Video,\NKuaishou, Xiaohongshu — and more.
+Dialogue: 0,0:01:43.51,0:01:53.09,Default,,0,0,0,,Whether you have a personal website or a full\Nenterprise site, Pzhisen helps anyone, anywhere,\Npromote and grow online — fully automated.
+Dialogue: 0,0:01:53.25,0:02:06.07,Default,,0,0,0,,And here's the result that matters most: Pzhisen has\Nalready helped thousands of individuals and businesses\Nworldwide generate one million dollars in revenue in a\Nsingle month through AI-powered promotion and marketing.
+Dialogue: 0,0:02:06.23,0:02:13.16,Default,,0,0,0,,If you're ready to put an AI team to\Nwork while you sleep, go to\Npzhisen.online — and start tonight.

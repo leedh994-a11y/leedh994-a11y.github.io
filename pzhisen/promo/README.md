@@ -28,6 +28,27 @@ and short 1–2 line wraps so talking-head remains easy to watch.
 | Voice | `en-US-ChristopherNeural` |
 | Rebuild | `python3 build_video_v2.py` |
 
+## Five vertical variants (EN)
+
+Five distinct American-presenter cuts for TikTok / Reels / Shorts / Douyin.
+
+| Version | Presenter | Voice | Output |
+|---|---|---|---|
+| V1 | Michael | `en-US-ChristopherNeural` | `versions/pzhisen-promo-v1-vertical.mp4` |
+| V2 | David | `en-US-GuyNeural` | `versions/pzhisen-promo-v2-vertical.mp4` |
+| V3 | James | `en-US-EricNeural` | `versions/pzhisen-promo-v3-vertical.mp4` |
+| V4 | Carlos | `en-US-RogerNeural` | `versions/pzhisen-promo-v4-vertical.mp4` |
+| V5 | William | `en-US-BrianNeural` | `versions/pzhisen-promo-v5-vertical.mp4` |
+
+| | |
+|---|---|
+| Format | Vertical 1080×1920 · English burned-in subtitles |
+| Player | `/promo-versions.html` |
+| Assets | `assets/versions/v{1-5}/` |
+| Narration | `python3 make_narration_versions.py` |
+| Rebuild | `python3 build_versions_vertical.py` (`v1`…`v5` or `all`) |
+| Re-burn subs only | `python3 build_versions_vertical.py all --subs-only` (needs silent intermediates) |
+
 ## Pipeline
 
 1. `python3 make_ui_broll.py` — dashboard / publish / analytics B-roll
