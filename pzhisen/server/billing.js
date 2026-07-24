@@ -19,17 +19,45 @@ import {
 } from "./paypal.js";
 import {
   getBankAccountConfig,
+  listReceivingBankAccounts,
   isBankTransferConfigured,
   makeTransferCode,
   isAdminAuthorized,
 } from "./bank-transfer.js";
 import { findCompanyByEmail } from "./store.js";
+import {
+  notifyOrderEvent,
+  isOrderNotifyConfigured,
+  getOrderNotifyEmails,
+  sendNotifyTestEmail,
+  isMailConfigured,
+} from "./mail.js";
 
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
 
 function maskAccount(num) {
-  if (num.length <= 8) return num;
+  if (!num || num.length <= 8) return num || "";
   return num.slice(0, 4) + " **** **** " + num.slice(-4);
+}
+
+function publicBankAccounts() {
+  return listReceivingBankAccounts().map((a) => ({
+    id: a.id,
+    label: a.label,
+    network: a.network,
+    bankName: a.bankName,
+    accountName: a.accountName,
+    accountNumber: a.accountNumber,
+    accountNumberMask: maskAccount(a.accountNumber),
+    branch: a.branch,
+  }));
+}
+
+function fireNotify(event, order, extra) {
+  // Never block checkout / capture on email failures
+  notifyOrderEvent(event, order, extra).catch((err) => {
+    console.error("order notify error:", err.message);
+  });
 }
 
 function formatExpiry(iso) {
@@ -39,6 +67,7 @@ function formatExpiry(iso) {
 
 export async function getBillingConfig() {
   const bank = getBankAccountConfig();
+  const accounts = publicBankAccounts();
   if (isPayPalConfigured()) await verifyPayPalAuth();
   const paypal = getPayPalPublicConfig();
   return {
@@ -50,12 +79,24 @@ export async function getBillingConfig() {
     publicUrl: PUBLIC_URL,
     paypal,
     bankAccount: bank.configured
-      ? { bankName: bank.bankName, accountName: bank.accountName, accountNumberMask: maskAccount(bank.accountNumber) }
+      ? {
+          bankName: bank.bankName,
+          accountName: bank.accountName,
+          accountNumberMask: maskAccount(bank.accountNumber),
+          label: accounts[0]?.label || "中国银行借记卡",
+        }
       : null,
+    bankAccounts: accounts.map(({ accountNumber, ...rest }) => rest),
+    orderNotify: {
+      configured: isOrderNotifyConfigured(),
+      smtpReady: isMailConfigured(),
+      // Do not expose the full mailbox publicly — only that merchant Gmail is the destination
+      destinationHint: getOrderNotifyEmails().length ? "merchant Gmail" : null,
+    },
     defaultPlanId: DEFAULT_PLAN_ID,
     defaultCycle: DEFAULT_CYCLE,
-    noteZh: "专业版按月 ¥699 / 年 ¥6999（银行卡转账），或 PayPal $99/月、$999/年。订阅到期后需续费方可继续使用。",
-    noteEn: "Pro plan: ¥699/mo or ¥6999/yr (bank transfer), or $99/mo / $999/yr (PayPal). Renew when your subscription expires.",
+    noteZh: "专业版按月 ¥699 / 年 ¥6999（中国银行/Visa 借记卡转账），或 PayPal $99/月、$999/年。订阅到期后需续费方可继续使用。",
+    noteEn: "Pro plan: ¥699/mo or ¥6999/yr (BOC/Visa debit transfer), or $99/mo / $999/yr (PayPal). Renew when your subscription expires.",
   };
 }
 
@@ -116,7 +157,10 @@ export async function checkoutHandler(req, res) {
         returnUrl: returnUrl + order.id,
         cancelUrl,
       });
-      updateOrder(order.id, { externalId: pp.paypalOrderId, approveUrl: pp.approveUrl });
+      const updated = updateOrder(order.id, { externalId: pp.paypalOrderId, approveUrl: pp.approveUrl });
+      fireNotify("created", updated || { ...order, externalId: pp.paypalOrderId, status: "pending" }, {
+        message: "全球用户已发起 PayPal 支付，等待完成扣款",
+      });
       return res.json({
         success: true,
         orderId: order.id,
@@ -130,7 +174,7 @@ export async function checkoutHandler(req, res) {
       if (!isBankTransferConfigured()) {
         return res.status(503).json({
           success: false,
-          error: "银行卡收款信息未配置。请在 Render 设置 BANK_ACCOUNT_NAME、BANK_NAME、BANK_ACCOUNT_NUMBER。",
+          error: "银行卡收款信息未配置。请在 Render 设置 BANK_ACCOUNT_NAME、BANK_NAME、BANK_ACCOUNT_NUMBER（及可选 BANK_VISA_*）。",
         });
       }
       const { amount, currency } = getAmount(planId, cycle, "cny");
@@ -138,9 +182,13 @@ export async function checkoutHandler(req, res) {
         email, planId, cycle, amount, currency, provider: "bankcard",
       });
       const transferCode = makeTransferCode(order.id);
-      updateOrder(order.id, { status: "awaiting_transfer", transferCode });
+      const updated = updateOrder(order.id, { status: "awaiting_transfer", transferCode });
 
       const bank = getBankAccountConfig();
+      const accounts = publicBankAccounts();
+      fireNotify("awaiting_transfer", updated || { ...order, status: "awaiting_transfer", transferCode }, {
+        message: "用户将向中国银行/Visa 借记卡转账，请留意银行到账短信并核对手注",
+      });
       return res.json({
         success: true,
         orderId: order.id,
@@ -154,8 +202,10 @@ export async function checkoutHandler(req, res) {
           bankName: bank.bankName,
           accountNumber: bank.accountNumber,
           branch: bank.branch,
+          label: accounts[0]?.label || "中国银行借记卡",
         },
-        instructions: `请转账 ¥${amount} 至以下账户，备注填写：${transferCode}`,
+        bankAccounts: accounts,
+        instructions: `请转账 ¥${amount} 至以下中国银行/Visa 借记卡账户，备注填写：${transferCode}`,
       });
     }
 
@@ -169,7 +219,7 @@ export async function checkoutHandler(req, res) {
   }
 }
 
-function completeOrder(order, externalId) {
+function completeOrder(order, externalId, notifyExtra = {}) {
   const sub = activateSubscription({
     email: order.email,
     planId: order.planId,
@@ -177,7 +227,11 @@ function completeOrder(order, externalId) {
     provider: order.provider,
     externalId,
   });
-  updateOrder(order.id, { status: "completed" });
+  const completed = updateOrder(order.id, { status: "completed" });
+  fireNotify("paid", completed || { ...order, status: "completed" }, {
+    expiresAt: sub?.expiresAt,
+    ...notifyExtra,
+  });
   return sub;
 }
 
@@ -201,7 +255,9 @@ export function confirmBankTransferHandler(req, res) {
   }
 
   updateOrder(order.id, { status: "paid", confirmedAt: new Date().toISOString() });
-  const sub = completeOrder(order, order.transferCode);
+  const sub = completeOrder(order, order.transferCode, {
+    message: "用户确认已完成中国银行/Visa 借记卡转账，订阅已开通",
+  });
   res.json({
     success: true,
     message: `订阅已开通，有效期至 ${formatExpiry(sub.expiresAt)}。`,
@@ -238,7 +294,9 @@ export function approveBankOrderHandler(req, res) {
   }
 
   updateOrder(order.id, { status: "paid" });
-  const sub = completeOrder(order, order.transferCode);
+  const sub = completeOrder(order, order.transferCode, {
+    message: "管理员在收款管理页确认到账并开通",
+  });
   res.json({
     success: true,
     order: getOrder(order.id),
@@ -261,7 +319,9 @@ export async function capturePayPalHandler(req, res) {
     }
 
     updateOrder(order.id, { status: "paid", captureId: cap.captureId });
-    const sub = completeOrder(order, cap.captureId);
+    const sub = completeOrder(order, cap.captureId, {
+      message: "全球 PayPal 支付已扣款成功，订阅已开通",
+    });
 
     res.json({
       success: true,
@@ -273,6 +333,55 @@ export async function capturePayPalHandler(req, res) {
   } catch (err) {
     console.error("capture error:", err);
     res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+/** Admin: inspect notify wiring + send a test email to merchant Gmail. */
+export async function notifyStatusHandler(req, res) {
+  const key = req.query.key || req.headers["x-admin-key"];
+  if (!isAdminAuthorized(key)) {
+    return res.status(401).json({ success: false, error: "Unauthorized" });
+  }
+  res.json({
+    success: true,
+    smtpConfigured: isMailConfigured(),
+    orderNotifyConfigured: isOrderNotifyConfigured(),
+    recipients: getOrderNotifyEmails(),
+    bankAccounts: listReceivingBankAccounts().map((a) => ({
+      id: a.id,
+      label: a.label,
+      network: a.network,
+      bankName: a.bankName,
+      accountName: a.accountName,
+      accountNumberMask: maskAccount(a.accountNumber),
+      branch: a.branch,
+    })),
+  });
+}
+
+export async function notifyTestHandler(req, res) {
+  const key = req.query.key || req.body?.key || req.headers["x-admin-key"];
+  if (!isAdminAuthorized(key)) {
+    return res.status(401).json({ success: false, error: "Unauthorized" });
+  }
+  try {
+    if (!isMailConfigured()) {
+      return res.status(503).json({
+        success: false,
+        error: "SMTP 未配置。请在 Render 设置 SMTP_HOST/SMTP_USER/SMTP_PASS（Gmail 可用应用专用密码）。",
+        recipients: getOrderNotifyEmails(),
+      });
+    }
+    const result = await sendNotifyTestEmail();
+    res.json({
+      success: true,
+      message: `测试邮件已发送至 ${getOrderNotifyEmails().join(", ")}`,
+      ...result,
+      recipients: getOrderNotifyEmails(),
+    });
+  } catch (err) {
+    console.error("notify test error:", err);
+    res.status(500).json({ success: false, error: err.message, recipients: getOrderNotifyEmails() });
   }
 }
 
