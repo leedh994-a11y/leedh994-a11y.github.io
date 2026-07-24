@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pzhisen — 5 条竖屏中文推广视频</title>
-  <meta name="description" content="五位不同中国成功男士详解如何用 pzhisen.online 的 AI 智能体全年每天 24 小时全自动推广营销。竖屏 1080×1920，烧录中文字幕。">
+  <meta name="description" content="五位不同中国成功男士详解如何用 pzhisen.online 的 AI 智能体全年每天 24 小时全自动推广营销。竖屏 1080×1920，烧录中文字幕。支持手机一键下载全部视频。">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -33,8 +33,43 @@
     }
     .promo-sub {
       font-size: 1.05rem; color: var(--body); max-width: 760px;
-      line-height: 1.75; margin: 0 0 36px;
+      line-height: 1.75; margin: 0 0 24px;
     }
+    .download-all {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin: 0 0 36px;
+      padding: 18px 20px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #f8fafc;
+      border-radius: 14px;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
+    }
+    .download-all p {
+      margin: 0;
+      flex: 1 1 220px;
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: rgba(248, 250, 252, 0.88);
+    }
+    .download-all strong { color: #fff; }
+    .btn-dl-all {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 12px 22px;
+      border-radius: 10px;
+      background: #38bdf8;
+      color: #0f172a;
+      font-weight: 700;
+      font-size: 1rem;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-dl-all:hover { background: #7dd3fc; }
     .grid {
       display: grid;
       gap: 28px;
@@ -66,12 +101,33 @@
     .video-shell video {
       width: 100%; height: 100%; display: block; background: #0f172a;
     }
-    .dl {
-      display: inline-block; margin-top: 12px;
-      font-size: 0.9rem; font-weight: 600; color: var(--primary-600);
-      text-decoration: none;
+    .dl-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+      justify-content: center;
     }
-    .dl:hover { text-decoration: underline; }
+    .dl {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      text-decoration: none;
+      background: var(--primary-600, #0284c7);
+      color: #fff;
+    }
+    .dl:hover { filter: brightness(1.08); }
+    .dl.secondary {
+      background: transparent;
+      color: var(--primary-600, #0284c7);
+      border: 1px solid rgba(2, 132, 199, 0.35);
+      font-weight: 600;
+    }
     .site-nav.promo-nav {
       position: fixed; top: 0; right: 0; left: 0;
       padding: 18px 28px; display: flex; justify-content: flex-end; gap: 18px;
@@ -88,6 +144,13 @@
     }
     .alt-link a { color: var(--primary-600); font-weight: 600; text-decoration: none; }
     .alt-link a:hover { text-decoration: underline; }
+    .tip {
+      margin-top: 28px;
+      font-size: 0.9rem;
+      color: var(--caption);
+      line-height: 1.65;
+      max-width: 720px;
+    }
   </style>
 </head>
 <body>
@@ -110,67 +173,100 @@
         并强调一个月累计帮助全球数千个人与企业赚到 100 万美元收益。
       </p>
 
+      <div class="download-all">
+        <p>
+          <strong>手机下载：</strong>点下方按钮一次打包下载全部 5 条竖屏视频（约 86MB ZIP）。
+          也可在每条视频下单独下载 MP4。
+        </p>
+        <a class="btn-dl-all"
+           href="promo/versions-zh/pzhisen-promo-zh-5videos-vertical.zip"
+           download="Pzhisen竖屏推广-5条全部.zip">
+          ⬇ 下载全部 5 条（ZIP）
+        </a>
+      </div>
+
       <div class="grid">
         <article class="card">
           <h2>V1 · 陈总</h2>
-          <p class="meta">zh-CN-YunyangNeural · 约 1:58</p>
+          <p class="meta">约 1:58 · 18MB</p>
           <div class="video-shell">
             <video controls playsinline preload="metadata" poster="promo/assets/versions-zh/v1/front.png"
               title="Pzhisen 竖屏推广 V1 — 陈总">
               <source src="promo/versions-zh/pzhisen-promo-zh-v1-vertical.mp4" type="video/mp4">
             </video>
           </div>
-          <a class="dl" href="promo/versions-zh/pzhisen-promo-zh-v1-vertical.mp4" download>下载 V1</a>
+          <div class="dl-row">
+            <a class="dl" href="promo/versions-zh/pzhisen-promo-zh-v1-vertical.mp4"
+               download="Pzhisen竖屏-V1-陈总.mp4">下载 V1 MP4</a>
+          </div>
         </article>
 
         <article class="card">
           <h2>V2 · 李总</h2>
-          <p class="meta">zh-CN-YunjianNeural · 约 2:07</p>
+          <p class="meta">约 2:07 · 18MB</p>
           <div class="video-shell">
             <video controls playsinline preload="metadata" poster="promo/assets/versions-zh/v2/front.png"
               title="Pzhisen 竖屏推广 V2 — 李总">
               <source src="promo/versions-zh/pzhisen-promo-zh-v2-vertical.mp4" type="video/mp4">
             </video>
           </div>
-          <a class="dl" href="promo/versions-zh/pzhisen-promo-zh-v2-vertical.mp4" download>下载 V2</a>
+          <div class="dl-row">
+            <a class="dl" href="promo/versions-zh/pzhisen-promo-zh-v2-vertical.mp4"
+               download="Pzhisen竖屏-V2-李总.mp4">下载 V2 MP4</a>
+          </div>
         </article>
 
         <article class="card">
           <h2>V3 · 王总</h2>
-          <p class="meta">zh-CN-YunxiNeural · 约 2:06</p>
+          <p class="meta">约 2:06 · 17MB</p>
           <div class="video-shell">
             <video controls playsinline preload="metadata" poster="promo/assets/versions-zh/v3/front.png"
               title="Pzhisen 竖屏推广 V3 — 王总">
               <source src="promo/versions-zh/pzhisen-promo-zh-v3-vertical.mp4" type="video/mp4">
             </video>
           </div>
-          <a class="dl" href="promo/versions-zh/pzhisen-promo-zh-v3-vertical.mp4" download>下载 V3</a>
+          <div class="dl-row">
+            <a class="dl" href="promo/versions-zh/pzhisen-promo-zh-v3-vertical.mp4"
+               download="Pzhisen竖屏-V3-王总.mp4">下载 V3 MP4</a>
+          </div>
         </article>
 
         <article class="card">
           <h2>V4 · 张总</h2>
-          <p class="meta">zh-TW-YunJheNeural · 约 1:56</p>
+          <p class="meta">约 1:56 · 18MB</p>
           <div class="video-shell">
             <video controls playsinline preload="metadata" poster="promo/assets/versions-zh/v4/front.png"
               title="Pzhisen 竖屏推广 V4 — 张总">
               <source src="promo/versions-zh/pzhisen-promo-zh-v4-vertical.mp4" type="video/mp4">
             </video>
           </div>
-          <a class="dl" href="promo/versions-zh/pzhisen-promo-zh-v4-vertical.mp4" download>下载 V4</a>
+          <div class="dl-row">
+            <a class="dl" href="promo/versions-zh/pzhisen-promo-zh-v4-vertical.mp4"
+               download="Pzhisen竖屏-V4-张总.mp4">下载 V4 MP4</a>
+          </div>
         </article>
 
         <article class="card">
           <h2>V5 · 刘总</h2>
-          <p class="meta">zh-CN-YunyangNeural (+pitch) · 约 2:16</p>
+          <p class="meta">约 2:16 · 18MB</p>
           <div class="video-shell">
             <video controls playsinline preload="metadata" poster="promo/assets/versions-zh/v5/front.png"
               title="Pzhisen 竖屏推广 V5 — 刘总">
               <source src="promo/versions-zh/pzhisen-promo-zh-v5-vertical.mp4" type="video/mp4">
             </video>
           </div>
-          <a class="dl" href="promo/versions-zh/pzhisen-promo-zh-v5-vertical.mp4" download>下载 V5</a>
+          <div class="dl-row">
+            <a class="dl" href="promo/versions-zh/pzhisen-promo-zh-v5-vertical.mp4"
+               download="Pzhisen竖屏-V5-刘总.mp4">下载 V5 MP4</a>
+          </div>
         </article>
       </div>
+
+      <p class="tip">
+        iPhone：用 Safari 打开本页 → 点「下载」→ 在「文件」App 查看。
+        Android：用 Chrome 打开 → 点「下载」→ 在「下载」文件夹打开。
+        若手机浏览器只预览不保存，可长按下载按钮选「下载链接」。
+      </p>
 
       <p class="alt-link">需要英文美国讲者五版本？请打开 <a href="/promo-versions-en.html">English 5-pack</a>。</p>
     </div>
