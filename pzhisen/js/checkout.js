@@ -50,7 +50,7 @@ function buildMethods() {
       id: "bank",
       icon: "🏦",
       name: "银行卡转账",
-      desc: `¥${cny} · 手机银行/网银转账，中国内地用户`,
+      desc: `¥${cny} · 中国银行/Visa 借记卡，中国内地用户`,
       providerKey: "bankCard",
     },
     {
@@ -159,17 +159,26 @@ function showBankPanel(data) {
   currentBankOrder = data;
   const panel = document.getElementById("bank-panel");
   panel.hidden = false;
+  const accounts = (data.bankAccounts && data.bankAccounts.length)
+    ? data.bankAccounts
+    : [data.bankAccount];
+  const accountsHtml = accounts.map((acc, i) => `
+    <div class="checkout-summary" style="margin-top:${i === 0 ? "16px" : "12px"};text-align:left">
+      <p style="margin:0 0 12px;font-weight:600">${acc.label || "收款银行卡"} ${acc.network ? `<small style="color:var(--muted);font-weight:400">(${acc.network})</small>` : ""}</p>
+      <div class="checkout-line"><span>开户名</span><strong>${acc.accountName}</strong></div>
+      <div class="checkout-line"><span>开户行</span><strong>${acc.bankName}</strong></div>
+      ${acc.branch ? `<div class="checkout-line"><span>支行</span><strong>${acc.branch}</strong></div>` : ""}
+      <div class="checkout-line"><span>卡号</span><strong style="font-family:monospace;letter-spacing:1px">${acc.accountNumber}</strong></div>
+    </div>
+  `).join("");
   panel.innerHTML = `
-    <div class="checkout-summary" style="margin-top:16px;text-align:left">
-      <p style="margin:0 0 12px;font-weight:600">请转账至以下银行卡（手机银行 / 网银均可）：</p>
-      <div class="checkout-line"><span>开户名</span><strong>${data.bankAccount.accountName}</strong></div>
-      <div class="checkout-line"><span>开户行</span><strong>${data.bankAccount.bankName}</strong></div>
-      ${data.bankAccount.branch ? `<div class="checkout-line"><span>支行</span><strong>${data.bankAccount.branch}</strong></div>` : ""}
-      <div class="checkout-line"><span>卡号</span><strong style="font-family:monospace;letter-spacing:1px">${data.bankAccount.accountNumber}</strong></div>
+    <p style="margin:16px 0 0;font-weight:600">请转账至以下中国银行 / Visa 借记卡（手机银行 / 网银均可）：</p>
+    ${accountsHtml}
+    <div class="checkout-summary" style="margin-top:12px;text-align:left">
       <div class="checkout-line"><span>金额</span><strong style="color:#dc2626">¥${data.amount}</strong></div>
       <div class="checkout-line total"><span>转账备注（必填）</span><strong style="color:#dc2626">${data.transferCode}</strong></div>
     </div>
-    <p class="checkout-hint">转账时务必填写备注 <strong>${data.transferCode}</strong>。完成转账后点击下方按钮开通${cycleLabelZh(cycle)}订阅（${cycle === "annual" ? "365" : "30"} 天）。到期后需续费方可继续使用。</p>
+    <p class="checkout-hint">转账时务必填写备注 <strong>${data.transferCode}</strong>。完成转账后点击下方按钮开通${cycleLabelZh(cycle)}订阅（${cycle === "annual" ? "365" : "30"} 天）。到期后需续费方可继续使用。商家会同步收到订单邮件通知。</p>
   `;
   setBusy(false);
 }

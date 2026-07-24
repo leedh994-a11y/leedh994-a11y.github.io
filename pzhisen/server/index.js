@@ -25,6 +25,8 @@ import {
   listPendingBankOrdersHandler,
   approveBankOrderHandler,
   grantLifetimeHandler,
+  notifyStatusHandler,
+  notifyTestHandler,
 } from "./billing.js";
 import { isSubscriptionActive, getSubscriptionByEmail, ensureGrandfatheredLifetimeAccess, ensureLifetimeForEmail } from "./billing-store.js";
 import { DEFAULT_PLAN_ID, DEFAULT_CYCLE } from "./plans.js";
@@ -100,6 +102,8 @@ app.post("/api/billing/bank/confirm", confirmBankTransferHandler);
 app.get("/api/billing/admin/pending", listPendingBankOrdersHandler);
 app.post("/api/billing/admin/approve", approveBankOrderHandler);
 app.post("/api/billing/admin/grant-lifetime", grantLifetimeHandler);
+app.get("/api/billing/admin/notify-status", notifyStatusHandler);
+app.post("/api/billing/admin/notify-test", notifyTestHandler);
 app.post("/api/auth/admin/restore-user", adminRestoreUserHandler);
 
 app.get("/api/logs/global", (_req, res) => {

@@ -20,7 +20,7 @@
   <main class="checkout-page">
     <div class="checkout-card">
       <h1>银行卡收款管理</h1>
-      <p class="checkout-hint">用户点击「我已完成转账」后会自动开通订阅。此处处理未点击确认的订单（awaiting_transfer）。月付 ¥699，年付 ¥6999。</p>
+      <p class="checkout-hint">用户点击「我已完成转账」后会自动开通订阅。此处处理未点击确认的订单（awaiting_transfer）。月付 ¥699，年付 ¥6999。所有全球订单会邮件通知至商家 Gmail。</p>
 
       <label style="display:block;margin:16px 0">
         管理密钥 (BILLING_ADMIN_SECRET)
@@ -28,6 +28,15 @@
           style="display:block;width:100%;height:44px;margin-top:8px;padding:0 16px;border:1px solid var(--border);border-radius:8px;">
       </label>
       <button type="button" class="btn-primary" id="btn-load" style="width:100%">加载待确认订单</button>
+
+      <hr style="margin:32px 0;border:none;border-top:1px solid var(--border)">
+      <h2 style="margin:0 0 8px;font-size:1.1rem">Gmail 订单通知</h2>
+      <p class="checkout-hint">新订单 / 支付完成会发送到 <code>ORDER_NOTIFY_EMAIL</code>（默认 <code>leedh994@gmail.com</code>）。需在 Render 配置 SMTP（推荐 Gmail 应用专用密码）。</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button type="button" class="btn-primary" id="btn-notify-status" style="flex:1;min-width:140px">查看通知状态</button>
+        <button type="button" class="btn-primary" id="btn-notify-test" style="flex:1;min-width:140px">发送测试邮件</button>
+      </div>
+      <p class="checkout-hint" id="notify-result" hidden style="margin-top:12px;white-space:pre-wrap"></p>
 
       <hr style="margin:32px 0;border:none;border-top:1px solid var(--border)">
       <h2 style="margin:0 0 8px;font-size:1.1rem">恢复终身用户</h2>
@@ -98,6 +107,46 @@
       });
     }
     document.getElementById("btn-load").addEventListener("click", loadOrders);
+
+    function showNotifyResult(ok, text) {
+      const el = document.getElementById("notify-result");
+      el.hidden = false;
+      el.textContent = text;
+      el.style.color = ok ? "#16a34a" : "#dc2626";
+    }
+
+    document.getElementById("btn-notify-status").addEventListener("click", async () => {
+      const key = keyInput.value.trim();
+      if (!key) return alert("请输入管理密钥");
+      sessionStorage.setItem("pzhisen_admin_key", key);
+      const res = await fetch(`/api/billing/admin/notify-status?key=${encodeURIComponent(key)}`);
+      const d = await res.json();
+      if (!d.success) return showNotifyResult(false, d.error || "加载失败");
+      const banks = (d.bankAccounts || [])
+        .map((a) => `${a.label}: ${a.bankName} ${a.accountName} ${a.accountNumberMask}`)
+        .join("\n") || "(未配置银行卡)";
+      showNotifyResult(true,
+        `SMTP: ${d.smtpConfigured ? "已配置" : "未配置"}\n` +
+        `订单通知: ${d.orderNotifyConfigured ? "已就绪" : "未就绪"}\n` +
+        `收件邮箱: ${(d.recipients || []).join(", ")}\n` +
+        `收款账户:\n${banks}`
+      );
+    });
+
+    document.getElementById("btn-notify-test").addEventListener("click", async () => {
+      const key = keyInput.value.trim();
+      if (!key) return alert("请输入管理密钥");
+      sessionStorage.setItem("pzhisen_admin_key", key);
+      const res = await fetch("/api/billing/admin/notify-test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Admin-Key": key },
+        body: JSON.stringify({ key }),
+      });
+      const d = await res.json();
+      showNotifyResult(!!d.success, d.success
+        ? (d.message || "已发送")
+        : (d.error || "发送失败"));
+    });
 
     document.getElementById("btn-restore").addEventListener("click", async () => {
       const key = keyInput.value.trim();

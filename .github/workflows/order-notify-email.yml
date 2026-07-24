@@ -1,0 +1,74 @@
+name: Order notify email
+
+# Triggered by the Pzhisen server over HTTPS (works on Render free tier
+# where outbound SMTP ports are blocked). Sends to merchant Gmail.
+
+on:
+  repository_dispatch:
+    types: [order-notify]
+  workflow_dispatch:
+    inputs:
+      subject:
+        description: Email subject
+        required: true
+        default: "[Pzhisen] 订单通知测试"
+      body:
+        description: Plain-text body
+        required: true
+        default: "Test from GitHub Actions"
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Gmail via SMTP
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+          ORDER_NOTIFY_EMAIL: ${{ secrets.ORDER_NOTIFY_EMAIL }}
+          SUBJECT: ${{ github.event.client_payload.subject || inputs.subject }}
+          BODY: ${{ github.event.client_payload.body || inputs.body }}
+          HTML: ${{ github.event.client_payload.html || '' }}
+        run: |
+          python3 <<'PY'
+          import os, smtplib, sys
+          from email.mime.multipart import MIMEMultipart
+          from email.mime.text import MIMEText
+
+          host = os.environ.get("SMTP_HOST") or "smtp.gmail.com"
+          port = int(os.environ.get("SMTP_PORT") or "587")
+          user = os.environ.get("SMTP_USER") or ""
+          password = os.environ.get("SMTP_PASS") or ""
+          mail_from = os.environ.get("SMTP_FROM") or user
+          to_raw = os.environ.get("ORDER_NOTIFY_EMAIL") or "leedh994@gmail.com"
+          recipients = [e.strip() for e in to_raw.split(",") if "@" in e.strip()]
+          subject = os.environ.get("SUBJECT") or "[Pzhisen] notify"
+          body = os.environ.get("BODY") or ""
+          html = os.environ.get("HTML") or ""
+
+          if not user or not password:
+              print("SMTP secrets missing", file=sys.stderr)
+              sys.exit(1)
+          if not recipients:
+              print("No recipients", file=sys.stderr)
+              sys.exit(1)
+
+          msg = MIMEMultipart("alternative")
+          msg["Subject"] = subject
+          msg["From"] = mail_from
+          msg["To"] = ", ".join(recipients)
+          msg.attach(MIMEText(body, "plain", "utf-8"))
+          if html.strip():
+              msg.attach(MIMEText(html, "html", "utf-8"))
+
+          with smtplib.SMTP(host, port, timeout=60) as smtp:
+              smtp.ehlo()
+              smtp.starttls()
+              smtp.ehlo()
+              smtp.login(user, password)
+              smtp.sendmail(mail_from, recipients, msg.as_string())
+          print("sent to", ", ".join(recipients))
+          PY

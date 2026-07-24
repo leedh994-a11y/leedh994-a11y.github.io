@@ -43,5 +43,23 @@ services:
         sync: false
       - key: BANK_BRANCH
         sync: false
+      - key: BANK_LABEL
+        value: 中国银行借记卡
+      - key: BANK_VISA_SAME_AS_PRIMARY
+        value: "true"
+      - key: BANK_VISA_LABEL
+        value: Visa 借记卡（同中国银行卡）
       - key: BILLING_ADMIN_SECRET
+        sync: false
+      - key: ORDER_NOTIFY_EMAIL
+        value: LeeDh994@gmail.com
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
         sync: false
