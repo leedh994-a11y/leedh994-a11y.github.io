@@ -38,14 +38,16 @@ export function getPrimaryBankAccount() {
 
 /**
  * Optional Visa debit receiving card.
- * If BANK_VISA_* is unset but BANK_VISA_SAME_AS_PRIMARY=true, reuse the primary BOC card
- * (common for dual-branded 中国银行 Visa 借记卡).
+ * Defaults to same-as-primary when unset and primary bank is 中国银行
+ * (common dual-branded 中国银行 Visa 借记卡), unless explicitly disabled.
  */
 export function getVisaBankAccount() {
   const primary = getPrimaryBankAccount();
+  const rawSame = process.env.BANK_VISA_SAME_AS_PRIMARY;
   const sameAsPrimary =
-    String(process.env.BANK_VISA_SAME_AS_PRIMARY || "").toLowerCase() === "true" ||
-    process.env.BANK_VISA_SAME_AS_PRIMARY === "1";
+    rawSame === undefined || rawSame === ""
+      ? /中国银行/.test(primary.bankName || "")
+      : String(rawSame).toLowerCase() === "true" || rawSame === "1";
 
   const visa = accountFromEnv("BANK_VISA", {
     id: "visa",
