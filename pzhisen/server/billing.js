@@ -31,6 +31,8 @@ import {
   getOrderNotifyEmails,
   sendNotifyTestEmail,
   isMailConfigured,
+  isSmtpConfigured,
+  isGithubNotifyConfigured,
 } from "./mail.js";
 
 const PUBLIC_URL = process.env.PUBLIC_URL || "http://localhost:3000";
@@ -89,7 +91,8 @@ export async function getBillingConfig() {
     bankAccounts: accounts.map(({ accountNumber, ...rest }) => rest),
     orderNotify: {
       configured: isOrderNotifyConfigured(),
-      smtpReady: isMailConfigured(),
+      smtpReady: isSmtpConfigured(),
+      githubBridge: isGithubNotifyConfigured(),
       // Do not expose the full mailbox publicly — only that merchant Gmail is the destination
       destinationHint: getOrderNotifyEmails().length ? "merchant Gmail" : null,
     },
@@ -344,7 +347,8 @@ export async function notifyStatusHandler(req, res) {
   }
   res.json({
     success: true,
-    smtpConfigured: isMailConfigured(),
+    smtpConfigured: isSmtpConfigured(),
+    githubBridgeConfigured: isGithubNotifyConfigured(),
     orderNotifyConfigured: isOrderNotifyConfigured(),
     recipients: getOrderNotifyEmails(),
     bankAccounts: listReceivingBankAccounts().map((a) => ({
@@ -368,14 +372,14 @@ export async function notifyTestHandler(req, res) {
     if (!isMailConfigured()) {
       return res.status(503).json({
         success: false,
-        error: "SMTP 未配置。请在 Render 设置 SMTP_HOST/SMTP_USER/SMTP_PASS（Gmail 可用应用专用密码）。",
+        error: "邮件未配置。请设置 GITHUB_NOTIFY_TOKEN（推荐，绕过 Render 免费版 SMTP 封锁）或 SMTP_*。",
         recipients: getOrderNotifyEmails(),
       });
     }
     const result = await sendNotifyTestEmail();
     res.json({
       success: true,
-      message: `测试邮件已发送至 ${getOrderNotifyEmails().join(", ")}`,
+      message: `测试邮件已发送至 ${getOrderNotifyEmails().join(", ")}（via ${result.via || "mail"}）`,
       ...result,
       recipients: getOrderNotifyEmails(),
     });

@@ -6,11 +6,24 @@ const SMTP_USER = process.env.SMTP_USER || "";
 const SMTP_PASS = process.env.SMTP_PASS || "";
 const SMTP_FROM = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@pzhisen.online";
 
+/** GitHub Actions email bridge (HTTPS) — bypasses Render free-tier SMTP block. */
+const GITHUB_NOTIFY_TOKEN = (process.env.GITHUB_NOTIFY_TOKEN || process.env.GH_NOTIFY_TOKEN || "").trim();
+const GITHUB_NOTIFY_REPO =
+  (process.env.GITHUB_NOTIFY_REPO || "leedh994-a11y/leedh994-a11y.github.io").trim();
+
 /** Merchant inbox for every subscription order worldwide (default: owner's Gmail). */
 const DEFAULT_NOTIFY_EMAIL = "leedh994@gmail.com";
 
-export function isMailConfigured() {
+export function isSmtpConfigured() {
   return Boolean(resolveSmtpHost() && SMTP_USER && SMTP_PASS);
+}
+
+export function isGithubNotifyConfigured() {
+  return Boolean(GITHUB_NOTIFY_TOKEN && GITHUB_NOTIFY_REPO.includes("/"));
+}
+
+export function isMailConfigured() {
+  return isSmtpConfigured() || isGithubNotifyConfigured();
 }
 
 function resolveSmtpHost() {
@@ -31,6 +44,9 @@ function createTransport() {
     port: SMTP_PORT,
     secure,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
+    connectionTimeout: 12000,
+    greetingTimeout: 12000,
+    socketTimeout: 20000,
     tls: { minVersion: "TLSv1.2", rejectUnauthorized: true },
     ...(SMTP_PORT === 587 ? { requireTLS: true } : {}),
   });
@@ -38,7 +54,6 @@ function createTransport() {
 
 function resolveFromAddress() {
   const user = (SMTP_USER || "").toLowerCase();
-  // Gmail / QQ / 163 require From to match the authenticated account
   if (
     user.endsWith("@gmail.com") ||
     user.endsWith("@googlemail.com") ||
@@ -70,10 +85,40 @@ export function isOrderNotifyConfigured() {
   return isMailConfigured() && getOrderNotifyEmails().length > 0;
 }
 
-async function sendMail({ to, subject, text, html }) {
-  if (!isMailConfigured()) {
-    console.log(`[mail] (SMTP not configured) to=${to} subject=${subject}\n${text}`);
-    return { sent: false, devMode: true };
+async function sendViaGithubActions({ to, subject, text, html }) {
+  if (!isGithubNotifyConfigured()) {
+    return { sent: false, reason: "github_notify_not_configured" };
+  }
+  const recipients = Array.isArray(to) ? to.join(", ") : to;
+  const res = await fetch(`https://api.github.com/repos/${GITHUB_NOTIFY_REPO}/dispatches`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${GITHUB_NOTIFY_TOKEN}`,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      "Content-Type": "application/json",
+      "User-Agent": "pzhisen-order-notify",
+    },
+    body: JSON.stringify({
+      event_type: "order-notify",
+      client_payload: {
+        subject: String(subject || "").slice(0, 200),
+        body: String(text || "").slice(0, 50000),
+        html: String(html || "").slice(0, 100000),
+        to: recipients,
+      },
+    }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`GitHub dispatch HTTP ${res.status}: ${detail.slice(0, 300)}`);
+  }
+  return { sent: true, via: "github_actions" };
+}
+
+async function sendViaSmtp({ to, subject, text, html }) {
+  if (!isSmtpConfigured()) {
+    return { sent: false, reason: "smtp_not_configured" };
   }
   const transport = createTransport();
   const recipients = Array.isArray(to) ? to.join(", ") : to;
@@ -84,7 +129,35 @@ async function sendMail({ to, subject, text, html }) {
     text,
     html,
   });
-  return { sent: true };
+  return { sent: true, via: "smtp" };
+}
+
+async function sendMail({ to, subject, text, html }) {
+  // Prefer GitHub Actions bridge on Render free (SMTP ports blocked).
+  if (isGithubNotifyConfigured()) {
+    try {
+      return await sendViaGithubActions({ to, subject, text, html });
+    } catch (err) {
+      console.error("[mail] github actions notify failed:", err.message);
+      if (!isSmtpConfigured()) throw err;
+    }
+  }
+
+  if (!isSmtpConfigured()) {
+    console.log(`[mail] (not configured) to=${to} subject=${subject}\n${text}`);
+    return { sent: false, devMode: true };
+  }
+
+  try {
+    return await sendViaSmtp({ to, subject, text, html });
+  } catch (err) {
+    // SMTP often times out on Render free — fall back to GitHub if available
+    if (isGithubNotifyConfigured()) {
+      console.error("[mail] smtp failed, falling back to github actions:", err.message);
+      return sendViaGithubActions({ to, subject, text, html });
+    }
+    throw err;
+  }
 }
 
 export async function sendOtpEmail(email, code) {
@@ -100,7 +173,7 @@ export async function sendOtpEmail(email, code) {
   `;
 
   if (!isMailConfigured()) {
-    console.log(`[mail] OTP for ${email}: ${code} (SMTP not configured)`);
+    console.log(`[mail] OTP for ${email}: ${code} (mail not configured)`);
     return { sent: false, devMode: true };
   }
 
@@ -182,7 +255,7 @@ export async function notifyOrderEvent(event, order, extra = {}) {
 
   try {
     const result = await sendMail({ to: recipients, subject, text, html });
-    console.log(`[mail] order notify event=${event} order=${order.id} to=${recipients.join(",")} sent=${result.sent}`);
+    console.log(`[mail] order notify event=${event} order=${order.id} to=${recipients.join(",")} sent=${result.sent} via=${result.via || "?"}`);
     return { ...result, recipients };
   } catch (err) {
     console.error(`[mail] order notify failed event=${event} order=${order?.id}:`, err.message);
@@ -194,10 +267,11 @@ export async function notifyOrderEvent(event, order, extra = {}) {
 export async function sendNotifyTestEmail() {
   const recipients = getOrderNotifyEmails();
   const subject = "[Pzhisen] 订单通知测试 — Gmail 已接通";
-  const text = `这是一封测试邮件。\n\n若您收到此信，说明网站订单通知已可送达：${recipients.join(", ")}\n\n时间：${new Date().toISOString()}\nhttps://www.pzhisen.online`;
+  const text = `这是一封测试邮件。\n\n若您收到此信，说明网站订单通知已可送达：${recipients.join(", ")}\n\n通道：${isGithubNotifyConfigured() ? "GitHub Actions → Gmail SMTP" : "SMTP"}\n时间：${new Date().toISOString()}\nhttps://www.pzhisen.online`;
   const html = orderEmailHtml("订单通知测试", [
     ["收件邮箱", recipients.join(", ")],
-    ["SMTP", isMailConfigured() ? "已配置" : "未配置"],
+    ["SMTP", isSmtpConfigured() ? "已配置" : "未配置"],
+    ["GitHub Actions 桥接", isGithubNotifyConfigured() ? "已配置" : "未配置"],
     ["时间", new Date().toISOString()],
   ]);
   return sendMail({ to: recipients, subject, text, html });
