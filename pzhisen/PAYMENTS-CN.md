@@ -69,6 +69,23 @@ SMTP_FROM=LeeDh994@gmail.com
 
 > 若 `SMTP_USER` 已是 `@gmail.com`，即使不写 `SMTP_HOST` 也会默认使用 `smtp.gmail.com`。
 
+## Render 免费版发信（重要）
+
+Render **免费 Web 服务会封锁 SMTP 端口**（25/465/587）。本仓库已用 **GitHub Actions 桥接** 发信：
+
+1. 网站通过 HTTPS 调用 `repository_dispatch`
+2. Actions 在 GitHub 跑 SMTP，把邮件发到 `LeeDh994@gmail.com`
+
+请在 **正式站** Render 服务（URL 为 `pzhisen.onrender.com`）Environment 增加：
+
+```env
+GITHUB_NOTIFY_TOKEN=<GitHub PAT，需 repo 权限>
+GITHUB_NOTIFY_REPO=leedh994-a11y/leedh994-a11y.github.io
+ORDER_NOTIFY_EMAIL=LeeDh994@gmail.com
+```
+
+仓库 Secrets 中已配置 `SMTP_*` / `ORDER_NOTIFY_EMAIL` 供 Actions 使用。
+
 ### 如何获取 Gmail 应用专用密码
 
 1. 打开 https://myaccount.google.com/security  
