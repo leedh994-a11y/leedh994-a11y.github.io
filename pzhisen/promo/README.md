@@ -28,9 +28,30 @@ and short 1–2 line wraps so talking-head remains easy to watch.
 | Voice | `en-US-ChristopherNeural` |
 | Rebuild | `python3 build_video_v2.py` |
 
+## Five vertical variants (ZH) — primary pack
+
+Five distinct Chinese successful-businessman cuts for 抖音 / 视频号 / TikTok / Shorts.
+
+| Version | Presenter | Voice | Output |
+|---|---|---|---|
+| V1 | 陈总 | `zh-CN-YunyangNeural` | `versions-zh/pzhisen-promo-zh-v1-vertical.mp4` |
+| V2 | 李总 | `zh-CN-YunjianNeural` | `versions-zh/pzhisen-promo-zh-v2-vertical.mp4` |
+| V3 | 王总 | `zh-CN-YunxiNeural` | `versions-zh/pzhisen-promo-zh-v3-vertical.mp4` |
+| V4 | 张总 | `zh-TW-YunJheNeural` | `versions-zh/pzhisen-promo-zh-v4-vertical.mp4` |
+| V5 | 刘总 | `zh-CN-YunyangNeural` (+pitch) | `versions-zh/pzhisen-promo-zh-v5-vertical.mp4` |
+
+| | |
+|---|---|
+| Format | Vertical 1080×1920 · Chinese burned-in subtitles |
+| Player | `/promo-versions.html` |
+| Assets | `assets/versions-zh/v{1-5}/` |
+| Narration | `python3 make_narration_versions_zh.py` |
+| Rebuild | `python3 build_versions_vertical_zh.py` (`v1`…`v5` or `all`) |
+| Re-burn subs only | `python3 build_versions_vertical_zh.py all --subs-only` |
+
 ## Five vertical variants (EN)
 
-Five distinct American-presenter cuts for TikTok / Reels / Shorts / Douyin.
+Five distinct American-presenter cuts (kept alongside the Chinese pack).
 
 | Version | Presenter | Voice | Output |
 |---|---|---|---|
@@ -43,7 +64,7 @@ Five distinct American-presenter cuts for TikTok / Reels / Shorts / Douyin.
 | | |
 |---|---|
 | Format | Vertical 1080×1920 · English burned-in subtitles |
-| Player | `/promo-versions.html` |
+| Player | `/promo-versions-en.html` |
 | Assets | `assets/versions/v{1-5}/` |
 | Narration | `python3 make_narration_versions.py` |
 | Rebuild | `python3 build_versions_vertical.py` (`v1`…`v5` or `all`) |
