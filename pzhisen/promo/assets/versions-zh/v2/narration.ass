@@ -1,0 +1,31 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,WenQuanYi Micro Hei,34,&H00FFFFFF,&H000000FF,&H64000000,&H64000000,0,0,0,0,100,100,0,0,1,2,0,2,40,40,88,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.05,0:00:07.39,Default,,0,0,0,,大家好，我是李总——\N从零做到规模化、在多个赛道跑通增\N长的连续创业者。
+Dialogue: 0,0:00:07.57,0:00:17.13,Default,,0,0,0,,接下来我把最省事、最快的全自动推\N广方法讲清楚：打开pzhisen\N.online，用Pzhisen的AI智能体。
+Dialogue: 0,0:00:17.31,0:00:21.17,Default,,0,0,0,,使用非常便捷、迅速、快捷。
+Dialogue: 0,0:00:21.35,0:00:32.05,Default,,0,0,0,,打开网站，告诉它你的商业想法，\N几分钟就能部署你的AI智能体团队\N——无需复杂配置，开始使用也无需绑定信用卡。
+Dialogue: 0,0:00:32.23,0:00:39.41,Default,,0,0,0,,智能体上线后，全年三百六十五天、\N每天二十四小时不间断为你工作。
+Dialogue: 0,0:00:39.59,0:00:41.53,Default,,0,0,0,,从不睡觉。
+Dialogue: 0,0:00:41.71,0:00:43.66,Default,,0,0,0,,从不休息。
+Dialogue: 0,0:00:43.84,0:00:45.78,Default,,0,0,0,,永不下班。
+Dialogue: 0,0:00:45.96,0:00:52.68,Default,,0,0,0,,有了Pzhisen，\N专业AI智能体可以全自动制作推广\N营销推文文案。
+Dialogue: 0,0:00:52.86,0:00:56.75,Default,,0,0,0,,可以全自动制作推广营销视频。
+Dialogue: 0,0:00:56.93,0:01:06.29,Default,,0,0,0,,可以制作推广营销文案，\N并发送到全球主流邮箱——\NGmail、Outlook、QQ邮箱、163等等。
+Dialogue: 0,0:01:06.47,0:01:12.11,Default,,0,0,0,,可以自动回复客服消息，\N让客户白天夜晚都能得到帮助。
+Dialogue: 0,0:01:12.29,0:01:18.41,Default,,0,0,0,,可以自动分析市场竞争力、\N销售数据，以及实时市场行情。
+Dialogue: 0,0:01:18.59,0:01:23.44,Default,,0,0,0,,可以自动调研市场，分析未来世界各\N行业走向。
+Dialogue: 0,0:01:23.62,0:01:36.99,Default,,0,0,0,,然后帮你发布到全球各大社交平台：\NYouTube、TikTok、\NX、Facebook、腾讯视频号、中国抖音、腾讯视频、快手、小红书，以及更多主流平台。
+Dialogue: 0,0:01:37.17,0:01:46.53,Default,,0,0,0,,无论你是个人网站还是企业网站，\NPzhisen都能帮助全球任何人\N，全自动推广营销你的线上业务。
+Dialogue: 0,0:01:46.71,0:01:58.20,Default,,0,0,0,,最重要的是：Pzhisen已经帮\N助全球数千位个人和企业，\N通过AI智能体推广营销，在一个月内赚到了总计一百万美元的收益。
+Dialogue: 0,0:01:58.38,0:02:06.57,Default,,0,0,0,,如果你也准备好让AI团队替你昼夜\N不停地工作，现在就打开pzhis\Nen.online，今晚就开始。
