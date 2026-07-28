@@ -27,6 +27,33 @@
     </div>
   </header>
 
+  <div class="daily-quota-banner" id="daily-quota-banner" role="status" aria-live="polite">
+    <div class="daily-quota-banner__stats">
+      <span class="quota-pulse" aria-hidden="true"></span>
+      <div class="quota-stat-block">
+        <strong class="quota-stat-num" id="quota-applied-count">48</strong>
+        <span class="quota-stat-label">Today's applicants<br><small>今日申请人数</small></span>
+      </div>
+      <div class="quota-stat-divider" aria-hidden="true"></div>
+      <div class="quota-stat-block quota-stat-block--highlight">
+        <strong class="quota-stat-num" id="quota-remaining-count">2</strong>
+        <span class="quota-stat-label">Spots left today<br><small>今日还剩名额</small></span>
+      </div>
+      <div class="quota-stat-divider" aria-hidden="true"></div>
+      <div class="quota-stat-block">
+        <strong class="quota-stat-num">50</strong>
+        <span class="quota-stat-label">Daily limit<br><small>今日仅限名额</small></span>
+      </div>
+    </div>
+    <div class="quota-marquee" aria-label="Recent applicants">
+      <div class="quota-marquee-track" id="quota-marquee-track"></div>
+    </div>
+    <p class="quota-banner-foot">
+      <span>⚡ High demand worldwide — secure your Pro access before today's quota closes.</span>
+      <span>全球申请火热进行中 — 今日仅限 50 个名额，还剩 2 个，请尽快锁定专业版。</span>
+    </p>
+  </div>
+
   <div class="dashboard-layout">
     <div id="paywall-banner" class="paywall-banner" hidden>
       <div>
@@ -74,6 +101,7 @@
     </main>
   </div>
 
+  <script src="js/daily-quota-ticker.js"></script>
   <script src="js/dashboard.js"></script>
 </body>
 </html>

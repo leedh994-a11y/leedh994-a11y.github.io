@@ -24,6 +24,155 @@
   color: var(--heading);
 }
 
+/* ─── Daily quota urgency banner (dashboard) ─── */
+.daily-quota-banner {
+  position: sticky;
+  top: 72px;
+  z-index: 99;
+  margin: 0;
+  padding: 14px 20px 12px;
+  background: linear-gradient(90deg, #7f1d1d 0%, #dc2626 35%, #ea580c 70%, #b45309 100%);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(220, 38, 38, 0.35);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+.daily-quota-banner__stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px 24px;
+  max-width: 1100px;
+  margin: 0 auto 10px;
+  position: relative;
+}
+
+.quota-pulse {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: #fef08a;
+  box-shadow: 0 0 0 0 rgba(254, 240, 138, 0.8);
+  animation: quota-pulse 1.6s ease-out infinite;
+}
+
+@keyframes quota-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(254, 240, 138, 0.75);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(254, 240, 138, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(254, 240, 138, 0);
+  }
+}
+
+.quota-stat-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.quota-stat-block--highlight .quota-stat-num {
+  color: #fef08a;
+  font-size: 2.25rem;
+  text-shadow: 0 0 20px rgba(254, 240, 138, 0.5);
+}
+
+.quota-stat-num {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.quota-stat-label {
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 600;
+  opacity: 0.95;
+}
+
+.quota-stat-label small {
+  display: block;
+  font-weight: 500;
+  opacity: 0.85;
+  font-size: 11px;
+}
+
+.quota-stat-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.quota-marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  margin: 0 auto;
+  max-width: 1200px;
+}
+
+.quota-marquee-track {
+  display: flex;
+  gap: 48px;
+  width: max-content;
+  animation: quota-marquee-scroll 45s linear infinite;
+  padding: 4px 0;
+}
+
+.quota-marquee-item {
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.95;
+}
+
+@keyframes quota-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.quota-banner-foot {
+  margin: 8px auto 0;
+  max-width: 1100px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 0.95;
+}
+
+@media (max-width: 640px) {
+  .daily-quota-banner {
+    top: 72px;
+    padding: 12px 12px 10px;
+  }
+  .quota-stat-divider {
+    display: none;
+  }
+  .quota-stat-block--highlight .quota-stat-num {
+    font-size: 1.85rem;
+  }
+  .quota-pulse {
+    display: none;
+  }
+}
+
 .dashboard-layout {
   display: grid;
   grid-template-columns: 280px 1fr;
