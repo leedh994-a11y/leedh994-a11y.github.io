@@ -35,4 +35,16 @@
 
   const items = [...applicants, ...applicants];
   track.innerHTML = items.map((t) => `<span class="quota-marquee-item">${t}</span>`).join("");
+
+  function adjustQuotaStackOffset() {
+    if (!document.body.classList.contains("has-quota-banner")) return;
+    const banner = document.getElementById("daily-quota-banner");
+    const bars = document.getElementById("top-bars");
+    if (!banner) return;
+    const h = banner.offsetHeight + (bars ? bars.offsetHeight : 0);
+    document.documentElement.style.setProperty("--quota-stack-offset", `${h}px`);
+  }
+
+  adjustQuotaStackOffset();
+  window.addEventListener("resize", adjustQuotaStackOffset);
 })();

@@ -49,6 +49,11 @@ img {
 }
 
 /* ─── Top bars (Section 1) ─── */
+#top-bars {
+  position: relative;
+  z-index: 1100;
+}
+
 .terminal-bar {
   background: #000;
   color: #fff;
