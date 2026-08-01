@@ -27,6 +27,9 @@ function subscriptionLabel(sub) {
   if (sub.cycle === "lifetime" || sub.planId === "lifetime" || sub.lifetime) {
     return "✓ 终身版";
   }
+  if (sub.cycle === "trial") {
+    return `✓ 免费体验中 · 至 ${formatExpiry(sub.expiresAt)}`;
+  }
   const cycle = sub.cycle === "annual" ? "年付" : "月付";
   return `✓ ${cycle} · 至 ${formatExpiry(sub.expiresAt)}`;
 }
@@ -84,19 +87,46 @@ function renderAgentList() {
   });
 }
 
-function updateSubscriptionUi(active, subscription) {
+function updateSubscriptionUi(active, subscription, meta = {}) {
   subscriptionActive = active;
   const banner = document.getElementById("paywall-banner");
   const layout = document.querySelector(".dashboard-layout");
   const pricingBtn = document.querySelector('a[href="/pricing.html"]');
+  const trialBanner = document.getElementById("trial-banner");
 
   if (active) {
     banner.hidden = true;
     layout?.classList.remove("locked");
     if (pricingBtn) pricingBtn.textContent = subscriptionLabel(subscription);
+    if (trialBanner) {
+      const onTrial = subscription?.cycle === "trial" || meta.onTrial;
+      trialBanner.hidden = !onTrial;
+      if (onTrial) {
+        const days = meta.trialDaysLeft ?? "";
+        trialBanner.innerHTML = `
+          <strong>免费 ${meta.trialDays || 3} 天全功能体验进行中</strong>
+          <span>剩余约 ${days} 天 · 到期后请订阅月付或年付以继续使用</span>
+          <a href="${checkoutUrl}" class="btn-primary" style="height:36px;padding:0 14px;font-size:12px">提前订阅</a>
+        `;
+      }
+    }
   } else {
     banner.hidden = false;
     layout?.classList.add("locked");
+    if (trialBanner) trialBanner.hidden = true;
+    const title = document.querySelector("#paywall-banner strong");
+    const desc = document.querySelector("#paywall-banner p");
+    const trialEnded = subscription?.cycle === "trial" || subscription?.trialUsed;
+    if (title) {
+      title.textContent = trialEnded
+        ? "免费 3 天体验已结束"
+        : "订阅专业版后即可使用全部功能";
+    }
+    if (desc) {
+      desc.textContent = trialEnded
+        ? "订阅月付或年付后可继续使用全部 AI Agent 功能。中国内地银行卡转账，海外 PayPal。"
+        : "月付 ¥699 / $99，年付 ¥6999 / $999。中国内地可用银行卡转账，海外用户可用 PayPal。";
+    }
     const cta = document.getElementById("paywall-cta");
     if (cta) cta.href = checkoutUrl;
     if (pricingBtn) pricingBtn.textContent = "订阅专业版";
@@ -157,7 +187,11 @@ async function loadCompany() {
   localStorage.setItem("pzhisen_company_id", company.id);
   if (company.email) localStorage.setItem("pzhisen_email", company.email);
   renderLogs(data.logs);
-  updateSubscriptionUi(Boolean(data.subscriptionActive), data.subscription);
+  updateSubscriptionUi(Boolean(data.subscriptionActive), data.subscription, {
+    onTrial: data.onTrial,
+    trialDays: data.trialDays,
+    trialDaysLeft: data.trialDaysLeft,
+  });
 }
 
 async function runDaily() {

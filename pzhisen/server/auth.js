@@ -16,7 +16,15 @@ import {
 } from "./otp-store.js";
 import { sendOtpEmail, isMailConfigured } from "./mail.js";
 import { validateEmail } from "./email-validator.js";
-import { isSubscriptionActive, getSubscriptionByEmail, ensureLifetimeForEmail } from "./billing-store.js";
+import {
+  isSubscriptionActive,
+  getSubscriptionByEmail,
+  ensureLifetimeForEmail,
+  activateTrial,
+  isTrialSubscription,
+  trialDaysRemaining,
+  TRIAL_DAYS,
+} from "./billing-store.js";
 import { isGrandfatheredLifetimeEmail } from "./lifetime-grants.js";
 import { DEFAULT_PLAN_ID, DEFAULT_CYCLE } from "./plans.js";
 import { upsertCompany, getCompany, appendLog, findCompanyByEmail, findCompanyByUserId } from "./store.js";
@@ -130,14 +138,19 @@ function authPayload(user) {
     }
   }
   const fresh = getUserById(user.id);
+  const subscription = getSubscriptionByEmail(fresh.email);
   const subscriptionActive = isSubscriptionActive(fresh.email);
   const lifetimeMember = isGrandfatheredLifetimeEmail(fresh.email);
+  const onTrial = subscriptionActive && isTrialSubscription(subscription);
   return {
     user: publicUser(fresh),
     company,
     subscriptionActive,
     lifetimeMember,
-    subscription: getSubscriptionByEmail(fresh.email),
+    subscription,
+    onTrial,
+    trialDays: TRIAL_DAYS,
+    trialDaysLeft: onTrial ? trialDaysRemaining(subscription) : 0,
     redirectUrl: company ? `/dashboard.html?company=${company.id}` : null,
     checkoutUrl: `/checkout.html?plan=${DEFAULT_PLAN_ID}&cycle=${DEFAULT_CYCLE}`,
   };
@@ -227,15 +240,22 @@ export async function verifyOtpHandler(req, res) {
       passwordHash: entry.passwordHash,
     });
 
-    const company = await createCompanyForUser(user, entry.idea);
     ensureLifetimeForEmail(normalized);
+    // New global users: one-time 3-day full-access trial (skipped for lifetime / already-paid)
+    if (!isSubscriptionActive(normalized)) {
+      activateTrial({ email: normalized });
+    }
+    const company = await createCompanyForUser(user, entry.idea);
     const freshUser = getUserById(user.id);
     setAuthCookie(res, freshUser);
 
+    const payload = authPayload(freshUser);
     res.json({
       success: true,
-      message: "注册成功",
-      ...authPayload(freshUser),
+      message: payload.onTrial
+        ? `注册成功！已开通 ${TRIAL_DAYS} 天免费全功能体验`
+        : "注册成功",
+      ...payload,
     });
   } catch (err) {
     console.error("verify otp error:", err);

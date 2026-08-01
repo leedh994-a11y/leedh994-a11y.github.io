@@ -98,8 +98,8 @@ export async function getBillingConfig() {
     },
     defaultPlanId: DEFAULT_PLAN_ID,
     defaultCycle: DEFAULT_CYCLE,
-    noteZh: "专业版按月 ¥699 / 年 ¥6999（中国银行/Visa 借记卡转账），或 PayPal $99/月、$999/年。订阅到期后需续费方可继续使用。",
-    noteEn: "Pro plan: ¥699/mo or ¥6999/yr (BOC/Visa debit transfer), or $99/mo / $999/yr (PayPal). Renew when your subscription expires.",
+    noteZh: "全球新用户注册后免费体验 3 天全部功能；之后专业版按月 ¥699 / 年 ¥6999（中国银行/Visa 借记卡），或 PayPal $99/月、$999/年。",
+    noteEn: "New global users get 3 days free full access after signup; then Pro at ¥699/mo or ¥6999/yr (BOC/Visa), or $99/mo / $999/yr (PayPal).",
   };
 }
 
