@@ -41,10 +41,21 @@
     if (terminalText) terminalText.textContent = `> ${tasks[taskIdx]}`;
   }, 3200);
 
+  function syncTopOffset() {
+    const trial = document.getElementById("trial-offer-bar");
+    const quota = document.getElementById("daily-quota-banner");
+    const h =
+      (trial?.offsetHeight || 0) +
+      (quota?.offsetHeight || 0) +
+      (topBars?.offsetHeight || 0);
+    document.documentElement.style.setProperty("--top-bars-offset", `${Math.max(h, 68)}px`);
+  }
+
   function updateNav() {
     const scrollY = window.scrollY;
     const section2 = document.getElementById("section-2");
     const inOffice = scrollY < (section2?.offsetTop || 800) - 100;
+    syncTopOffset();
 
     if (nav) {
       nav.classList.toggle("scrolled", scrollY > 40);
@@ -60,6 +71,8 @@
   }
 
   window.addEventListener("scroll", updateNav, { passive: true });
+  window.addEventListener("resize", syncTopOffset, { passive: true });
+  syncTopOffset();
   updateNav();
 
   const revealEls = document.querySelectorAll(".reveal, .reveal-stagger");

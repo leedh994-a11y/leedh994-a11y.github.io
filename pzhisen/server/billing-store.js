@@ -68,16 +68,82 @@ export function updateOrder(orderId, patch) {
   return data.orders[idx];
 }
 
+/** Free full-access trial for newly registered global users. */
+export const TRIAL_DAYS = 3;
+
 function computeExpiresAt(cycle, existingSub = null) {
   const meta = getCycle(cycle);
   const days = meta?.days || 30;
   const now = Date.now();
   let base = now;
-  if (existingSub?.expiresAt) {
+  // Paid plans should not stack unused trial days — start from now when upgrading from trial
+  if (existingSub?.expiresAt && existingSub.cycle !== "trial") {
     const current = new Date(existingSub.expiresAt).getTime();
     if (current > now) base = current;
   }
   return new Date(base + days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+/**
+ * Grant a one-time 3-day full-access trial to a newly registered user.
+ * Never re-grants after a previous trial, and never overwrites paid/lifetime access.
+ */
+export function activateTrial({ email }) {
+  const normalized = (email || "").trim().toLowerCase();
+  if (!normalized.includes("@")) return null;
+
+  if (isGrandfatheredLifetimeEmail(normalized)) {
+    return ensureLifetimeForEmail(normalized);
+  }
+
+  const existing = getSubscriptionByEmail(normalized);
+  if (existing) {
+    if (isLifetimeSubscription(existing)) return existing;
+    if (existing.trialUsed || existing.cycle === "trial") return existing;
+    if (
+      existing.status === "active" &&
+      existing.cycle !== "trial" &&
+      existing.expiresAt &&
+      new Date(existing.expiresAt) > new Date()
+    ) {
+      return existing;
+    }
+  }
+
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const sub = {
+    email: normalized,
+    planId: "pro",
+    cycle: "trial",
+    provider: "free_trial",
+    externalId: null,
+    status: "active",
+    activatedAt: now.toISOString(),
+    renewedAt: now.toISOString(),
+    expiresAt,
+    trialUsed: true,
+    trialDays: TRIAL_DAYS,
+  };
+
+  const data = getSubscriptions();
+  const idx = data.subscriptions.findIndex((s) => s.email === normalized);
+  if (idx >= 0) data.subscriptions[idx] = { ...data.subscriptions[idx], ...sub };
+  else data.subscriptions.push(sub);
+  saveSubscriptions(data);
+  updateCompaniesPlanByEmail(normalized, "trial");
+  return sub;
+}
+
+export function isTrialSubscription(sub) {
+  return Boolean(sub && sub.cycle === "trial");
+}
+
+export function trialDaysRemaining(sub) {
+  if (!isTrialSubscription(sub) || !sub.expiresAt) return 0;
+  const ms = new Date(sub.expiresAt).getTime() - Date.now();
+  if (ms <= 0) return 0;
+  return Math.ceil(ms / (24 * 60 * 60 * 1000));
 }
 
 export function activateLifetime({ email, planId, provider, externalId, note }) {

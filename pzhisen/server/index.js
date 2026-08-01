@@ -28,8 +28,16 @@ import {
   notifyStatusHandler,
   notifyTestHandler,
 } from "./billing.js";
-import { isSubscriptionActive, getSubscriptionByEmail, ensureGrandfatheredLifetimeAccess, ensureLifetimeForEmail } from "./billing-store.js";
-import { DEFAULT_PLAN_ID, DEFAULT_CYCLE } from "./plans.js";
+import {
+  isSubscriptionActive,
+  getSubscriptionByEmail,
+  ensureGrandfatheredLifetimeAccess,
+  ensureLifetimeForEmail,
+  isTrialSubscription,
+  trialDaysRemaining,
+  TRIAL_DAYS,
+} from "./billing-store.js";
+import { DEFAULT_PLAN_ID, DEFAULT_CYCLE, isValidCycle } from "./plans.js";
 import {
   registerHandler,
   verifyOtpHandler,
@@ -191,10 +199,14 @@ app.get("/api/companies/:id/logs", requireAuth, requireCompanyAccess, (req, res)
 function subscriptionPayload(email) {
   const active = isSubscriptionActive(email);
   const sub = getSubscriptionByEmail(email);
-  const cycle = sub?.cycle || DEFAULT_CYCLE;
+  const onTrial = active && isTrialSubscription(sub);
+  const cycle = isValidCycle(sub?.cycle) ? sub.cycle : DEFAULT_CYCLE;
   return {
     subscriptionActive: active,
     subscription: sub,
+    onTrial,
+    trialDays: TRIAL_DAYS,
+    trialDaysLeft: onTrial ? trialDaysRemaining(sub) : 0,
     checkoutUrl: `/checkout.html?plan=${DEFAULT_PLAN_ID}&cycle=${cycle}`,
   };
 }
@@ -207,13 +219,17 @@ function requireSubscription(company, res) {
   if (!isSubscriptionActive(company.email)) {
     const sub = getSubscriptionByEmail(company.email);
     const expired = sub && new Date(sub.expiresAt) <= new Date();
+    const trialEnded = expired && (sub?.cycle === "trial" || sub?.trialUsed);
     res.status(402).json({
       success: false,
       error: "Subscription required",
-      errorZh: expired
-        ? "您的订阅已到期，请续费月付（¥699 / $99）或年付（¥6999 / $999）后继续使用。"
-        : "请先订阅专业版（月付或年付）后使用全部功能。中国内地可用银行卡转账，海外用户可用 PayPal。",
+      errorZh: trialEnded
+        ? `免费 ${TRIAL_DAYS} 天体验已结束。请订阅月付（¥699 / $99）或年付（¥6999 / $999）后继续使用全部功能。`
+        : expired
+          ? "您的订阅已到期，请续费月付（¥699 / $99）或年付（¥6999 / $999）后继续使用。"
+          : "请先订阅专业版（月付或年付）后使用全部功能。中国内地可用银行卡转账，海外用户可用 PayPal。",
       expired,
+      trialEnded,
       ...subscriptionPayload(company.email),
     });
     return false;
