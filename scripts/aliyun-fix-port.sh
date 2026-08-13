@@ -60,8 +60,10 @@ ensure_files() {
 write_env() {
   local paypal_secret="${PAYPAL_CLIENT_SECRET:-}"
   local smtp_pass="${SMTP_PASS:-}"
+  local openrouter_key="${OPENROUTER_API_KEY:-}"
   [ -n "$paypal_secret" ] || paypal_secret="$(grep -E '^PAYPAL_CLIENT_SECRET=' "$APP/.env" 2>/dev/null | cut -d= -f2- || true)"
   [ -n "$smtp_pass" ] || smtp_pass="$(grep -E '^SMTP_PASS=' "$APP/.env" 2>/dev/null | cut -d= -f2- || true)"
+  [ -n "$openrouter_key" ] || openrouter_key="$(grep -E '^OPENROUTER_API_KEY=' "$APP/.env" 2>/dev/null | cut -d= -f2- || true)"
 
   cat > "$APP/.env" <<EOF
 PUBLIC_URL=https://yoursite.asia
@@ -75,6 +77,9 @@ SMTP_USER=LeeDh994@gmail.com
 SMTP_PASS=${smtp_pass}
 SMTP_FROM=LeeDh994@gmail.com
 BILLING_ADMIN_SECRET=sitp-notify-admin-2026
+OPENROUTER_API_KEY=${openrouter_key}
+OPENROUTER_SITE_URL=https://yoursite.asia
+OPENROUTER_SITE_NAME=Sitp GPT
 PORT=${PORT}
 DATA_DIR=./server/data
 EOF

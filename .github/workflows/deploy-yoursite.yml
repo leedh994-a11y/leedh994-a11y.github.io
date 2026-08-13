@@ -45,7 +45,12 @@ jobs:
             curl -fsSL "https://cdn.jsdelivr.net/gh/leedh994-a11y/leedh994-a11y.github.io@main/scripts/aliyun-disk-cleanup.sh" | bash
             export PAYPAL_CLIENT_SECRET="${{ secrets.YS_PAYPAL_CLIENT_SECRET }}"
             export SMTP_PASS="${{ secrets.YS_SMTP_PASS }}"
+            export OPENROUTER_API_KEY="${{ secrets.YS_OPENROUTER_API_KEY }}"
             curl -fsSL "https://cdn.jsdelivr.net/gh/leedh994-a11y/leedh994-a11y.github.io@main/scripts/aliyun-full-restore.sh" | bash
+            if [ -n "${{ secrets.YS_OPENROUTER_API_KEY }}" ]; then
+              export OPENROUTER_API_KEY="${{ secrets.YS_OPENROUTER_API_KEY }}"
+              curl -fsSL "https://cdn.jsdelivr.net/gh/leedh994-a11y/leedh994-a11y.github.io@main/scripts/aliyun-set-openrouter.sh" | bash
+            fi
             echo "--- verify ---"
             curl -s -o /dev/null -w "local %{http_code}\n" http://127.0.0.1:3000/ || true
             curl -s -o /dev/null -w "local3456 %{http_code}\n" http://127.0.0.1:3456/ || true

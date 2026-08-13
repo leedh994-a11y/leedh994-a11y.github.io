@@ -81,11 +81,15 @@ write_env() {
   local paypal_id="${PAYPAL_CLIENT_ID:-BAA_HhKZAA-3hl-Bx67hXC5snkRbipDaPzkWGBvcZKYwpYe9IQAVSrdtkHmtwTmsN2YPBZDpkVb9RHc3eU}"
   local paypal_secret="${PAYPAL_CLIENT_SECRET:-}"
   local smtp_pass="${SMTP_PASS:-}"
+  local openrouter_key="${OPENROUTER_API_KEY:-}"
   if [ -z "$paypal_secret" ] && [ -f "$APP_DIR/.env" ]; then
     paypal_secret="$(grep -E '^PAYPAL_CLIENT_SECRET=' "$APP_DIR/.env" | cut -d= -f2- || true)"
   fi
   if [ -z "$smtp_pass" ] && [ -f "$APP_DIR/.env" ]; then
     smtp_pass="$(grep -E '^SMTP_PASS=' "$APP_DIR/.env" | cut -d= -f2- || true)"
+  fi
+  if [ -z "$openrouter_key" ] && [ -f "$APP_DIR/.env" ]; then
+    openrouter_key="$(grep -E '^OPENROUTER_API_KEY=' "$APP_DIR/.env" | cut -d= -f2- || true)"
   fi
   [ -n "$paypal_secret" ] || die "Set PAYPAL_CLIENT_SECRET env var or keep existing .env"
   [ -n "$smtp_pass" ] || die "Set SMTP_PASS env var or keep existing .env"
@@ -102,6 +106,9 @@ SMTP_USER=LeeDh994@gmail.com
 SMTP_PASS=${smtp_pass}
 SMTP_FROM=LeeDh994@gmail.com
 BILLING_ADMIN_SECRET=sitp-notify-admin-2026
+OPENROUTER_API_KEY=${openrouter_key}
+OPENROUTER_SITE_URL=https://yoursite.asia
+OPENROUTER_SITE_NAME=Sitp GPT
 PORT=${PORT}
 DATA_DIR=./server/data
 EOF

@@ -26,12 +26,16 @@ write_env() {
   local paypal_id="${PAYPAL_CLIENT_ID:-BAA_HhKZAA-3hl-Bx67hXC5snkRbipDaPzkWGBvcZKYwpYe9IQAVSrdtkHmtwTmsN2YPBZDpkVb9RHc3eU}"
   local paypal_secret="${PAYPAL_CLIENT_SECRET:-}"
   local smtp_pass="${SMTP_PASS:-}"
+  local openrouter_key="${OPENROUTER_API_KEY:-}"
 
   if [ -z "$paypal_secret" ] && [ -f "$APP/.env" ]; then
     paypal_secret="$(grep -E '^PAYPAL_CLIENT_SECRET=' "$APP/.env" | cut -d= -f2- || true)"
   fi
   if [ -z "$smtp_pass" ] && [ -f "$APP/.env" ]; then
     smtp_pass="$(grep -E '^SMTP_PASS=' "$APP/.env" | cut -d= -f2- || true)"
+  fi
+  if [ -z "$openrouter_key" ] && [ -f "$APP/.env" ]; then
+    openrouter_key="$(grep -E '^OPENROUTER_API_KEY=' "$APP/.env" | cut -d= -f2- || true)"
   fi
 
   cat > "$APP/.env" <<EOF
@@ -46,6 +50,9 @@ SMTP_USER=LeeDh994@gmail.com
 SMTP_PASS=${smtp_pass}
 SMTP_FROM=LeeDh994@gmail.com
 BILLING_ADMIN_SECRET=sitp-notify-admin-2026
+OPENROUTER_API_KEY=${openrouter_key}
+OPENROUTER_SITE_URL=https://yoursite.asia
+OPENROUTER_SITE_NAME=Sitp GPT
 PORT=${port}
 DATA_DIR=./server/data
 EOF

@@ -62,6 +62,9 @@ EOF
   if [ -n "${SMTP_PASS:-}" ]; then
     grep -q '^SMTP_PASS=' "$APP/.env" 2>/dev/null && sed -i "s/^SMTP_PASS=.*/SMTP_PASS=${SMTP_PASS}/" "$APP/.env" || echo "SMTP_PASS=${SMTP_PASS}" >> "$APP/.env"
   fi
+  if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+    grep -q '^OPENROUTER_API_KEY=' "$APP/.env" 2>/dev/null && sed -i "s/^OPENROUTER_API_KEY=.*/OPENROUTER_API_KEY=${OPENROUTER_API_KEY}/" "$APP/.env" || echo "OPENROUTER_API_KEY=${OPENROUTER_API_KEY}" >> "$APP/.env"
+  fi
 
   log "npm install..."
   cd "$APP"
