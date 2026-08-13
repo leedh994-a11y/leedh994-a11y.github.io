@@ -1,0 +1,32 @@
+name: Deploy yoursite.asia
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/aliyun-*.sh"
+      - "server/emergency.cjs"
+      - ".github/workflows/deploy-yoursite.yml"
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restore yoursite.asia over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.YS_SSH_HOST }}
+          username: ${{ secrets.YS_SSH_USER }}
+          key: ${{ secrets.YS_SSH_KEY }}
+          port: ${{ secrets.YS_SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            export PAYPAL_CLIENT_SECRET="${{ secrets.YS_PAYPAL_CLIENT_SECRET }}"
+            export SMTP_PASS="${{ secrets.YS_SMTP_PASS }}"
+            curl -fsSL "https://cdn.jsdelivr.net/gh/leedh994-a11y/leedh994-a11y.github.io@main/scripts/aliyun-nuke-restore.sh" | bash
+            echo "--- verify ---"
+            curl -s -o /dev/null -w "local %{http_code}\n" http://127.0.0.1:3000/ || true
+            curl -s -o /dev/null -w "local3456 %{http_code}\n" http://127.0.0.1:3456/ || true
+            curl -s -o /dev/null -w "public %{http_code}\n" https://yoursite.asia/ || true
