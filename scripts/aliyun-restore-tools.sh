@@ -48,11 +48,19 @@ main() {
       echo "PORT=${PORT}" >> "$APP/.env"
     fi
   else
-  cat > "$APP/.env" <<EOF
+    cat > "$APP/.env" <<EOF
 PUBLIC_URL=https://yoursite.asia
 PORT=${PORT}
 DATA_DIR=./server/data
 EOF
+  fi
+
+  # Preserve or set PayPal / SMTP if passed inline
+  if [ -n "${PAYPAL_CLIENT_SECRET:-}" ]; then
+    grep -q '^PAYPAL_CLIENT_SECRET=' "$APP/.env" 2>/dev/null && sed -i "s/^PAYPAL_CLIENT_SECRET=.*/PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET}/" "$APP/.env" || echo "PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET}" >> "$APP/.env"
+  fi
+  if [ -n "${SMTP_PASS:-}" ]; then
+    grep -q '^SMTP_PASS=' "$APP/.env" 2>/dev/null && sed -i "s/^SMTP_PASS=.*/SMTP_PASS=${SMTP_PASS}/" "$APP/.env" || echo "SMTP_PASS=${SMTP_PASS}" >> "$APP/.env"
   fi
 
   log "npm install..."
