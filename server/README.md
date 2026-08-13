@@ -37,15 +37,20 @@ Open http://localhost:3000
    - `GITHUB_NOTIFY_REPO` = `leedh994-a11y/leedh994-a11y.github.io`
 3. Test: `POST /api/billing/admin/notify-test` with header `x-admin-key: YOUR_SECRET`
 
-### Option B — Direct SMTP (Outlook)
+### Option A — Gmail SMTP (recommended)
+
+Send from `LeeDh994@gmail.com`, deliver order alerts to `ddb1520@outlook.com`:
 
 ```env
 ORDER_NOTIFY_EMAIL=ddb1520@outlook.com
-SMTP_HOST=smtp-mail.outlook.com
+SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=ddb1520@outlook.com
-SMTP_PASS=your-outlook-app-password
+SMTP_USER=LeeDh994@gmail.com
+SMTP_PASS=your-gmail-app-password
+SMTP_FROM=LeeDh994@gmail.com
 ```
+
+Create a Gmail app password: https://myaccount.google.com/apppasswords
 
 ## Deploy to yoursite.asia (nginx + PM2)
 
