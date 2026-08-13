@@ -1,7 +1,7 @@
 name: Order notify email
 
-# Triggered by the Pzhisen server over HTTPS (works on Render free tier
-# where outbound SMTP ports are blocked). Sends to merchant Gmail.
+# Triggered by the Sitp GPT / yoursite.asia server over HTTPS when a global
+# user completes PayPal checkout. Delivers alerts to ddb1520@outlook.com.
 
 on:
   repository_dispatch:
@@ -11,17 +11,17 @@ on:
       subject:
         description: Email subject
         required: true
-        default: "[Pzhisen] 订单通知测试"
+        default: "[Sitp GPT] 订单通知测试"
       body:
         description: Plain-text body
         required: true
-        default: "Test from GitHub Actions"
+        default: "Test from GitHub Actions — yoursite.asia order notify"
 
 jobs:
   send:
     runs-on: ubuntu-latest
     steps:
-      - name: Send Gmail via SMTP
+      - name: Send order notification email
         env:
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
@@ -29,6 +29,7 @@ jobs:
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           SMTP_FROM: ${{ secrets.SMTP_FROM }}
           ORDER_NOTIFY_EMAIL: ${{ secrets.ORDER_NOTIFY_EMAIL }}
+          PAYLOAD_TO: ${{ github.event.client_payload.to }}
           SUBJECT: ${{ github.event.client_payload.subject || inputs.subject }}
           BODY: ${{ github.event.client_payload.body || inputs.body }}
           HTML: ${{ github.event.client_payload.html || '' }}
@@ -43,9 +44,9 @@ jobs:
           user = os.environ.get("SMTP_USER") or ""
           password = os.environ.get("SMTP_PASS") or ""
           mail_from = os.environ.get("SMTP_FROM") or user
-          to_raw = os.environ.get("ORDER_NOTIFY_EMAIL") or "leedh994@gmail.com"
+          to_raw = os.environ.get("PAYLOAD_TO") or os.environ.get("ORDER_NOTIFY_EMAIL") or "ddb1520@outlook.com"
           recipients = [e.strip() for e in to_raw.split(",") if "@" in e.strip()]
-          subject = os.environ.get("SUBJECT") or "[Pzhisen] notify"
+          subject = os.environ.get("SUBJECT") or "[Sitp GPT] notify"
           body = os.environ.get("BODY") or ""
           html = os.environ.get("HTML") or ""
 

@@ -1,53 +1,75 @@
-# Server billing — installation plan ($599)
+# Sitp GPT Server (yoursite.asia)
 
-The live site API (`/api/billing/checkout`) must accept `planId: "installation"` for PayPal checkout to work end-to-end.
+Node.js backend for global PayPal subscriptions and **order email notifications** to `ddb1520@outlook.com`.
 
-## Quick integration
+## Features
 
-In your existing billing checkout handler, add:
+- PayPal checkout for Starter / Growth / Scale plans + $599 installation
+- 7-day free trial (`POST /api/billing/checkout` with `mode: "trial"`)
+- Email alerts on: trial start, order created, payment completed
+- GitHub Actions email bridge (when SMTP is blocked on host)
 
-```js
-import {
-  isInstallationPlan,
-  handleInstallationCheckout,
-  handleInstallationActivate,
-} from "./server/billing-installation.js";
+## Quick start
 
-// POST /api/billing/checkout
-if (isInstallationPlan(planId)) {
-  if (mode === "trial") {
-    return res.json({ success: false, error: "安装套餐不支持试用，请使用 PayPal 付款" });
-  }
-  const result = await handleInstallationCheckout({
-    email,
-    createPayPalOrder: yourCreatePayPalOrderFn,
-    savePendingOrder: yourSavePendingOrderFn,
-  });
-  return res.json(result);
-}
-
-// POST /api/billing/activate
-if (isInstallationPlan(planId)) {
-  const result = await handleInstallationActivate({
-    orderId,
-    email,
-    captureOrder: yourCaptureOrderFn,
-    savePurchase: yourSavePurchaseFn,
-  });
-  return res.json(result);
-}
+```bash
+cp .env.example .env
+# Fill PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, GITHUB_NOTIFY_TOKEN (or SMTP)
+npm install
+npm start
 ```
 
-## Frontend (already wired)
+Open http://localhost:3000
 
-- Pricing CTA → `/checkout.html?plan=installation`
-- `js/checkout.js` calls `/api/billing/checkout` with `planId: "installation"`, `cycle: "onetime"`
-- Falls back to `/api/paypal/create-order` ($599) if billing API returns「无效套餐」
-- After PayPal capture → `/api/billing/activate` with `planId: "installation"`
+## Order notification setup
 
-## Deploy checklist
+### Recipient (default)
 
-1. Merge `server/billing-installation.js` into your Node server
-2. Register installation plan in checkout + activate handlers
-3. Deploy static files from this repo (`checkout.js`, `pricing.html`)
-4. Restart server (`npm start`)
+`ORDER_NOTIFY_EMAIL=ddb1520@outlook.com` — already the default in `server/mail.js`.
+
+### Option A — GitHub Actions bridge (recommended)
+
+1. GitHub repo → **Settings → Secrets and variables → Actions**:
+   - `SMTP_HOST` = `smtp.gmail.com` (sender Gmail)
+   - `SMTP_USER` / `SMTP_PASS` = Gmail app password
+   - `ORDER_NOTIFY_EMAIL` = `ddb1520@outlook.com`
+2. Server `.env`:
+   - `GITHUB_NOTIFY_TOKEN` = fine-grained PAT with `Actions: Write`
+   - `GITHUB_NOTIFY_REPO` = `leedh994-a11y/leedh994-a11y.github.io`
+3. Test: `POST /api/billing/admin/notify-test` with header `x-admin-key: YOUR_SECRET`
+
+### Option B — Direct SMTP (Outlook)
+
+```env
+ORDER_NOTIFY_EMAIL=ddb1520@outlook.com
+SMTP_HOST=smtp-mail.outlook.com
+SMTP_PORT=587
+SMTP_USER=ddb1520@outlook.com
+SMTP_PASS=your-outlook-app-password
+```
+
+## Deploy to yoursite.asia (nginx + PM2)
+
+```bash
+git pull
+npm install --omit=dev
+# Update .env on server
+pm2 restart sitp-gpt || pm2 start server/index.js --name sitp-gpt
+```
+
+Nginx should proxy `/api/*` to `http://127.0.0.1:3000`.
+
+## API endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/health` | Health check |
+| GET | `/api/paypal/config` | PayPal SDK config |
+| POST | `/api/billing/checkout` | Create order or start trial |
+| POST | `/api/billing/activate` | Capture PayPal + activate subscription |
+| POST | `/api/paypal/capture-order` | Capture only |
+| GET | `/api/billing/subscription?email=` | Lookup subscription |
+| POST | `/api/billing/admin/notify-test` | Send test email (admin key) |
+
+## Installation plan
+
+See `billing-installation.js` — wired into checkout for `plan=installation`.

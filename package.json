@@ -3,6 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "start": "node server/index.js",
     "generate-seo": "node scripts/generate-seo-pages.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "nodemailer": "^6.9.16"
   }
 }
