@@ -65,7 +65,7 @@ main() {
   PORT="$(detect_nginx_port)"
   log "App: $APP  Port: $PORT"
 
-  TMP="${APP}/.restore-tmp"
+  TMP="/var/tmp/yoursite-restore-$$"
   rm -rf "$TMP"
   log "Clone full site (branch $BRANCH)..."
   if ! git clone -b "$BRANCH" --depth 1 "$REPO" "$TMP" 2>/dev/null; then
@@ -75,8 +75,21 @@ main() {
   [ -d "$APP/server/data" ] && mkdir -p "$TMP/server/data" && cp -a "$APP/server/data/." "$TMP/server/data/" 2>/dev/null || true
 
   log "Sync all files..."
-  rsync -a --delete --exclude node_modules --exclude .git --exclude server/data "$TMP/" "$APP/"
+  rsync -a --delete \
+    --exclude node_modules \
+    --exclude .git \
+    --exclude server/data \
+    --exclude .restore-tmp \
+    "$TMP/" "$APP/"
   rm -rf "$TMP"
+
+  log "Verify SEO pages..."
+  SEO_N="$(find "$APP/seo" -name '*.html' 2>/dev/null | wc -l | tr -d ' ')"
+  log "SEO pages on disk: $SEO_N (expected ~1000)"
+  if [ "${SEO_N:-0}" -lt 900 ]; then
+    log "SEO incomplete — running seo restore..."
+    curl -fsSL "https://cdn.jsdelivr.net/gh/leedh994-a11y/leedh994-a11y.github.io@main/scripts/aliyun-restore-seo.sh" | bash
+  fi
 
   write_env "$PORT"
 
