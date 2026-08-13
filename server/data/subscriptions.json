@@ -1,0 +1,16 @@
+{
+  "subscriptions": [
+    {
+      "id": "sub_1786603658047",
+      "email": "buyer@example.com",
+      "planId": "growth",
+      "cycle": "monthly",
+      "status": "trialing",
+      "trialUsed": true,
+      "trialEndsAt": "2026-08-20T06:47:38.047Z",
+      "currentPeriodEnd": "2026-08-20T06:47:38.047Z",
+      "activatedAt": "2026-08-13T06:47:38.047Z",
+      "provider": "trial"
+    }
+  ]
+}

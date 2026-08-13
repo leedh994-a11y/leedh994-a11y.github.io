@@ -1,0 +1,19 @@
+{
+  "orders": [
+    {
+      "id": "sitp_1786629667169_ij0fzm",
+      "email": "test-buyer@example.com",
+      "planId": "growth",
+      "cycle": "monthly",
+      "amount": 79,
+      "currency": "USD",
+      "provider": "paypal",
+      "externalId": "8H8555148W874125D",
+      "status": "pending",
+      "meta": {
+        "addons": []
+      },
+      "createdAt": "2026-08-13T14:01:07.169Z"
+    }
+  ]
+}
