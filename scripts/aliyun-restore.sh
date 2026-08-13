@@ -34,7 +34,12 @@ pick_entry() {
 
 try_health() {
   local port="$1"
-  curl -sf "http://127.0.0.1:${port}/api/health" >/dev/null 2>&1
+  ss -tlnp 2>/dev/null | grep -q ":${port} " || return 1
+  curl -sf -m 3 "http://127.0.0.1:${port}/api/health" >/dev/null 2>&1 && return 0
+  curl -sf -m 3 "http://127.0.0.1:${port}/" >/dev/null 2>&1 && return 0
+  local code
+  code="$(curl -s -o /dev/null -m 3 -w '%{http_code}' "http://127.0.0.1:${port}/" 2>/dev/null || echo 000)"
+  [ "$code" != "000" ] && [ "$code" != "502" ]
 }
 
 start_pm2() {

@@ -11,8 +11,16 @@ set -euo pipefail
 APP_DIR="${APP_DIR:-/opt/sitegpt}"
 BRANCH="${BRANCH:-cursor/yoursite-order-notify-fd54}"
 REPO="${REPO:-https://github.com/leedh994-a11y/leedh994-a11y.github.io.git}"
-PORT="${PORT:-3000}"
 TMP_SRC="/tmp/yoursite-src-$$"
+
+detect_nginx_port() {
+  local p
+  p="$(grep -rh "proxy_pass" /etc/nginx/ 2>/dev/null | grep -oE '127\.0\.0\.1:[0-9]+|localhost:[0-9]+|:[0-9]+' | grep -oE '[0-9]+' | head -1 || true)"
+  [ -n "$p" ] && echo "$p" && return
+  echo "3000"
+}
+
+PORT="${PORT:-$(detect_nginx_port)}"
 
 log() { echo "[deploy] $*"; }
 die() { echo "[deploy] ERROR: $*" >&2; exit 1; }
