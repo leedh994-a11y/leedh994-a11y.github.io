@@ -1,0 +1,21 @@
+name: Deploy yoursite.asia
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.YS_SSH_HOST }}
+          username: ${{ secrets.YS_SSH_USER }}
+          key: ${{ secrets.YS_SSH_KEY }}
+          port: ${{ secrets.YS_SSH_PORT || 22 }}
+          script: |
+            set -e
+            export PAYPAL_CLIENT_SECRET="${{ secrets.YS_PAYPAL_CLIENT_SECRET }}"
+            export SMTP_PASS="${{ secrets.YS_SMTP_PASS }}"
+            curl -fsSL https://raw.githubusercontent.com/leedh994-a11y/leedh994-a11y.github.io/cursor/yoursite-order-notify-fd54/scripts/aliyun-deploy.sh | bash
