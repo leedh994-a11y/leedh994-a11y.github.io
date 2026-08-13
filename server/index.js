@@ -19,13 +19,16 @@ import {
   notifyStatusHandler,
   notifyTestHandler,
 } from "./billing.js";
+import toolsApi from "./tools-api.js";
+import { isAiEnabled } from "./openrouter.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = Number(process.env.PORT) || 3456;
 
 const app = express();
 app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
 app.use((req, res, next) => {
   res.setHeader("X-Powered-By", "Express");
@@ -87,6 +90,8 @@ app.post("/api/billing/cancel", cancelHandler);
 app.get("/api/billing/admin/notify-status", notifyStatusHandler);
 app.post("/api/billing/admin/notify-test", notifyTestHandler);
 
+app.use("/api", toolsApi);
+
 app.use(express.static(ROOT));
 
 app.listen(PORT, () => {
@@ -94,4 +99,5 @@ app.listen(PORT, () => {
   console.log(`Static root: ${ROOT}`);
   console.log(`PUBLIC_URL: ${process.env.PUBLIC_URL || "https://yoursite.asia"}`);
   console.log(`ORDER_NOTIFY_EMAIL: ${process.env.ORDER_NOTIFY_EMAIL || "ddb1520@outlook.com"}`);
+  console.log(`AI (OpenRouter): ${isAiEnabled() ? "enabled" : "disabled — template/mock responses"}`);
 });

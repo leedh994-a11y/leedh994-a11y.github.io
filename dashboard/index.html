@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Sitp GPT AI Chatbot SaaS</title>
+  <link rel="stylesheet" href="/dashboard/css/dashboard.css" />
+</head>
+<body>
+  <div id="auth-screen" class="auth-screen">
+    <div class="auth-card">
+      <a href="/" class="auth-logo">Sitp GPT</a>
+      <h1>AI Chatbot Dashboard</h1>
+      <p class="auth-sub">Train chatbots, deploy widgets, and manage customer support — SiteGPT-style SaaS.</p>
+      <div class="auth-tabs">
+        <button id="tab-login" class="active" type="button">Sign In</button>
+        <button id="tab-register" type="button">Register</button>
+      </div>
+      <form id="login-form">
+        <label>Email<input type="email" id="login-email" required placeholder="you@company.com" /></label>
+        <label>Password<input type="password" id="login-password" required minlength="6" /></label>
+        <button type="submit" class="btn-primary">Sign In</button>
+      </form>
+      <form id="register-form" class="hidden">
+        <label>Email <small>(must have active subscription)</small><input type="email" id="reg-email" required /></label>
+        <label>Name<input type="text" id="reg-name" placeholder="Your name" /></label>
+        <label>Password<input type="password" id="reg-password" required minlength="6" /></label>
+        <button type="submit" class="btn-primary">Create Account</button>
+      </form>
+      <p id="auth-error" class="auth-error hidden"></p>
+      <p class="auth-footer">No subscription? <a href="/pricing.html">Start free trial</a> · <a href="/account.html">Manage billing</a></p>
+    </div>
+  </div>
+
+  <div id="app" class="app hidden">
+    <aside class="sidebar">
+      <div class="sidebar-brand">Sitp GPT <span>SaaS</span></div>
+      <nav>
+        <button data-view="overview" class="nav-item active">Overview</button>
+        <button data-view="bots" class="nav-item">Chatbots</button>
+        <button data-view="conversations" class="nav-item">Conversations</button>
+        <button data-view="analytics" class="nav-item">Analytics</button>
+        <button data-view="team" class="nav-item">Team</button>
+        <button data-view="integrations" class="nav-item">Integrations</button>
+        <button data-view="webhooks" class="nav-item">Webhooks</button>
+        <button data-view="settings" class="nav-item">Settings</button>
+      </nav>
+      <div class="sidebar-footer">
+        <div id="plan-badge" class="plan-badge">—</div>
+        <button id="btn-logout" type="button" class="btn-ghost">Sign out</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <h2 id="view-title">Overview</h2>
+        <div class="topbar-user" id="user-email">—</div>
+      </header>
+
+      <!-- Overview -->
+      <section id="view-overview" class="view">
+        <div id="onboarding-banner" class="onboarding-banner hidden"></div>
+        <div class="stats-grid" id="stats-grid"></div>
+        <div class="card">
+          <h3>Getting Started</h3>
+          <div id="setup-steps" class="setup-steps"></div>
+        </div>
+        <div class="card">
+          <h3>Quick Tips</h3>
+          <ol class="quick-steps">
+            <li>Create a chatbot and enter your website URL</li>
+            <li>Click <strong>Train on Website</strong> — vector embeddings improve answer accuracy</li>
+            <li>Use <strong>Live Preview</strong> to test before deploying</li>
+            <li>Copy the embed code and paste it before <code>&lt;/body&gt;</code></li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- Bots -->
+      <section id="view-bots" class="view hidden">
+        <div class="view-actions">
+          <button id="btn-new-bot" class="btn-primary" type="button">+ New Chatbot</button>
+        </div>
+        <div id="bots-list" class="bots-grid"></div>
+        <div id="bot-detail" class="bot-detail hidden"></div>
+      </section>
+
+      <!-- Conversations -->
+      <section id="view-conversations" class="view hidden">
+        <div id="conversations-list" class="table-wrap"></div>
+        <div id="conversation-detail" class="card hidden"></div>
+      </section>
+
+      <!-- Analytics -->
+      <section id="view-analytics" class="view hidden">
+        <div id="analytics-content"></div>
+      </section>
+
+      <!-- Team -->
+      <section id="view-team" class="view hidden">
+        <div class="view-actions">
+          <button id="btn-add-member" class="btn-primary" type="button">+ Invite Member</button>
+        </div>
+        <div id="team-list" class="table-wrap"></div>
+      </section>
+
+      <!-- Integrations -->
+      <section id="view-integrations" class="view hidden">
+        <div id="integrations-grid" class="integrations-grid"></div>
+      </section>
+
+      <!-- Webhooks -->
+      <section id="view-webhooks" class="view hidden">
+        <div class="view-actions">
+          <button id="btn-add-webhook" class="btn-primary" type="button">+ Add Webhook</button>
+        </div>
+        <div id="webhooks-list" class="table-wrap"></div>
+      </section>
+
+      <!-- Settings -->
+      <section id="view-settings" class="view hidden">
+        <div class="card">
+          <h3>API Key</h3>
+          <p>Use this key for server-to-server integrations.</p>
+          <div class="api-key-row">
+            <code id="api-key-display">—</code>
+            <button id="btn-regen-key" class="btn-ghost" type="button">Regenerate</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Change Password</h3>
+          <form id="password-form">
+            <label>New Password<input type="password" id="new-password" minlength="6" required /></label>
+            <button type="submit" class="btn-primary">Update Password</button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Onboarding wizard -->
+  <div id="onboarding-overlay" class="onboarding-overlay hidden">
+    <div class="onboarding-wizard">
+      <div class="wizard-progress"><div id="wizard-bar" class="wizard-bar"></div></div>
+      <div id="wizard-content"></div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal" id="modal-content"></div>
+  </div>
+
+  <script src="/dashboard/js/dashboard.js"></script>
+</body>
+</html>
