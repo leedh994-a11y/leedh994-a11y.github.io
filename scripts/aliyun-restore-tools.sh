@@ -56,11 +56,21 @@ EOF
   fi
 
   # Preserve or set PayPal / SMTP if passed inline
+  local paypal_id="${PAYPAL_CLIENT_ID:-BAA_HhKZAA-3hl-Bx67hXC5snkRbipDaPzkWGBvcZKYwpYe9IQAVSrdtkHmtwTmsN2YPBZDpkVb9RHc3eU}"
+  if [ -n "${PAYPAL_CLIENT_ID:-}" ] || ! grep -q '^PAYPAL_CLIENT_ID=' "$APP/.env" 2>/dev/null; then
+    grep -q '^PAYPAL_CLIENT_ID=' "$APP/.env" 2>/dev/null && sed -i "s/^PAYPAL_CLIENT_ID=.*/PAYPAL_CLIENT_ID=${paypal_id}/" "$APP/.env" || echo "PAYPAL_CLIENT_ID=${paypal_id}" >> "$APP/.env"
+  fi
   if [ -n "${PAYPAL_CLIENT_SECRET:-}" ]; then
     grep -q '^PAYPAL_CLIENT_SECRET=' "$APP/.env" 2>/dev/null && sed -i "s/^PAYPAL_CLIENT_SECRET=.*/PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET}/" "$APP/.env" || echo "PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET}" >> "$APP/.env"
   fi
+  if ! grep -q '^PAYPAL_MODE=' "$APP/.env" 2>/dev/null; then
+    echo "PAYPAL_MODE=live" >> "$APP/.env"
+  fi
   if [ -n "${SMTP_PASS:-}" ]; then
     grep -q '^SMTP_PASS=' "$APP/.env" 2>/dev/null && sed -i "s/^SMTP_PASS=.*/SMTP_PASS=${SMTP_PASS}/" "$APP/.env" || echo "SMTP_PASS=${SMTP_PASS}" >> "$APP/.env"
+  fi
+  if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+    grep -q '^OPENROUTER_API_KEY=' "$APP/.env" 2>/dev/null && sed -i "s/^OPENROUTER_API_KEY=.*/OPENROUTER_API_KEY=${OPENROUTER_API_KEY}/" "$APP/.env" || echo "OPENROUTER_API_KEY=${OPENROUTER_API_KEY}" >> "$APP/.env"
   fi
 
   log "npm install..."
