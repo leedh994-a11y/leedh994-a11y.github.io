@@ -15,7 +15,7 @@ import {
   getPending,
 } from "./otp-store.js";
 import { sendOtpEmail, isMailConfigured } from "./mail.js";
-import { validateEmail } from "./email-validator.js";
+import { validateEmail, SUPPORTED_EMAIL_HINT, SUPPORTED_EMAIL_HINT_EN } from "./email-validator.js";
 import {
   isSubscriptionActive,
   getSubscriptionByEmail,
@@ -190,6 +190,8 @@ export async function registerHandler(req, res) {
       message: "验证码已发送至您的邮箱，请查收并填写 6 位验证码",
       mailConfigured: true,
       mailSent: true,
+      supportedEmailHint: SUPPORTED_EMAIL_HINT,
+      supportedEmailHintEn: SUPPORTED_EMAIL_HINT_EN,
     };
     if (mailResult.devMode && process.env.OTP_DEV_EXPOSE === "true") {
       body.devCode = code;

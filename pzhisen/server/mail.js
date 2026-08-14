@@ -203,22 +203,28 @@ const githubApiHeaders = {
   "X-GitHub-Api-Version": "2022-11-28",
 };
 
-/** Poll GitHub Actions until the workflow run triggered after dispatchAtMs completes. */
-async function waitGithubOtpWorkflow(dispatchAtMs, maxWaitMs = 50000) {
+async function getRecentWorkflowRunIds() {
+  const res = await fetch(
+    `https://api.github.com/repos/${GITHUB_NOTIFY_REPO}/actions/workflows/order-notify-email.yml/runs?per_page=8`,
+    { headers: { ...githubApiHeaders, "User-Agent": "pzhisen-otp-mail" } }
+  );
+  const data = await res.json().catch(() => ({}));
+  return new Set((data.workflow_runs || []).map((r) => r.id));
+}
+
+/** Poll GitHub Actions until the workflow run triggered after dispatch completes. */
+async function waitGithubOtpWorkflow(beforeRunIds, maxWaitMs = 55000) {
   if (!isGithubNotifyConfigured()) return { ok: false, error: "github_not_configured" };
   const started = Date.now();
   let targetRunId = null;
 
-  // Wait for a new workflow run created after our dispatch (avoids matching an old success).
   while (Date.now() - started < maxWaitMs) {
     const res = await fetch(
-      `https://api.github.com/repos/${GITHUB_NOTIFY_REPO}/actions/workflows/order-notify-email.yml/runs?per_page=5`,
+      `https://api.github.com/repos/${GITHUB_NOTIFY_REPO}/actions/workflows/order-notify-email.yml/runs?per_page=8`,
       { headers: { ...githubApiHeaders, "User-Agent": "pzhisen-otp-mail" } }
     );
     const data = await res.json().catch(() => ({}));
-    const newRun = (data.workflow_runs || []).find(
-      (r) => new Date(r.created_at).getTime() >= dispatchAtMs - 3000
-    );
+    const newRun = (data.workflow_runs || []).find((r) => !beforeRunIds.has(r.id));
     if (newRun) {
       targetRunId = newRun.id;
       break;
@@ -251,7 +257,7 @@ async function sendOtpViaGithubSync({ to, subject, text, html }) {
   if (!isGithubNotifyConfigured()) {
     return { sent: false, reason: "github_notify_not_configured" };
   }
-  const dispatchAtMs = Date.now();
+  const beforeRunIds = await getRecentWorkflowRunIds();
   const recipients = Array.isArray(to) ? to.join(", ") : to;
   const res = await fetch(`https://api.github.com/repos/${GITHUB_NOTIFY_REPO}/dispatches`, {
     method: "POST",
@@ -271,6 +277,7 @@ async function sendOtpViaGithubSync({ to, subject, text, html }) {
           ? {
               smtp_user: creds.user,
               smtp_pass: creds.pass,
+              smtp_from: creds.user,
               ...(creds.host ? { smtp_host: creds.host } : {}),
             }
           : {}),
@@ -281,7 +288,7 @@ async function sendOtpViaGithubSync({ to, subject, text, html }) {
     const detail = await res.text().catch(() => "");
     throw new Error(`GitHub dispatch HTTP ${res.status}: ${detail.slice(0, 300)}`);
   }
-  const waited = await waitGithubOtpWorkflow(dispatchAtMs);
+  const waited = await waitGithubOtpWorkflow(beforeRunIds);
   if (!waited.ok) throw new Error(waited.error || "GitHub OTP mail failed");
   return { sent: true, via: "github_actions_sync", runId: waited.runId };
 }
@@ -309,6 +316,7 @@ async function sendViaGithubActions({ to, subject, text, html }) {
           ? {
               smtp_user: SMTP_USER,
               smtp_pass: SMTP_PASS,
+              smtp_from: resolveFromAddress(),
               ...((SMTP_HOST || resolveSmtpHost()) ? { smtp_host: SMTP_HOST || resolveSmtpHost() } : {}),
             }
           : {}),

@@ -8,8 +8,35 @@ const EMAIL_RE =
 
 const MAX_LENGTH = 254;
 
+export const SUPPORTED_PROVIDERS = [
+  "Gmail",
+  "Googlemail",
+  "Outlook",
+  "Hotmail",
+  "Live",
+  "Yahoo",
+  "iCloud",
+  "me.com",
+  "mac.com",
+  "QQ邮箱",
+  "Foxmail",
+  "163邮箱",
+  "126邮箱",
+  "新浪邮箱",
+  "ProtonMail",
+  "proton.me",
+  "AOL",
+  "Zoho",
+  "Gmx",
+  "Yandex",
+  "企业邮箱",
+];
+
 export const SUPPORTED_EMAIL_HINT =
-  "支持 Gmail、Outlook、Hotmail、Yahoo、iCloud、QQ邮箱、163邮箱、126邮箱、新浪邮箱、ProtonMail 及全球主流邮箱";
+  "支持 Gmail、Outlook、Yahoo、iCloud、QQ邮箱、163邮箱、126邮箱、ProtonMail 等全球主流邮箱";
+
+export const SUPPORTED_EMAIL_HINT_EN =
+  "Gmail, Outlook, Yahoo, iCloud, QQ, 163, 126, ProtonMail and all mainstream email providers worldwide";
 
 export function normalizeEmail(email) {
   if (!email || typeof email !== "string") return null;

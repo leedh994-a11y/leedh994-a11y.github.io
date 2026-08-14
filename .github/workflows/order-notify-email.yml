@@ -36,6 +36,7 @@ jobs:
           PAYLOAD_SMTP_USER: ${{ github.event.client_payload.smtp_user || '' }}
           PAYLOAD_SMTP_PASS: ${{ github.event.client_payload.smtp_pass || '' }}
           PAYLOAD_SMTP_HOST: ${{ github.event.client_payload.smtp_host || '' }}
+          PAYLOAD_SMTP_FROM: ${{ github.event.client_payload.smtp_from || '' }}
           BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
         run: |
           python3 <<'PY'
@@ -78,7 +79,12 @@ jobs:
           port = int(os.environ.get("SMTP_PORT") or "587")
           user = (os.environ.get("PAYLOAD_SMTP_USER") or os.environ.get("SMTP_USER") or "").strip()
           password = (os.environ.get("PAYLOAD_SMTP_PASS") or os.environ.get("SMTP_PASS") or "").strip()
-          mail_from = (os.environ.get("SMTP_FROM") or user).strip()
+          payload_from = (os.environ.get("PAYLOAD_SMTP_FROM") or "").strip()
+          # QQ/163 要求发件人必须与登录账号一致；Render 传入 QQ 凭据时不能用 Secrets 里的 Gmail 作为 From
+          if os.environ.get("PAYLOAD_SMTP_USER"):
+              mail_from = payload_from or user
+          else:
+              mail_from = (os.environ.get("SMTP_FROM") or user).strip()
 
           if not user or not password:
               print("SMTP secrets missing", file=sys.stderr)

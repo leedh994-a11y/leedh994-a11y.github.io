@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 import { isAiEnabled, getModels } from "./openrouter.js";
+import { SUPPORTED_EMAIL_HINT, SUPPORTED_EMAIL_HINT_EN } from "./email-validator.js";
 import { AGENTS, runAgent, runDailyStandup } from "./agents.js";
 import {
   upsertCompany,
@@ -79,8 +80,8 @@ app.get("/api/config", async (_req, res) => {
     agents: Object.values(AGENTS).map((a) => ({ id: a.id, name: a.name, icon: a.icon })),
     billing: await getBillingConfig(),
     auth: {
-      supportedEmailHint: "Gmail, Outlook, Yahoo, iCloud, QQ, 163, 126, ProtonMail and all mainstream email providers worldwide",
-      supportedEmailHintZh: "支持 Gmail、Outlook、Yahoo、iCloud、QQ邮箱、163邮箱、126邮箱、ProtonMail 等全球主流邮箱",
+      supportedEmailHint: SUPPORTED_EMAIL_HINT_EN,
+      supportedEmailHintZh: SUPPORTED_EMAIL_HINT,
     },
   });
 });
