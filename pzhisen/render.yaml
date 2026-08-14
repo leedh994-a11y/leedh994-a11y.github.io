@@ -50,7 +50,7 @@ services:
       - key: ORDER_NOTIFY_EMAIL
         value: LeeDh994@gmail.com
       - key: SMTP_HOST
-        sync: false
+        value: smtp.qq.com
       - key: SMTP_PORT
         value: "587"
       - key: SMTP_USER
@@ -61,6 +61,8 @@ services:
         sync: false
       - key: OTP_SMTP_PASS
         sync: false
+      - key: OTP_SMTP_HOST
+        value: smtp.qq.com
       - key: SMTP_FROM
         sync: false
       - key: GITHUB_NOTIFY_TOKEN

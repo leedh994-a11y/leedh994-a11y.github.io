@@ -1,58 +1,40 @@
-# 恢复注册验证码邮件（几个月前的工作配置）
+# 恢复注册验证码邮件（QQ 邮箱 + GitHub Actions 配置）
 
-注册验证码通过 **GitHub Actions → Gmail SMTP** 发送（Render 免费版无法直连 SMTP）。
+几个月前的配置：Render 将 **QQ 邮箱** 凭据传给 GitHub Actions 发送验证码。
 
-## 一、GitHub Secrets（必须）
+## Render 环境变量（pzhisen 服务）
 
-打开：https://github.com/leedh994-a11y/leedh994-a11y.github.io/settings/secrets/actions
-
-设置或更新：
-
-| Secret | 值 |
-|--------|-----|
-| `SMTP_USER` | `LeeDh994@gmail.com` |
-| `SMTP_PASS` | Gmail 应用专用密码（16 位，无空格） |
-| `SMTP_FROM` | `LeeDh994@gmail.com` |
-| `ORDER_NOTIFY_EMAIL` | `leedh994@gmail.com` |
-
-Gmail 应用专用密码：https://myaccount.google.com/apppasswords
-
-## 二、Render 环境变量（pzhisen 服务）
-
-打开：https://dashboard.render.com → pzhisen → Environment
-
-**必须设置：**
+https://dashboard.render.com → pzhisen → Environment
 
 | 变量 | 值 |
 |------|-----|
-| `GITHUB_NOTIFY_TOKEN` | GitHub PAT（权限：Actions Read & Write） |
+| `SMTP_HOST` | `smtp.qq.com` |
+| `SMTP_PORT` | `587` |
+| `SMTP_USER` | `768204575@qq.com` |
+| `SMTP_PASS` | QQ 邮箱授权码 |
+| `SMTP_FROM` | `768204575@qq.com` |
+| `OTP_SMTP_USER` | `768204575@qq.com` |
+| `OTP_SMTP_PASS` | QQ 邮箱授权码（与 SMTP_PASS 相同） |
+| `OTP_SMTP_HOST` | `smtp.qq.com`（可选，代码会自动识别） |
+| `GITHUB_NOTIFY_TOKEN` | GitHub PAT（Actions Read & Write） |
 | `GITHUB_NOTIFY_REPO` | `leedh994-a11y/leedh994-a11y.github.io` |
 
-**删除或覆盖错误的 QQ 邮箱变量**（会导致验证码发不出去）：
+QQ 邮箱授权码获取：QQ 邮箱 → 设置 → 账户 → POP3/SMTP → 开启服务 → 生成授权码
 
-- 删除 `OTP_SMTP_USER=768204575@qq.com`
-- 删除 `OTP_SMTP_PASS=...`
-- 或改为 Gmail：
-  - `OTP_SMTP_USER=LeeDh994@gmail.com`
-  - `OTP_SMTP_PASS=<Gmail应用专用密码>`
-  - `SMTP_USER=LeeDh994@gmail.com`
-  - `SMTP_PASS=<Gmail应用专用密码>`
+## GitHub Secrets（备用，Render 会优先传 QQ 凭据）
 
-保存后 Render 会自动重新部署。
+https://github.com/leedh994-a11y/leedh994-a11y.github.io/settings/secrets/actions
 
-## 三、验证
+可与 Render 保持一致，或留空（OTP 使用 Render 传入的 QQ 凭据）：
 
-1. 打开 https://pzhisen.online/login.html
-2. 用真实邮箱注册
-3. 应收到主题为 **「Pzhisen 注册验证码」** 的邮件
-4. GitHub Actions 应显示绿色成功：
-   https://github.com/leedh994-a11y/leedh994-a11y.github.io/actions/workflows/order-notify-email.yml
+| Secret | 值 |
+|--------|-----|
+| `SMTP_HOST` | `smtp.qq.com` |
+| `SMTP_USER` | `768204575@qq.com` |
+| `SMTP_PASS` | QQ 邮箱授权码 |
 
-## 四、故障排查
+## 验证
 
-| 现象 | 原因 | 处理 |
-|------|------|------|
-| API 返回成功但收不到邮件 | GitHub `SMTP_PASS` 过期 | 更新 Secret |
-| Actions 报 `SMTPAuthenticationError` | QQ 邮箱配在 Gmail SMTP 上 | 删除 Render 的 QQ 变量，用 Gmail |
-| `mailSent: false` | `GITHUB_NOTIFY_TOKEN` 未配置 | 在 Render 添加 PAT |
-| 注册页显示「邮件服务未配置」 | 缺少 `GITHUB_NOTIFY_TOKEN` | 同上 |
+1. 打开 https://pzhisen.online/login.html 注册
+2. 收到主题为 **「Pzhisen 注册验证码」** 的邮件
+3. GitHub Actions 日志应显示 `SMTP host=smtp.qq.com user=***@qq.com`

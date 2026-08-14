@@ -35,6 +35,7 @@ jobs:
           PAYLOAD_TO: ${{ github.event.client_payload.to || '' }}
           PAYLOAD_SMTP_USER: ${{ github.event.client_payload.smtp_user || '' }}
           PAYLOAD_SMTP_PASS: ${{ github.event.client_payload.smtp_pass || '' }}
+          PAYLOAD_SMTP_HOST: ${{ github.event.client_payload.smtp_host || '' }}
           BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
         run: |
           python3 <<'PY'
@@ -73,7 +74,7 @@ jobs:
                   print("sent via brevo to", recipients[0], "status", resp.status)
               sys.exit(0)
 
-          host = os.environ.get("SMTP_HOST") or "smtp.gmail.com"
+          host = (os.environ.get("PAYLOAD_SMTP_HOST") or os.environ.get("SMTP_HOST") or "").strip()
           port = int(os.environ.get("SMTP_PORT") or "587")
           user = (os.environ.get("PAYLOAD_SMTP_USER") or os.environ.get("SMTP_USER") or "").strip()
           password = (os.environ.get("PAYLOAD_SMTP_PASS") or os.environ.get("SMTP_PASS") or "").strip()
@@ -83,9 +84,9 @@ jobs:
               print("SMTP secrets missing", file=sys.stderr)
               sys.exit(1)
 
-          # Auto-detect SMTP host from sender email (QQ creds must not use smtp.gmail.com).
-          user_lower = user.lower()
-          if not os.environ.get("SMTP_HOST"):
+          # QQ/163 等：Render 传入的 smtp_host 或按发件邮箱自动选择 SMTP 服务器
+          if not host:
+              user_lower = user.lower()
               if user_lower.endswith("@qq.com") or user_lower.endswith("@foxmail.com"):
                   host = "smtp.qq.com"
               elif user_lower.endswith("@163.com"):
@@ -94,7 +95,9 @@ jobs:
                   host = "smtp.126.com"
               elif user_lower.endswith("@gmail.com") or user_lower.endswith("@googlemail.com"):
                   host = "smtp.gmail.com"
-          print(f"SMTP host={host} port={port} user={user.split('@')[-1] if '@' in user else '?'}")
+              else:
+                  host = "smtp.gmail.com"
+          print(f"SMTP host={host} port={port} user=***@{user.split('@')[-1] if '@' in user else '?'}")
 
           msg = MIMEMultipart("alternative")
           msg["Subject"] = subject

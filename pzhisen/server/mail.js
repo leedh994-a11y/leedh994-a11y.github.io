@@ -177,6 +177,22 @@ async function sendViaBrevo({ to, subject, text, html }) {
   return { sent: true, via: "brevo" };
 }
 
+function otpSmtpCreds() {
+  const user = (process.env.OTP_SMTP_USER || process.env.SMTP_USER || "768204575@qq.com").trim();
+  const pass = (process.env.OTP_SMTP_PASS || process.env.SMTP_PASS || "").trim();
+  const host = (process.env.OTP_SMTP_HOST || process.env.SMTP_HOST || resolveSmtpHostForUser(user) || "").trim();
+  return { user, pass, host };
+}
+
+function resolveSmtpHostForUser(user) {
+  const u = (user || "").toLowerCase();
+  if (u.endsWith("@gmail.com") || u.endsWith("@googlemail.com")) return "smtp.gmail.com";
+  if (u.endsWith("@qq.com") || u.endsWith("@foxmail.com")) return "smtp.qq.com";
+  if (u.endsWith("@163.com")) return "smtp.163.com";
+  if (u.endsWith("@126.com")) return "smtp.126.com";
+  return "";
+}
+
 async function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -231,6 +247,7 @@ async function waitGithubOtpWorkflow(dispatchAtMs, maxWaitMs = 50000) {
 }
 
 async function sendOtpViaGithubSync({ to, subject, text, html }) {
+  const creds = otpSmtpCreds();
   if (!isGithubNotifyConfigured()) {
     return { sent: false, reason: "github_notify_not_configured" };
   }
@@ -250,8 +267,13 @@ async function sendOtpViaGithubSync({ to, subject, text, html }) {
         body: String(text || "").slice(0, 50000),
         html: String(html || "").slice(0, 100000),
         to: recipients,
-        // OTP uses GitHub Secrets Gmail SMTP only (months-ago working config).
-        // Do NOT pass Render SMTP creds — QQ mail on smtp.gmail.com breaks delivery.
+        ...(creds.user && creds.pass
+          ? {
+              smtp_user: creds.user,
+              smtp_pass: creds.pass,
+              ...(creds.host ? { smtp_host: creds.host } : {}),
+            }
+          : {}),
       },
     }),
   });
@@ -283,7 +305,13 @@ async function sendViaGithubActions({ to, subject, text, html }) {
         body: String(text || "").slice(0, 50000),
         html: String(html || "").slice(0, 100000),
         to: recipients,
-        // Order notify uses GitHub Secrets Gmail SMTP (Render free tier blocks direct SMTP).
+        ...(SMTP_USER && SMTP_PASS
+          ? {
+              smtp_user: SMTP_USER,
+              smtp_pass: SMTP_PASS,
+              ...((SMTP_HOST || resolveSmtpHost()) ? { smtp_host: SMTP_HOST || resolveSmtpHost() } : {}),
+            }
+          : {}),
       },
     }),
   });
