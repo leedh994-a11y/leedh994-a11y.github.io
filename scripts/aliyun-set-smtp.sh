@@ -38,14 +38,29 @@ main() {
     exit 1
   }
 
-  log "Pull latest ($BRANCH)..."
+  log "Ensure app at $APP (branch $BRANCH)..."
+  command -v git >/dev/null 2>&1 || yum install -y git 2>/dev/null || dnf install -y git
+  command -v node >/dev/null 2>&1 || { curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -; yum install -y nodejs 2>/dev/null || dnf install -y nodejs; }
+  command -v pm2 >/dev/null 2>&1 || npm install -g pm2
+  command -v rsync >/dev/null 2>&1 || yum install -y rsync 2>/dev/null || dnf install -y rsync
+
+  mkdir -p "$APP/server/data"
   if [ -d "$APP/.git" ]; then
     cd "$APP"
     git fetch origin "$BRANCH"
     git reset --hard "origin/$BRANCH"
   else
-    echo "No git repo at $APP — clone manually first"
-    exit 1
+    local tmp="/var/tmp/yoursite-smtp-restore-$$"
+    rm -rf "$tmp"
+    log "No git repo — cloning to $tmp then syncing to $APP..."
+    if ! git clone -b "$BRANCH" --depth 1 "$REPO" "$tmp" 2>/dev/null; then
+      git clone -b "$BRANCH" --depth 1 "https://ghproxy.net/${REPO}" "$tmp"
+    fi
+    [ -d "$APP/server/data" ] && mkdir -p "$tmp/server/data" && cp -a "$APP/server/data/." "$tmp/server/data/" 2>/dev/null || true
+    mkdir -p "$APP"
+    rsync -a --exclude node_modules --exclude .git "$tmp/" "$APP/"
+    rm -rf "$tmp"
+    cd "$APP"
   fi
 
   log "Write SMTP + mail relay config..."
