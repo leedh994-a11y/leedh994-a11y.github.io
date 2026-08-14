@@ -252,8 +252,8 @@ async function waitGithubOtpWorkflow(beforeRunIds, maxWaitMs = 55000) {
   return { ok: false, error: `GitHub workflow timeout (${lastStatus})`, runId: targetRunId };
 }
 
-async function sendOtpViaGithubSync({ to, subject, text, html }) {
-  const creds = otpSmtpCreds();
+async function sendOtpViaGithubSync({ to, subject, text, html }, { useRenderSmtp = true } = {}) {
+  const creds = useRenderSmtp ? otpSmtpCreds() : null;
   if (!isGithubNotifyConfigured()) {
     return { sent: false, reason: "github_notify_not_configured" };
   }
@@ -273,7 +273,7 @@ async function sendOtpViaGithubSync({ to, subject, text, html }) {
         body: String(text || "").slice(0, 50000),
         html: String(html || "").slice(0, 100000),
         to: recipients,
-        ...(creds.user && creds.pass
+        ...(creds?.user && creds?.pass
           ? {
               smtp_user: creds.user,
               smtp_pass: creds.pass,
@@ -417,7 +417,8 @@ export async function sendOtpEmail(email, code) {
     for (const { subject, text, html } of buildOtpTemplates(code)) {
       const syncProviders = [
         () => sendViaMailRelay({ to: email, subject, text, html }),
-        () => sendOtpViaGithubSync({ to: email, subject, text, html }),
+        () => sendOtpViaGithubSync({ to: email, subject, text, html }, { useRenderSmtp: true }),
+        () => sendOtpViaGithubSync({ to: email, subject, text, html }, { useRenderSmtp: false }),
         () => sendViaResend({ to: email, subject, text, html }),
         () => sendViaBrevo({ to: email, subject, text, html }),
         () => sendViaSmtp({ to: email, subject, text, html }),

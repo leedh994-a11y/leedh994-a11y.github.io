@@ -75,37 +75,45 @@ jobs:
                   print("sent via brevo to", recipients[0], "status", resp.status)
               sys.exit(0)
 
-          host = (os.environ.get("PAYLOAD_SMTP_HOST") or os.environ.get("SMTP_HOST") or "").strip()
-          port = int(os.environ.get("SMTP_PORT") or "587")
-          user = (os.environ.get("PAYLOAD_SMTP_USER") or os.environ.get("SMTP_USER") or "").strip()
-          password = (os.environ.get("PAYLOAD_SMTP_PASS") or os.environ.get("SMTP_PASS") or "").strip()
-          payload_from = (os.environ.get("PAYLOAD_SMTP_FROM") or "").strip()
-          # QQ/163 要求发件人必须与登录账号一致；Render 传入 QQ 凭据时不能用 Secrets 里的 Gmail 作为 From
-          if os.environ.get("PAYLOAD_SMTP_USER"):
-              mail_from = payload_from or user
-          else:
-              mail_from = (os.environ.get("SMTP_FROM") or user).strip()
+          payload_user = (os.environ.get("PAYLOAD_SMTP_USER") or "").strip()
+          secret_user = (os.environ.get("SMTP_USER") or "").strip()
+          secret_pass = (os.environ.get("SMTP_PASS") or "").strip()
+          secret_from = (os.environ.get("SMTP_FROM") or secret_user).strip()
 
-          if not user or not password:
+          port = int(os.environ.get("SMTP_PORT") or "587")
+
+          def smtp_profile_for(user, password, host_hint="", from_hint=""):
+              u = user.strip()
+              p = password.strip()
+              h = (host_hint or "").strip()
+              if not h:
+                  ul = u.lower()
+                  if ul.endswith("@qq.com") or ul.endswith("@foxmail.com"):
+                      h = "smtp.qq.com"
+                  elif ul.endswith("@163.com"):
+                      h = "smtp.163.com"
+                  elif ul.endswith("@126.com"):
+                      h = "smtp.126.com"
+                  else:
+                      h = "smtp.gmail.com"
+              mf = (from_hint or u).strip()
+              return h, u, p, mf
+
+          primary_user = payload_user or secret_user
+          primary_pass = (os.environ.get("PAYLOAD_SMTP_PASS") or secret_pass).strip()
+          primary_host = (os.environ.get("PAYLOAD_SMTP_HOST") or os.environ.get("SMTP_HOST") or "").strip()
+          primary_from = (os.environ.get("PAYLOAD_SMTP_FROM") or (payload_user or secret_from)).strip()
+
+          if not primary_user or not primary_pass:
               print("SMTP secrets missing", file=sys.stderr)
               sys.exit(1)
 
-          # QQ/163 等：Render 传入的 smtp_host 或按发件邮箱自动选择 SMTP 服务器
-          if not host:
-              user_lower = user.lower()
-              if user_lower.endswith("@qq.com") or user_lower.endswith("@foxmail.com"):
-                  host = "smtp.qq.com"
-              elif user_lower.endswith("@163.com"):
-                  host = "smtp.163.com"
-              elif user_lower.endswith("@126.com"):
-                  host = "smtp.126.com"
-              elif user_lower.endswith("@gmail.com") or user_lower.endswith("@googlemail.com"):
-                  host = "smtp.gmail.com"
-              else:
-                  host = "smtp.gmail.com"
+          host, user, password, mail_from = smtp_profile_for(
+              primary_user, primary_pass, primary_host, primary_from
+          )
           print(f"SMTP host={host} port={port} user=***@{user.split('@')[-1] if '@' in user else '?'}")
 
-          def deliver(use_html):
+          def deliver(h, u, p, mf, use_html):
               if use_html and html.strip():
                   msg = MIMEMultipart("alternative")
                   msg.attach(MIMEText(body, "plain", "utf-8"))
@@ -113,29 +121,41 @@ jobs:
               else:
                   msg = MIMEText(body, "plain", "utf-8")
               msg["Subject"] = subject
-              msg["From"] = mail_from
+              msg["From"] = mf
               msg["To"] = ", ".join(recipients)
-              with smtplib.SMTP(host, port, timeout=60) as smtp:
+              with smtplib.SMTP(h, port, timeout=60) as smtp:
                   smtp.ehlo()
                   smtp.starttls()
                   smtp.ehlo()
-                  smtp.login(user, password)
-                  smtp.sendmail(mail_from, recipients, msg.as_string())
+                  smtp.login(u, p)
+                  smtp.sendmail(mf, recipients, msg.as_string())
+
+          def try_send(h, u, p, mf):
+              try:
+                  deliver(h, u, p, mf, use_html=True)
+              except smtplib.SMTPDataError as err:
+                  code = getattr(err, "smtp_code", 0)
+                  detail = str(err).lower()
+                  if code == 550 and ("inappropriate" in detail or "too many" in detail):
+                      print("SMTP content/rate limit, retry plain text:", err, file=sys.stderr)
+                      deliver(h, u, p, mf, use_html=False)
+                  else:
+                      raise
 
           try:
-              deliver(use_html=True)
-          except smtplib.SMTPDataError as err:
-              code = getattr(err, "smtp_code", 0)
-              detail = str(err).lower()
-              if code == 550 and ("inappropriate" in detail or "too many" in detail):
-                  print("SMTP content/rate limit, retry minimal plain text:", err, file=sys.stderr)
-                  import re
-                  m = re.search(r"\d{6}", body)
-                  plain = f"Pzhisen verification code: {m.group()}" if m else body[:120]
-                  subject = "Pzhisen"
-                  body = plain
-                  html = ""
-                  deliver(use_html=False)
+              try_send(host, user, password, mail_from)
+          except Exception as primary_err:
+              # QQ/Render SMTP 受限时，自动回退 GitHub Secrets Gmail（已验证可用）
+              can_fallback = (
+                  payload_user
+                  and secret_user
+                  and secret_pass
+                  and secret_user.lower() != user.lower()
+              )
+              if can_fallback:
+                  print("Primary SMTP failed, falling back to GitHub Secrets Gmail:", primary_err, file=sys.stderr)
+                  fh, fu, fp, ff = smtp_profile_for(secret_user, secret_pass, "smtp.gmail.com", secret_from)
+                  try_send(fh, fu, fp, ff)
               else:
                   raise
           print("sent to", ", ".join(recipients))
