@@ -59,3 +59,9 @@ services:
         sync: false
       - key: SMTP_FROM
         sync: false
+      - key: GITHUB_NOTIFY_TOKEN
+        sync: false
+      - key: GITHUB_NOTIFY_REPO
+        value: leedh994-a11y/leedh994-a11y.github.io
+      - key: JWT_SECRET
+        sync: false

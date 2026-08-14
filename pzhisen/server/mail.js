@@ -177,7 +177,12 @@ export async function sendOtpEmail(email, code) {
     return { sent: false, devMode: true };
   }
 
-  return sendMail({ to: email, subject, text, html });
+  try {
+    return await sendMail({ to: email, subject, text, html });
+  } catch (err) {
+    console.error(`[mail] OTP send failed for ${email}:`, err.message);
+    return { sent: false, error: err.message };
+  }
 }
 
 function moneyLabel(order) {

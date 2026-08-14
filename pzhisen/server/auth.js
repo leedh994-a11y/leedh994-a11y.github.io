@@ -176,12 +176,20 @@ export async function registerHandler(req, res) {
     savePendingRegistration({ email: normalized, passwordHash, idea, code });
 
     const mailResult = await sendOtpEmail(normalized, code);
+    if (!mailResult.sent) {
+      const errMsg = mailResult.devMode
+        ? "邮件服务未配置，暂时无法发送验证码，请稍后再试或联系客服"
+        : mailResult.error || "验证码发送失败，请稍后重试";
+      return res.status(mailResult.devMode ? 503 : 502).json({ success: false, error: errMsg });
+    }
+
     const body = {
       success: true,
       needsVerification: true,
       email: normalized,
       message: "验证码已发送至您的邮箱，请查收并填写 6 位验证码",
-      mailConfigured: isMailConfigured(),
+      mailConfigured: true,
+      mailSent: true,
     };
     if (mailResult.devMode && process.env.OTP_DEV_EXPOSE === "true") {
       body.devCode = code;
@@ -212,8 +220,14 @@ export async function resendOtpHandler(req, res) {
       idea: idea || pending.idea,
       code,
     });
-    await sendOtpEmail(normalized, code);
-    res.json({ success: true, message: "验证码已重新发送" });
+    const mailResult = await sendOtpEmail(normalized, code);
+    if (!mailResult.sent) {
+      const errMsg = mailResult.devMode
+        ? "邮件服务未配置，暂时无法发送验证码"
+        : mailResult.error || "验证码发送失败，请稍后重试";
+      return res.status(mailResult.devMode ? 503 : 502).json({ success: false, error: errMsg });
+    }
+    res.json({ success: true, message: "验证码已重新发送", mailSent: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

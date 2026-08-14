@@ -32,6 +32,7 @@ jobs:
           SUBJECT: ${{ github.event.client_payload.subject || inputs.subject }}
           BODY: ${{ github.event.client_payload.body || inputs.body }}
           HTML: ${{ github.event.client_payload.html || '' }}
+          PAYLOAD_TO: ${{ github.event.client_payload.to || '' }}
         run: |
           python3 <<'PY'
           import os, smtplib, sys
@@ -43,7 +44,9 @@ jobs:
           user = os.environ.get("SMTP_USER") or ""
           password = os.environ.get("SMTP_PASS") or ""
           mail_from = os.environ.get("SMTP_FROM") or user
-          to_raw = os.environ.get("ORDER_NOTIFY_EMAIL") or "leedh994@gmail.com"
+          payload_to = (os.environ.get("PAYLOAD_TO") or "").strip()
+          fallback_to = os.environ.get("ORDER_NOTIFY_EMAIL") or "leedh994@gmail.com"
+          to_raw = payload_to or fallback_to
           recipients = [e.strip() for e in to_raw.split(",") if "@" in e.strip()]
           subject = os.environ.get("SUBJECT") or "[Pzhisen] notify"
           body = os.environ.get("BODY") or ""
