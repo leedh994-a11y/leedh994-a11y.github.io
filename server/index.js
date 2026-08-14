@@ -19,6 +19,7 @@ import {
   notifyStatusHandler,
   notifyTestHandler,
 } from "./billing.js";
+import { mailRelaySendHandler, mailRelayStatusHandler } from "./mail-relay.js";
 import toolsApi from "./tools-api.js";
 import { isAiEnabled } from "./openrouter.js";
 
@@ -89,6 +90,9 @@ app.post("/api/billing/activate", activateHandler);
 app.post("/api/billing/cancel", cancelHandler);
 app.get("/api/billing/admin/notify-status", notifyStatusHandler);
 app.post("/api/billing/admin/notify-test", notifyTestHandler);
+
+app.get("/api/mail/relay/status", mailRelayStatusHandler);
+app.post("/api/mail/send", mailRelaySendHandler);
 
 app.use("/api", toolsApi);
 

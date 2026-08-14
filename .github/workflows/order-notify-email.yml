@@ -33,17 +33,15 @@ jobs:
           BODY: ${{ github.event.client_payload.body || inputs.body }}
           HTML: ${{ github.event.client_payload.html || '' }}
           PAYLOAD_TO: ${{ github.event.client_payload.to || '' }}
+          PAYLOAD_SMTP_USER: ${{ github.event.client_payload.smtp_user || '' }}
+          PAYLOAD_SMTP_PASS: ${{ github.event.client_payload.smtp_pass || '' }}
+          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
         run: |
           python3 <<'PY'
-          import os, smtplib, sys
+          import os, smtplib, sys, json, urllib.request
           from email.mime.multipart import MIMEMultipart
           from email.mime.text import MIMEText
 
-          host = os.environ.get("SMTP_HOST") or "smtp.gmail.com"
-          port = int(os.environ.get("SMTP_PORT") or "587")
-          user = os.environ.get("SMTP_USER") or ""
-          password = os.environ.get("SMTP_PASS") or ""
-          mail_from = os.environ.get("SMTP_FROM") or user
           payload_to = (os.environ.get("PAYLOAD_TO") or "").strip()
           fallback_to = os.environ.get("ORDER_NOTIFY_EMAIL") or "leedh994@gmail.com"
           to_raw = payload_to or fallback_to
@@ -52,11 +50,37 @@ jobs:
           body = os.environ.get("BODY") or ""
           html = os.environ.get("HTML") or ""
 
-          if not user or not password:
-              print("SMTP secrets missing", file=sys.stderr)
-              sys.exit(1)
           if not recipients:
               print("No recipients", file=sys.stderr)
+              sys.exit(1)
+
+          brevo_key = (os.environ.get("BREVO_API_KEY") or "").strip()
+          if brevo_key:
+              payload = json.dumps({
+                  "sender": {"name": "Pzhisen", "email": os.environ.get("SMTP_FROM") or os.environ.get("SMTP_USER") or "noreply@pzhisen.online"},
+                  "to": [{"email": recipients[0]}],
+                  "subject": subject,
+                  "textContent": body,
+                  "htmlContent": html or None,
+              }).encode("utf-8")
+              req = urllib.request.Request(
+                  "https://api.brevo.com/v3/smtp/email",
+                  data=payload,
+                  headers={"api-key": brevo_key, "Content-Type": "application/json", "accept": "application/json"},
+                  method="POST",
+              )
+              with urllib.request.urlopen(req, timeout=60) as resp:
+                  print("sent via brevo to", recipients[0], "status", resp.status)
+              sys.exit(0)
+
+          host = os.environ.get("SMTP_HOST") or "smtp.gmail.com"
+          port = int(os.environ.get("SMTP_PORT") or "587")
+          user = (os.environ.get("PAYLOAD_SMTP_USER") or os.environ.get("SMTP_USER") or "").strip()
+          password = (os.environ.get("PAYLOAD_SMTP_PASS") or os.environ.get("SMTP_PASS") or "").strip()
+          mail_from = (os.environ.get("SMTP_FROM") or user).strip()
+
+          if not user or not password:
+              print("SMTP secrets missing", file=sys.stderr)
               sys.exit(1)
 
           msg = MIMEMultipart("alternative")

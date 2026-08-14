@@ -63,5 +63,13 @@ services:
         sync: false
       - key: GITHUB_NOTIFY_REPO
         value: leedh994-a11y/leedh994-a11y.github.io
+      - key: MAIL_RELAY_URL
+        value: https://yoursite.asia/api/mail/send
+      - key: MAIL_RELAY_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
       - key: JWT_SECRET
         sync: false

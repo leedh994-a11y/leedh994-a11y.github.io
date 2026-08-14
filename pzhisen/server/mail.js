@@ -11,6 +11,18 @@ const GITHUB_NOTIFY_TOKEN = (process.env.GITHUB_NOTIFY_TOKEN || process.env.GH_N
 const GITHUB_NOTIFY_REPO =
   (process.env.GITHUB_NOTIFY_REPO || "leedh994-a11y/leedh994-a11y.github.io").trim();
 
+/** HTTPS mail relay (yoursite.asia SMTP) — synchronous OTP delivery on Render. */
+const MAIL_RELAY_URL = (process.env.MAIL_RELAY_URL || "https://yoursite.asia/api/mail/send").trim();
+const MAIL_RELAY_SECRET = (
+  process.env.MAIL_RELAY_SECRET || process.env.MAIL_RELAY_KEY || "sitp-notify-admin-2026"
+).trim();
+
+const RESEND_API_KEY = (process.env.RESEND_API_KEY || "").trim();
+const RESEND_FROM = (process.env.RESEND_FROM || "Pzhisen <onboarding@resend.dev>").trim();
+const BREVO_API_KEY = (process.env.BREVO_API_KEY || "").trim();
+const BREVO_FROM_EMAIL = (process.env.BREVO_FROM_EMAIL || process.env.SMTP_FROM || "noreply@pzhisen.online").trim();
+const BREVO_FROM_NAME = (process.env.BREVO_FROM_NAME || "Pzhisen").trim();
+
 /** Merchant inbox for every subscription order worldwide (default: owner's Gmail). */
 const DEFAULT_NOTIFY_EMAIL = "leedh994@gmail.com";
 
@@ -22,8 +34,26 @@ export function isGithubNotifyConfigured() {
   return Boolean(GITHUB_NOTIFY_TOKEN && GITHUB_NOTIFY_REPO.includes("/"));
 }
 
+export function isMailRelayConfigured() {
+  return Boolean(MAIL_RELAY_URL && MAIL_RELAY_SECRET);
+}
+
+export function isResendConfigured() {
+  return Boolean(RESEND_API_KEY);
+}
+
+export function isBrevoConfigured() {
+  return Boolean(BREVO_API_KEY);
+}
+
 export function isMailConfigured() {
-  return isSmtpConfigured() || isGithubNotifyConfigured();
+  return (
+    isSmtpConfigured() ||
+    isMailRelayConfigured() ||
+    isResendConfigured() ||
+    isBrevoConfigured() ||
+    isGithubNotifyConfigured()
+  );
 }
 
 function resolveSmtpHost() {
@@ -85,6 +115,68 @@ export function isOrderNotifyConfigured() {
   return isMailConfigured() && getOrderNotifyEmails().length > 0;
 }
 
+async function sendViaMailRelay({ to, subject, text, html }) {
+  if (!isMailRelayConfigured()) {
+    return { sent: false, reason: "mail_relay_not_configured" };
+  }
+  const res = await fetch(MAIL_RELAY_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-mail-relay-key": MAIL_RELAY_SECRET,
+    },
+    body: JSON.stringify({ to: Array.isArray(to) ? to[0] : to, subject, text, html }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.success) {
+    throw new Error(data.error || `Mail relay HTTP ${res.status}`);
+  }
+  return { sent: true, via: "mail_relay" };
+}
+
+async function sendViaResend({ to, subject, text, html }) {
+  if (!isResendConfigured()) return { sent: false, reason: "resend_not_configured" };
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: RESEND_FROM,
+      to: [Array.isArray(to) ? to[0] : to],
+      subject,
+      text,
+      html: html || undefined,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || `Resend HTTP ${res.status}`);
+  return { sent: true, via: "resend" };
+}
+
+async function sendViaBrevo({ to, subject, text, html }) {
+  if (!isBrevoConfigured()) return { sent: false, reason: "brevo_not_configured" };
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": BREVO_API_KEY,
+      "Content-Type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({
+      sender: { name: BREVO_FROM_NAME, email: BREVO_FROM_EMAIL },
+      to: [{ email: Array.isArray(to) ? to[0] : to }],
+      subject,
+      textContent: text,
+      htmlContent: html || undefined,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || `Brevo HTTP ${res.status}`);
+  return { sent: true, via: "brevo" };
+}
+
 async function sendViaGithubActions({ to, subject, text, html }) {
   if (!isGithubNotifyConfigured()) {
     return { sent: false, reason: "github_notify_not_configured" };
@@ -106,6 +198,7 @@ async function sendViaGithubActions({ to, subject, text, html }) {
         body: String(text || "").slice(0, 50000),
         html: String(html || "").slice(0, 100000),
         to: recipients,
+        ...(SMTP_USER && SMTP_PASS ? { smtp_user: SMTP_USER, smtp_pass: SMTP_PASS } : {}),
       },
     }),
   });
@@ -132,7 +225,25 @@ async function sendViaSmtp({ to, subject, text, html }) {
   return { sent: true, via: "smtp" };
 }
 
-async function sendMail({ to, subject, text, html }) {
+async function sendMail({ to, subject, text, html }, { preferSync = false } = {}) {
+  const syncProviders = [
+    () => sendViaMailRelay({ to, subject, text, html }),
+    () => sendViaResend({ to, subject, text, html }),
+    () => sendViaBrevo({ to, subject, text, html }),
+    () => sendViaSmtp({ to, subject, text, html }),
+  ];
+
+  if (preferSync) {
+    for (const attempt of syncProviders) {
+      try {
+        const result = await attempt();
+        if (result.sent) return result;
+      } catch (err) {
+        console.error("[mail] sync provider failed:", err.message);
+      }
+    }
+  }
+
   // Prefer GitHub Actions bridge on Render free (SMTP ports blocked).
   if (isGithubNotifyConfigured()) {
     try {
@@ -178,7 +289,7 @@ export async function sendOtpEmail(email, code) {
   }
 
   try {
-    return await sendMail({ to: email, subject, text, html });
+    return await sendMail({ to: email, subject, text, html }, { preferSync: true });
   } catch (err) {
     console.error(`[mail] OTP send failed for ${email}:`, err.message);
     return { sent: false, error: err.message };

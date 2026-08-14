@@ -230,6 +230,19 @@ export async function notifyOrderEvent(event, order, extra = {}) {
   }
 }
 
+/** Send a transactional email (OTP relay, etc.) via SMTP when configured. */
+export async function sendTransactionalEmail({ to, subject, text, html }) {
+  if (!isSmtpConfigured()) {
+    return { sent: false, reason: "smtp_not_configured" };
+  }
+  try {
+    return await sendViaSmtp({ to, subject, text, html });
+  } catch (err) {
+    console.error("[mail] transactional send failed:", err.message);
+    return { sent: false, error: err.message };
+  }
+}
+
 export async function sendNotifyTestEmail() {
   const recipients = getOrderNotifyEmails();
   const subject = "[Sitp GPT] 订单通知测试 — 邮件已接通";
