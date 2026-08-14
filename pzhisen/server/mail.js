@@ -392,37 +392,43 @@ async function sendMail({ to, subject, text, html }, { preferSync = false } = {}
   }
 }
 
-export async function sendOtpEmail(email, code) {
-  const subject = "Pzhisen 注册验证码";
-  const text = `您的 Pzhisen 注册验证码是：${code}\n\n验证码 10 分钟内有效，请勿泄露给他人。\n\n— Pzhisen`;
-  const html = `
-    <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
-      <h2>Pzhisen 注册验证码</h2>
-      <p>您的验证码是：</p>
-      <p style="font-size:32px;font-weight:700;letter-spacing:8px;color:#111">${code}</p>
-      <p style="color:#666;font-size:14px">验证码 10 分钟内有效，请勿泄露给他人。</p>
-    </div>
-  `;
+function buildOtpTemplates(code) {
+  return [
+    {
+      subject: "Pzhisen 邮箱验证",
+      text: `您好，\n\n您的 Pzhisen 验证号码：${code}\n（10 分钟内有效）\n\nPzhisen\nhttps://www.pzhisen.online`,
+      html: `<div style="font-family:sans-serif;max-width:480px"><p>您好，</p><p>您的 Pzhisen 验证号码：<strong>${code}</strong></p><p>10 分钟内有效。</p><p>Pzhisen · www.pzhisen.online</p></div>`,
+    },
+    {
+      subject: "Pzhisen Verification",
+      text: `Hello,\n\nYour Pzhisen verification code: ${code}\nValid for 10 minutes.\n\nhttps://www.pzhisen.online`,
+      html: `<div style="font-family:sans-serif;max-width:480px"><p>Hello,</p><p>Your code: <strong>${code}</strong></p><p>Valid for 10 minutes.</p></div>`,
+    },
+  ];
+}
 
+export async function sendOtpEmail(email, code) {
   if (!isMailConfigured()) {
     console.log(`[mail] OTP for ${email}: ${code} (mail not configured)`);
     return { sent: false, devMode: true };
   }
 
   try {
-    const syncProviders = [
-      () => sendViaMailRelay({ to: email, subject, text, html }),
-      () => sendOtpViaGithubSync({ to: email, subject, text, html }),
-      () => sendViaResend({ to: email, subject, text, html }),
-      () => sendViaBrevo({ to: email, subject, text, html }),
-      () => sendViaSmtp({ to: email, subject, text, html }),
-    ];
-    for (const attempt of syncProviders) {
-      try {
-        const result = await attempt();
-        if (result.sent) return result;
-      } catch (err) {
-        console.error(`[mail] OTP provider failed:`, err.message);
+    for (const { subject, text, html } of buildOtpTemplates(code)) {
+      const syncProviders = [
+        () => sendViaMailRelay({ to: email, subject, text, html }),
+        () => sendOtpViaGithubSync({ to: email, subject, text, html }),
+        () => sendViaResend({ to: email, subject, text, html }),
+        () => sendViaBrevo({ to: email, subject, text, html }),
+        () => sendViaSmtp({ to: email, subject, text, html }),
+      ];
+      for (const attempt of syncProviders) {
+        try {
+          const result = await attempt();
+          if (result.sent) return result;
+        } catch (err) {
+          console.error(`[mail] OTP provider failed (${subject}):`, err.message);
+        }
       }
     }
     return { sent: false, error: "所有邮件通道均失败，请稍后重试" };

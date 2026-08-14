@@ -105,19 +105,38 @@ jobs:
                   host = "smtp.gmail.com"
           print(f"SMTP host={host} port={port} user=***@{user.split('@')[-1] if '@' in user else '?'}")
 
-          msg = MIMEMultipart("alternative")
-          msg["Subject"] = subject
-          msg["From"] = mail_from
-          msg["To"] = ", ".join(recipients)
-          msg.attach(MIMEText(body, "plain", "utf-8"))
-          if html.strip():
-              msg.attach(MIMEText(html, "html", "utf-8"))
+          def deliver(use_html):
+              if use_html and html.strip():
+                  msg = MIMEMultipart("alternative")
+                  msg.attach(MIMEText(body, "plain", "utf-8"))
+                  msg.attach(MIMEText(html, "html", "utf-8"))
+              else:
+                  msg = MIMEText(body, "plain", "utf-8")
+              msg["Subject"] = subject
+              msg["From"] = mail_from
+              msg["To"] = ", ".join(recipients)
+              with smtplib.SMTP(host, port, timeout=60) as smtp:
+                  smtp.ehlo()
+                  smtp.starttls()
+                  smtp.ehlo()
+                  smtp.login(user, password)
+                  smtp.sendmail(mail_from, recipients, msg.as_string())
 
-          with smtplib.SMTP(host, port, timeout=60) as smtp:
-              smtp.ehlo()
-              smtp.starttls()
-              smtp.ehlo()
-              smtp.login(user, password)
-              smtp.sendmail(mail_from, recipients, msg.as_string())
+          try:
+              deliver(use_html=True)
+          except smtplib.SMTPDataError as err:
+              code = getattr(err, "smtp_code", 0)
+              detail = str(err).lower()
+              if code == 550 and ("inappropriate" in detail or "too many" in detail):
+                  print("SMTP content/rate limit, retry minimal plain text:", err, file=sys.stderr)
+                  import re
+                  m = re.search(r"\d{6}", body)
+                  plain = f"Pzhisen verification code: {m.group()}" if m else body[:120]
+                  subject = "Pzhisen"
+                  body = plain
+                  html = ""
+                  deliver(use_html=False)
+              else:
+                  raise
           print("sent to", ", ".join(recipients))
           PY
