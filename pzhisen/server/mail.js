@@ -177,62 +177,69 @@ async function sendViaBrevo({ to, subject, text, html }) {
   return { sent: true, via: "brevo" };
 }
 
-function otpSmtpCreds() {
-  return {
-    user: (process.env.OTP_SMTP_USER || process.env.SMTP_USER || "LeeDh994@gmail.com").trim(),
-    pass: (process.env.OTP_SMTP_PASS || process.env.SMTP_PASS || "").trim(),
-  };
-}
-
 async function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-/** Poll GitHub Actions until OTP mail workflow completes (sync delivery). */
-async function waitGithubOtpWorkflow(maxWaitMs = 45000) {
+const githubApiHeaders = {
+  Authorization: `Bearer ${GITHUB_NOTIFY_TOKEN}`,
+  Accept: "application/vnd.github+json",
+  "X-GitHub-Api-Version": "2022-11-28",
+};
+
+/** Poll GitHub Actions until the workflow run triggered after dispatchAtMs completes. */
+async function waitGithubOtpWorkflow(dispatchAtMs, maxWaitMs = 50000) {
   if (!isGithubNotifyConfigured()) return { ok: false, error: "github_not_configured" };
   const started = Date.now();
+  let targetRunId = null;
+
+  // Wait for a new workflow run created after our dispatch (avoids matching an old success).
+  while (Date.now() - started < maxWaitMs) {
+    const res = await fetch(
+      `https://api.github.com/repos/${GITHUB_NOTIFY_REPO}/actions/workflows/order-notify-email.yml/runs?per_page=5`,
+      { headers: { ...githubApiHeaders, "User-Agent": "pzhisen-otp-mail" } }
+    );
+    const data = await res.json().catch(() => ({}));
+    const newRun = (data.workflow_runs || []).find(
+      (r) => new Date(r.created_at).getTime() >= dispatchAtMs - 3000
+    );
+    if (newRun) {
+      targetRunId = newRun.id;
+      break;
+    }
+    await sleep(1500);
+  }
+  if (!targetRunId) {
+    return { ok: false, error: "GitHub workflow did not start" };
+  }
+
   let lastStatus = "queued";
   while (Date.now() - started < maxWaitMs) {
     const res = await fetch(
-      `https://api.github.com/repos/${GITHUB_NOTIFY_REPO}/actions/workflows/order-notify-email.yml/runs?per_page=1`,
-      {
-        headers: {
-          Authorization: `Bearer ${GITHUB_NOTIFY_TOKEN}`,
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-          "User-Agent": "pzhisen-otp-mail",
-        },
-      }
+      `https://api.github.com/repos/${GITHUB_NOTIFY_REPO}/actions/runs/${targetRunId}`,
+      { headers: { ...githubApiHeaders, "User-Agent": "pzhisen-otp-mail" } }
     );
-    const data = await res.json().catch(() => ({}));
-    const run = data.workflow_runs?.[0];
-    if (!run) {
-      await sleep(2000);
-      continue;
-    }
+    const run = await res.json().catch(() => ({}));
     lastStatus = `${run.status}/${run.conclusion || "pending"}`;
     if (run.status === "completed") {
-      if (run.conclusion === "success") return { ok: true };
-      return { ok: false, error: `GitHub workflow failed: ${run.conclusion}` };
+      if (run.conclusion === "success") return { ok: true, runId: targetRunId };
+      return { ok: false, error: `GitHub workflow failed: ${run.conclusion}`, runId: targetRunId };
     }
     await sleep(2000);
   }
-  return { ok: false, error: `GitHub workflow timeout (${lastStatus})` };
+  return { ok: false, error: `GitHub workflow timeout (${lastStatus})`, runId: targetRunId };
 }
 
 async function sendOtpViaGithubSync({ to, subject, text, html }) {
-  const creds = otpSmtpCreds();
   if (!isGithubNotifyConfigured()) {
     return { sent: false, reason: "github_notify_not_configured" };
   }
+  const dispatchAtMs = Date.now();
   const recipients = Array.isArray(to) ? to.join(", ") : to;
   const res = await fetch(`https://api.github.com/repos/${GITHUB_NOTIFY_REPO}/dispatches`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${GITHUB_NOTIFY_TOKEN}`,
-      Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
+      ...githubApiHeaders,
       "Content-Type": "application/json",
       "User-Agent": "pzhisen-otp-mail",
     },
@@ -243,7 +250,8 @@ async function sendOtpViaGithubSync({ to, subject, text, html }) {
         body: String(text || "").slice(0, 50000),
         html: String(html || "").slice(0, 100000),
         to: recipients,
-        ...(creds.user && creds.pass ? { smtp_user: creds.user, smtp_pass: creds.pass } : {}),
+        // OTP uses GitHub Secrets Gmail SMTP only (months-ago working config).
+        // Do NOT pass Render SMTP creds — QQ mail on smtp.gmail.com breaks delivery.
       },
     }),
   });
@@ -251,9 +259,9 @@ async function sendOtpViaGithubSync({ to, subject, text, html }) {
     const detail = await res.text().catch(() => "");
     throw new Error(`GitHub dispatch HTTP ${res.status}: ${detail.slice(0, 300)}`);
   }
-  const waited = await waitGithubOtpWorkflow();
+  const waited = await waitGithubOtpWorkflow(dispatchAtMs);
   if (!waited.ok) throw new Error(waited.error || "GitHub OTP mail failed");
-  return { sent: true, via: "github_actions_sync" };
+  return { sent: true, via: "github_actions_sync", runId: waited.runId };
 }
 
 async function sendViaGithubActions({ to, subject, text, html }) {
@@ -264,9 +272,7 @@ async function sendViaGithubActions({ to, subject, text, html }) {
   const res = await fetch(`https://api.github.com/repos/${GITHUB_NOTIFY_REPO}/dispatches`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${GITHUB_NOTIFY_TOKEN}`,
-      Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
+      ...githubApiHeaders,
       "Content-Type": "application/json",
       "User-Agent": "pzhisen-order-notify",
     },
@@ -277,7 +283,7 @@ async function sendViaGithubActions({ to, subject, text, html }) {
         body: String(text || "").slice(0, 50000),
         html: String(html || "").slice(0, 100000),
         to: recipients,
-        ...(SMTP_USER && SMTP_PASS ? { smtp_user: SMTP_USER, smtp_pass: SMTP_PASS } : {}),
+        // Order notify uses GitHub Secrets Gmail SMTP (Render free tier blocks direct SMTP).
       },
     }),
   });

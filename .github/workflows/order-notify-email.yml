@@ -83,6 +83,19 @@ jobs:
               print("SMTP secrets missing", file=sys.stderr)
               sys.exit(1)
 
+          # Auto-detect SMTP host from sender email (QQ creds must not use smtp.gmail.com).
+          user_lower = user.lower()
+          if not os.environ.get("SMTP_HOST"):
+              if user_lower.endswith("@qq.com") or user_lower.endswith("@foxmail.com"):
+                  host = "smtp.qq.com"
+              elif user_lower.endswith("@163.com"):
+                  host = "smtp.163.com"
+              elif user_lower.endswith("@126.com"):
+                  host = "smtp.126.com"
+              elif user_lower.endswith("@gmail.com") or user_lower.endswith("@googlemail.com"):
+                  host = "smtp.gmail.com"
+          print(f"SMTP host={host} port={port} user={user.split('@')[-1] if '@' in user else '?'}")
+
           msg = MIMEMultipart("alternative")
           msg["Subject"] = subject
           msg["From"] = mail_from
