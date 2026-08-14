@@ -57,6 +57,10 @@ services:
         sync: false
       - key: SMTP_PASS
         sync: false
+      - key: OTP_SMTP_USER
+        sync: false
+      - key: OTP_SMTP_PASS
+        sync: false
       - key: SMTP_FROM
         sync: false
       - key: GITHUB_NOTIFY_TOKEN

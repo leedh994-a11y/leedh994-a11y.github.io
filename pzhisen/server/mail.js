@@ -177,6 +177,85 @@ async function sendViaBrevo({ to, subject, text, html }) {
   return { sent: true, via: "brevo" };
 }
 
+function otpSmtpCreds() {
+  return {
+    user: (process.env.OTP_SMTP_USER || process.env.SMTP_USER || "LeeDh994@gmail.com").trim(),
+    pass: (process.env.OTP_SMTP_PASS || process.env.SMTP_PASS || "").trim(),
+  };
+}
+
+async function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/** Poll GitHub Actions until OTP mail workflow completes (sync delivery). */
+async function waitGithubOtpWorkflow(maxWaitMs = 45000) {
+  if (!isGithubNotifyConfigured()) return { ok: false, error: "github_not_configured" };
+  const started = Date.now();
+  let lastStatus = "queued";
+  while (Date.now() - started < maxWaitMs) {
+    const res = await fetch(
+      `https://api.github.com/repos/${GITHUB_NOTIFY_REPO}/actions/workflows/order-notify-email.yml/runs?per_page=1`,
+      {
+        headers: {
+          Authorization: `Bearer ${GITHUB_NOTIFY_TOKEN}`,
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+          "User-Agent": "pzhisen-otp-mail",
+        },
+      }
+    );
+    const data = await res.json().catch(() => ({}));
+    const run = data.workflow_runs?.[0];
+    if (!run) {
+      await sleep(2000);
+      continue;
+    }
+    lastStatus = `${run.status}/${run.conclusion || "pending"}`;
+    if (run.status === "completed") {
+      if (run.conclusion === "success") return { ok: true };
+      return { ok: false, error: `GitHub workflow failed: ${run.conclusion}` };
+    }
+    await sleep(2000);
+  }
+  return { ok: false, error: `GitHub workflow timeout (${lastStatus})` };
+}
+
+async function sendOtpViaGithubSync({ to, subject, text, html }) {
+  const creds = otpSmtpCreds();
+  if (!isGithubNotifyConfigured()) {
+    return { sent: false, reason: "github_notify_not_configured" };
+  }
+  const recipients = Array.isArray(to) ? to.join(", ") : to;
+  const res = await fetch(`https://api.github.com/repos/${GITHUB_NOTIFY_REPO}/dispatches`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${GITHUB_NOTIFY_TOKEN}`,
+      Accept: "application/vnd.github+json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      "Content-Type": "application/json",
+      "User-Agent": "pzhisen-otp-mail",
+    },
+    body: JSON.stringify({
+      event_type: "order-notify",
+      client_payload: {
+        subject: String(subject || "").slice(0, 200),
+        body: String(text || "").slice(0, 50000),
+        html: String(html || "").slice(0, 100000),
+        to: recipients,
+        ...(creds.user && creds.pass ? { smtp_user: creds.user, smtp_pass: creds.pass } : {}),
+      },
+    }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`GitHub dispatch HTTP ${res.status}: ${detail.slice(0, 300)}`);
+  }
+  const waited = await waitGithubOtpWorkflow();
+  if (!waited.ok) throw new Error(waited.error || "GitHub OTP mail failed");
+  return { sent: true, via: "github_actions_sync" };
+}
+
 async function sendViaGithubActions({ to, subject, text, html }) {
   if (!isGithubNotifyConfigured()) {
     return { sent: false, reason: "github_notify_not_configured" };
@@ -289,7 +368,22 @@ export async function sendOtpEmail(email, code) {
   }
 
   try {
-    return await sendMail({ to: email, subject, text, html }, { preferSync: true });
+    const syncProviders = [
+      () => sendViaMailRelay({ to: email, subject, text, html }),
+      () => sendOtpViaGithubSync({ to: email, subject, text, html }),
+      () => sendViaResend({ to: email, subject, text, html }),
+      () => sendViaBrevo({ to: email, subject, text, html }),
+      () => sendViaSmtp({ to: email, subject, text, html }),
+    ];
+    for (const attempt of syncProviders) {
+      try {
+        const result = await attempt();
+        if (result.sent) return result;
+      } catch (err) {
+        console.error(`[mail] OTP provider failed:`, err.message);
+      }
+    }
+    return { sent: false, error: "所有邮件通道均失败，请稍后重试" };
   } catch (err) {
     console.error(`[mail] OTP send failed for ${email}:`, err.message);
     return { sent: false, error: err.message };
