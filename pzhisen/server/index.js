@@ -37,6 +37,8 @@ import {
   ensureLifetimeForEmail,
   isTrialSubscription,
   trialDaysRemaining,
+  trialTimeRemaining,
+  TRIAL_HOURS,
   TRIAL_DAYS,
 } from "./billing-store.js";
 import { DEFAULT_PLAN_ID, DEFAULT_CYCLE, isValidCycle } from "./plans.js";
@@ -484,7 +486,9 @@ function subscriptionPayload(email) {
     subscriptionActive: active,
     subscription: sub,
     onTrial,
+    trialHours: TRIAL_HOURS,
     trialDays: TRIAL_DAYS,
+    trialTimeLeft: onTrial ? trialTimeRemaining(sub) : null,
     trialDaysLeft: onTrial ? trialDaysRemaining(sub) : 0,
     checkoutUrl: `/checkout.html?plan=${DEFAULT_PLAN_ID}&cycle=${cycle}`,
   };
@@ -503,7 +507,7 @@ function requireSubscription(company, res) {
       success: false,
       error: "Subscription required",
       errorZh: trialEnded
-        ? `免费 ${TRIAL_DAYS} 天体验已结束。请订阅月付（¥699 / $99）或年付（¥6999 / $999）后继续使用全部功能。`
+        ? `免费 ${TRIAL_HOURS} 小时体验已结束。请订阅月付（¥699 / $99）或年付（¥6999 / $999）后继续使用全部功能。`
         : expired
           ? "您的订阅已到期，请续费月付（¥699 / $99）或年付（¥6999 / $999）后继续使用。"
           : "请先订阅专业版（月付或年付）后使用全部功能。中国内地可用银行卡转账，海外用户可用 PayPal。",

@@ -68,15 +68,21 @@ export function updateOrder(orderId, patch) {
   return data.orders[idx];
 }
 
-/** Free full-access trial for newly registered global users. */
-export const TRIAL_DAYS = 3;
+/** Free full-access trial for newly registered users (3 hours). */
+export const TRIAL_HOURS = 3;
+/** @deprecated Use TRIAL_HOURS — kept for older clients */
+export const TRIAL_DAYS = 0;
+
+function computeTrialExpiresAt(now = new Date()) {
+  return new Date(now.getTime() + TRIAL_HOURS * 60 * 60 * 1000).toISOString();
+}
 
 function computeExpiresAt(cycle, existingSub = null) {
   const meta = getCycle(cycle);
   const days = meta?.days || 30;
   const now = Date.now();
   let base = now;
-  // Paid plans should not stack unused trial days — start from now when upgrading from trial
+  // Paid plans should not stack unused trial time — start from now when upgrading from trial
   if (existingSub?.expiresAt && existingSub.cycle !== "trial") {
     const current = new Date(existingSub.expiresAt).getTime();
     if (current > now) base = current;
@@ -85,7 +91,7 @@ function computeExpiresAt(cycle, existingSub = null) {
 }
 
 /**
- * Grant a one-time 3-day full-access trial to a newly registered user.
+ * Grant a one-time 3-hour full-access trial to a newly registered user.
  * Never re-grants after a previous trial, and never overwrites paid/lifetime access.
  */
 export function activateTrial({ email }) {
@@ -111,7 +117,7 @@ export function activateTrial({ email }) {
   }
 
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const expiresAt = computeTrialExpiresAt(now);
   const sub = {
     email: normalized,
     planId: "pro",
@@ -123,7 +129,7 @@ export function activateTrial({ email }) {
     renewedAt: now.toISOString(),
     expiresAt,
     trialUsed: true,
-    trialDays: TRIAL_DAYS,
+    trialHours: TRIAL_HOURS,
   };
 
   const data = getSubscriptions();
@@ -139,11 +145,36 @@ export function isTrialSubscription(sub) {
   return Boolean(sub && sub.cycle === "trial");
 }
 
-export function trialDaysRemaining(sub) {
-  if (!isTrialSubscription(sub) || !sub.expiresAt) return 0;
+export function trialTimeRemaining(sub) {
+  if (!isTrialSubscription(sub) || !sub.expiresAt) {
+    return { expired: true, hours: 0, minutes: 0, seconds: 0, ms: 0, label: "已结束" };
+  }
   const ms = new Date(sub.expiresAt).getTime() - Date.now();
-  if (ms <= 0) return 0;
-  return Math.ceil(ms / (24 * 60 * 60 * 1000));
+  if (ms <= 0) {
+    return { expired: true, hours: 0, minutes: 0, seconds: 0, ms: 0, label: "已结束" };
+  }
+  const hours = Math.floor(ms / 3600000);
+  const minutes = Math.floor((ms % 3600000) / 60000);
+  const seconds = Math.floor((ms % 60000) / 1000);
+  const parts = [];
+  if (hours > 0) parts.push(`${hours} 小时`);
+  if (minutes > 0 || hours === 0) parts.push(`${minutes} 分`);
+  if (hours === 0 && minutes < 5) parts.push(`${seconds} 秒`);
+  return {
+    expired: false,
+    hours,
+    minutes,
+    seconds,
+    ms,
+    label: parts.join(" ") || "不足 1 分钟",
+  };
+}
+
+/** @deprecated Use trialTimeRemaining */
+export function trialDaysRemaining(sub) {
+  const t = trialTimeRemaining(sub);
+  if (t.expired) return 0;
+  return t.hours > 0 ? 1 : 0;
 }
 
 export function activateLifetime({ email, planId, provider, externalId, note }) {

@@ -25,6 +25,8 @@ import {
   activateTrial,
   isTrialSubscription,
   trialDaysRemaining,
+  trialTimeRemaining,
+  TRIAL_HOURS,
   TRIAL_DAYS,
 } from "./billing-store.js";
 import { isGrandfatheredLifetimeEmail } from "./lifetime-grants.js";
@@ -151,7 +153,9 @@ function authPayload(user) {
     lifetimeMember,
     subscription,
     onTrial,
+    trialHours: TRIAL_HOURS,
     trialDays: TRIAL_DAYS,
+    trialTimeLeft: onTrial ? trialTimeRemaining(subscription) : null,
     trialDaysLeft: onTrial ? trialDaysRemaining(subscription) : 0,
     redirectUrl: company ? `/dashboard.html?company=${company.id}` : null,
     checkoutUrl: `/checkout.html?plan=${DEFAULT_PLAN_ID}&cycle=${DEFAULT_CYCLE}`,
@@ -266,7 +270,7 @@ export async function verifyOtpHandler(req, res) {
     }
 
     ensureLifetimeForEmail(normalized);
-    // New global users: one-time 3-day full-access trial (skipped for lifetime / already-paid)
+    // New users: one-time 3-hour full-access trial (skipped for lifetime / already-paid)
     if (!isSubscriptionActive(normalized)) {
       activateTrial({ email: normalized });
     }
@@ -278,7 +282,7 @@ export async function verifyOtpHandler(req, res) {
     res.json({
       success: true,
       message: payload.onTrial
-        ? `注册成功！已开通 ${TRIAL_DAYS} 天免费全功能体验`
+        ? `注册成功！已开通 ${TRIAL_HOURS} 小时免费全功能体验`
         : "注册成功",
       ...payload,
     });

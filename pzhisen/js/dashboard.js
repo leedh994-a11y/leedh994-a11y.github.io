@@ -76,6 +76,7 @@ const AGENTS = [
 let activeAgent = "ceo";
 let company = null;
 let subscriptionActive = false;
+let trialCountdownTimer = null;
 let checkoutUrl = "/checkout.html?plan=pro&cycle=monthly";
 let allLogs = [];
 let historySearch = "";
@@ -361,13 +362,21 @@ function formatExpiry(iso) {
   return new Date(iso).toLocaleDateString("zh-CN", { year: "numeric", month: "short", day: "numeric" });
 }
 
+function formatTrialCountdown(timeLeft) {
+  if (!timeLeft || timeLeft.expired) return "已结束";
+  const h = String(timeLeft.hours ?? 0).padStart(2, "0");
+  const m = String(timeLeft.minutes ?? 0).padStart(2, "0");
+  const s = String(timeLeft.seconds ?? 0).padStart(2, "0");
+  return `${h}:${m}:${s}`;
+}
+
 function subscriptionLabel(sub) {
   if (!sub) return "专业版";
   if (sub.cycle === "lifetime" || sub.planId === "lifetime" || sub.lifetime) {
     return "✓ 终身版";
   }
   if (sub.cycle === "trial") {
-    return `✓ 免费体验中 · 至 ${formatExpiry(sub.expiresAt)}`;
+    return `✓ 免费体验中 · 剩余 ${formatTrialCountdown(window.__trialTimeLeft)}`;
   }
   const cycle = sub.cycle === "annual" ? "年付" : "月付";
   return `✓ ${cycle} · 至 ${formatExpiry(sub.expiresAt)}`;
@@ -381,6 +390,35 @@ function escapeHtml(s) {
   const d = document.createElement("div");
   d.textContent = s ?? "";
   return d.innerHTML;
+}
+
+function startTrialCountdown(expiresAt) {
+  if (trialCountdownTimer) clearInterval(trialCountdownTimer);
+  if (!expiresAt) return;
+  const tick = () => {
+    const ms = new Date(expiresAt).getTime() - Date.now();
+    const el = document.getElementById("trial-countdown");
+    if (ms <= 0) {
+      if (el) el.textContent = "00:00:00";
+      clearInterval(trialCountdownTimer);
+      trialCountdownTimer = null;
+      refreshCompanySnapshot();
+      return;
+    }
+    const hours = Math.floor(ms / 3600000);
+    const minutes = Math.floor((ms % 3600000) / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    window.__trialTimeLeft = { hours, minutes, seconds, expired: false };
+    if (el) {
+      el.textContent = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+    const pricingBtn = document.querySelector('.dashboard-nav a[href="/pricing.html"]');
+    if (pricingBtn && subscriptionActive) {
+      pricingBtn.textContent = `✓ 免费体验中 · 剩余 ${el?.textContent || ""}`;
+    }
+  };
+  tick();
+  trialCountdownTimer = setInterval(tick, 1000);
 }
 
 async function fetchLogs() {
@@ -416,6 +454,7 @@ function renderAgentList() {
 
 function updateSubscriptionUi(active, subscription, meta = {}) {
   subscriptionActive = active;
+  window.__trialTimeLeft = meta.trialTimeLeft || null;
   const banner = document.getElementById("paywall-banner");
   const layout = document.querySelector(".dashboard-layout");
   const pricingBtn = document.querySelector('a[href="/pricing.html"]');
@@ -429,12 +468,17 @@ function updateSubscriptionUi(active, subscription, meta = {}) {
       const onTrial = subscription?.cycle === "trial" || meta.onTrial;
       trialBanner.hidden = !onTrial;
       if (onTrial) {
-        const days = meta.trialDaysLeft ?? "";
+        const hours = meta.trialHours || 3;
+        const countdown = formatTrialCountdown(meta.trialTimeLeft);
         trialBanner.innerHTML = `
-          <strong>免费 ${meta.trialDays || 3} 天全功能体验进行中</strong>
-          <span>剩余约 ${days} 天 · 到期后请订阅月付或年付以继续使用</span>
+          <strong>免费 ${hours} 小时全功能体验进行中</strong>
+          <span>剩余时间 <strong id="trial-countdown">${countdown}</strong> · 到期后请订阅月付或年付以继续使用</span>
           <a href="${checkoutUrl}" class="btn-primary" style="height:36px;padding:0 14px;font-size:12px">提前订阅</a>
         `;
+        startTrialCountdown(subscription?.expiresAt);
+      } else if (trialCountdownTimer) {
+        clearInterval(trialCountdownTimer);
+        trialCountdownTimer = null;
       }
     }
   } else {
@@ -446,7 +490,7 @@ function updateSubscriptionUi(active, subscription, meta = {}) {
     const trialEnded = subscription?.cycle === "trial" || subscription?.trialUsed;
     if (title) {
       title.textContent = trialEnded
-        ? "免费 3 天体验已结束"
+        ? "免费 3 小时体验已结束"
         : "订阅专业版后即可使用全部功能";
     }
     if (desc) {
@@ -558,6 +602,8 @@ async function refreshCompanySnapshot({ redirectOnFail = false } = {}) {
   renderLogs(data.logs);
   updateSubscriptionUi(Boolean(data.subscriptionActive), data.subscription, {
     onTrial: data.onTrial,
+    trialHours: data.trialHours,
+    trialTimeLeft: data.trialTimeLeft,
     trialDays: data.trialDays,
     trialDaysLeft: data.trialDaysLeft,
   });
