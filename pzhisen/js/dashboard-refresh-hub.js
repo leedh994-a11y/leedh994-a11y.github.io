@@ -29,9 +29,28 @@
     }
   }
 
+  function resolveCompanyId() {
+    if (typeof window.getCompanyId === "function") {
+      try {
+        const id = window.getCompanyId();
+        if (id) return id;
+      } catch (_) {
+        /* ignore */
+      }
+    }
+    const fromUrl = new URLSearchParams(location.search).get("company");
+    if (fromUrl) return fromUrl;
+    if (window.companyId) return window.companyId;
+    try {
+      return localStorage.getItem("pzhisen_company_id") || null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   async function run(btn, label, loader) {
     if (!btn || btn.disabled) return;
-    const id = window.companyId || new URLSearchParams(location.search).get("company");
+    const id = resolveCompanyId();
     if (!id) {
       toast("缺少公司 ID，无法刷新", "error");
       return;

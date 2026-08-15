@@ -1,5 +1,9 @@
 /* global companyId, api */
 
+if (typeof window !== "undefined") {
+  window.api = window.api || ((path, options = {}) => fetch(path, { credentials: "include", ...options }));
+}
+
 let marketingData = null;
 let countdownTimer = null;
 
@@ -214,7 +218,7 @@ async function loadMarketingDashboard(options = {}) {
   if (!id) return false;
   try {
     const suffix = options.refresh ? `?_=${Date.now()}` : "";
-    const res = await api(`/api/companies/${id}/marketing/dashboard${suffix}`, {
+    const res = await window.api(`/api/companies/${id}/marketing/dashboard${suffix}`, {
       cache: options.refresh ? "no-store" : "default",
       headers: options.refresh ? { "Cache-Control": "no-cache", Pragma: "no-cache" } : undefined,
     });
@@ -252,7 +256,7 @@ function setupMarketingDashboard() {
     const targetDays = Number(document.getElementById("mkt-goal-days").value);
     const currency = document.getElementById("mkt-goal-currency").value;
     try {
-      const res = await api(`/api/companies/${companyId}/marketing/goal`, {
+      const res = await window.api(`/api/companies/${companyId}/marketing/goal`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ revenueTarget, targetDays, currency }),

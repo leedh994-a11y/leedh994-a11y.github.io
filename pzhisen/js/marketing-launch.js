@@ -1,5 +1,9 @@
 /* global companyId, api, subscriptionActive, checkoutUrl, renderMarketingDashboard, renderContentMarketingDashboard, renderLogs, fetchLogs */
 
+if (typeof window !== "undefined") {
+  window.api = window.api || ((path, options = {}) => fetch(path, { credentials: "include", ...options }));
+}
+
 const LAUNCH_URL_STORAGE_KEY = "pzhisen_launch_website_url";
 
 let launchCatalog = null;
@@ -64,7 +68,7 @@ async function loadLaunchCatalog(options = {}) {
   if (!id) return false;
   try {
     const suffix = options.refresh ? `?_=${Date.now()}` : "";
-    const res = await api(`/api/companies/${id}/marketing/launch-catalog${suffix}`, {
+    const res = await window.api(`/api/companies/${id}/marketing/launch-catalog${suffix}`, {
       cache: options.refresh ? "no-store" : "default",
     });
     const data = await res.json();
@@ -133,7 +137,7 @@ async function launchAllMarketing() {
   setLaunchStatus(`正在为 ${websiteUrl} 一键部署并启动所有推广营销方式，请稍候…`, "loading");
 
   try {
-    const res = await api(`/api/companies/${companyId}/marketing/launch-all`, {
+    const res = await window.api(`/api/companies/${companyId}/marketing/launch-all`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ websiteUrl }),

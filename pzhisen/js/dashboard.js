@@ -3,7 +3,6 @@ let companyId = params.get("company") || window.companyId;
 window.companyId = companyId;
 
 window.api = window.api || ((path, options = {}) => fetch(path, { credentials: "include", ...options }));
-const api = window.api;
 
 function getCompanyId() {
   return window.companyId || companyId || new URLSearchParams(location.search).get("company");
@@ -424,7 +423,7 @@ function startTrialCountdown(expiresAt) {
 async function fetchLogs() {
   const id = getCompanyId();
   if (!id) return;
-  const res = await api(`/api/companies/${id}/logs?limit=500&_=${Date.now()}`, {
+  const res = await window.api(`/api/companies/${id}/logs?limit=500&_=${Date.now()}`, {
     cache: "no-store",
   });
   const data = await res.json();
@@ -524,7 +523,7 @@ async function loadConfig() {
 }
 
 async function loadCompany() {
-  const meRes = await api("/api/auth/me");
+  const meRes = await window.api("/api/auth/me");
   if (!meRes.ok) {
     window.location.href = "/login.html";
     return;
@@ -572,7 +571,7 @@ async function refreshCompanySnapshot({ redirectOnFail = false } = {}) {
   const id = getCompanyId();
   if (!id) return false;
 
-  const res = await api(`/api/companies/${id}?_=${Date.now()}`, {
+  const res = await window.api(`/api/companies/${id}?_=${Date.now()}`, {
     cache: "no-store",
     headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
   });
@@ -661,7 +660,7 @@ async function runDaily() {
   btn.textContent = "Agents working…";
 
   try {
-    const res = await api(`/api/companies/${companyId}/run-daily`, { method: "POST" });
+    const res = await window.api(`/api/companies/${companyId}/run-daily`, { method: "POST" });
     const data = await res.json();
     if (res.status === 402) throw new Error(handleSubscriptionError(data));
     if (!data.success) throw new Error(data.error);
@@ -722,7 +721,7 @@ document.getElementById("chat-form").addEventListener("submit", async (e) => {
   input.value = "";
 
   try {
-    const res = await api(`/api/companies/${companyId}/agents/${activeAgent}`, {
+    const res = await window.api(`/api/companies/${companyId}/agents/${activeAgent}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message }),
@@ -746,7 +745,7 @@ document.getElementById("chat-form").addEventListener("submit", async (e) => {
 });
 
 document.getElementById("btn-logout")?.addEventListener("click", async () => {
-  await api("/api/auth/logout", { method: "POST" });
+  await window.api("/api/auth/logout", { method: "POST" });
   localStorage.removeItem("pzhisen_company_id");
   location.href = "/login.html";
 });
@@ -771,7 +770,7 @@ loadCompany();
 setInterval(async () => {
   const id = getCompanyId();
   if (!id) return;
-  const res = await api(`/api/companies/${id}`);
+  const res = await window.api(`/api/companies/${id}`);
   const data = await res.json();
   if (data.success) updateSubscriptionUi(Boolean(data.subscriptionActive), data.subscription);
 }, 10000);

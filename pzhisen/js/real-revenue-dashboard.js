@@ -1,5 +1,9 @@
 /* global companyId, api */
 
+if (typeof window !== "undefined") {
+  window.api = window.api || ((path, options = {}) => fetch(path, { credentials: "include", ...options }));
+}
+
 let realRevenueData = null;
 
 function fmtMoney(amount, currency = "USD") {
@@ -99,7 +103,7 @@ async function loadRealRevenueDashboard(options = {}) {
   if (!id) return false;
   try {
     const suffix = options.refresh ? `?_=${Date.now()}` : "";
-    const res = await api(`/api/companies/${id}/revenue/real${suffix}`, {
+    const res = await window.api(`/api/companies/${id}/revenue/real${suffix}`, {
       cache: options.refresh ? "no-store" : "default",
       headers: options.refresh ? { "Cache-Control": "no-cache", Pragma: "no-cache" } : undefined,
     });
@@ -134,7 +138,7 @@ function setupRealRevenueDashboard() {
     e.preventDefault();
     if (!companyId) return;
     try {
-      const res = await api(`/api/companies/${companyId}/revenue/goal`, {
+      const res = await window.api(`/api/companies/${companyId}/revenue/goal`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

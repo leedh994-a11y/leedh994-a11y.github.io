@@ -1,5 +1,9 @@
 /* global companyId, api */
 
+if (typeof window !== "undefined") {
+  window.api = window.api || ((path, options = {}) => fetch(path, { credentials: "include", ...options }));
+}
+
 let analyticsData = null;
 
 function fmtNum(n) {
@@ -131,7 +135,7 @@ async function loadMarketingAnalytics(options = {}) {
   if (!id) return false;
   try {
     const suffix = options.refresh ? `?_=${Date.now()}` : "";
-    const res = await api(`/api/companies/${id}/marketing/analytics/daily${suffix}`, {
+    const res = await window.api(`/api/companies/${id}/marketing/analytics/daily${suffix}`, {
       cache: options.refresh ? "no-store" : "default",
       headers: options.refresh ? { "Cache-Control": "no-cache", Pragma: "no-cache" } : undefined,
     });

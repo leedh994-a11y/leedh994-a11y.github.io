@@ -1,5 +1,9 @@
 /* global api */
 
+if (typeof window !== "undefined") {
+  window.api = window.api || ((path, options = {}) => fetch(path, { credentials: "include", ...options }));
+}
+
 let dshTimer = null;
 let dshBound = false;
 
@@ -152,7 +156,7 @@ async function loadDailySalesHero(options = {}) {
   const id = resolveDshCompanyId();
   if (!id) return;
   const suffix = options.refresh ? `?_=${Date.now()}` : "";
-  const fetchApi = window.api || api;
+  const fetchApi = window.api;
   try {
     const res = await fetchApi(`/api/companies/${id}/marketing/daily-sales${suffix}`, {
       cache: options.refresh ? "no-store" : "default",
@@ -193,7 +197,7 @@ async function saveDailySalesGoal(e) {
     btn.textContent = "保存中…";
   }
 
-  const fetchApi = window.api || api;
+  const fetchApi = window.api;
   try {
     const res = await fetchApi(`/api/companies/${id}/marketing/daily-sales/goal`, {
       method: "PUT",
