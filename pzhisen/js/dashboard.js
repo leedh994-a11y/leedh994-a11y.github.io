@@ -2,8 +2,8 @@ const params = new URLSearchParams(location.search);
 let companyId = params.get("company") || window.companyId;
 window.companyId = companyId;
 
-const api = (path, options = {}) => fetch(path, { credentials: "include", ...options });
-window.api = api;
+window.api = window.api || ((path, options = {}) => fetch(path, { credentials: "include", ...options }));
+const api = window.api;
 
 function getCompanyId() {
   return window.companyId || companyId || new URLSearchParams(location.search).get("company");
@@ -598,48 +598,6 @@ async function refreshAllDashboards() {
   }
 }
 
-function initDashboardRefreshHub() {
-  const panelRefreshMap = {
-    "btn-real-revenue-refresh": ["真实收益", () => loadRealRevenueDashboard({ refresh: true })],
-    "btn-cm-refresh": ["内容营销", () => loadContentMarketingDashboard({ refresh: true })],
-    "btn-analytics-refresh": ["推广数据分析", () => loadMarketingAnalytics({ refresh: true })],
-    "btn-marketing-refresh": ["AI 推广营销", () => loadMarketingDashboard({ refresh: true })],
-  };
-
-  document.addEventListener(
-    "click",
-    (e) => {
-      const btn = e.target.closest("button[id]");
-      if (!btn || btn.disabled) return;
-
-      if (btn.id === "btn-dashboard-refresh") {
-        e.preventDefault();
-        e.stopPropagation();
-        refreshAllDashboards();
-        return;
-      }
-
-      if (btn.id === "btn-bank-revenue-refresh") {
-        e.preventDefault();
-        e.stopPropagation();
-        showDashboardRefreshToast("正在刷新中国银行收账…", "loading");
-        refreshBankRevenueDashboard(e).then(() => {
-          showDashboardRefreshToast("中国银行收账已刷新", "success");
-        });
-        return;
-      }
-
-      const entry = panelRefreshMap[btn.id];
-      if (!entry) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const [label, loader] = entry;
-      runPanelRefresh(btn.id, label, loader);
-    },
-    true
-  );
-}
-
 async function runDaily() {
   if (!subscriptionActive) {
     alert("请先订阅专业版（月付或年付）后使用全部功能。");
@@ -758,7 +716,6 @@ setupMarketingAnalytics();
 setupRealRevenueDashboard();
 setupBankRevenueDashboard();
 setupContentMarketingDashboard();
-initDashboardRefreshHub();
 loadConfig();
 loadCompany();
 

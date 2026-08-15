@@ -2,13 +2,8 @@
 
 const BANK_AUTH_SOURCE = "bank-revenue";
 
-const api =
-  typeof window !== "undefined" && window.api
-    ? window.api
-    : (path, options = {}) => fetch(path, { credentials: "include", ...options });
-
-if (typeof window !== "undefined" && !window.api) {
-  window.api = api;
+if (typeof window !== "undefined") {
+  window.api = window.api || ((path, options = {}) => fetch(path, { credentials: "include", ...options }));
 }
 
 function fmtCny(amount) {
@@ -331,7 +326,7 @@ function renderBankRevenueDashboard(data) {
 
 async function claimBankMerchantAccess() {
   try {
-    const res = await api("/api/revenue/bank/claim-merchant", {
+    const res = await window.api("/api/revenue/bank/claim-merchant", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
@@ -355,7 +350,7 @@ async function loadBankRevenueDashboard(options = {}) {
   }
 
   try {
-    const res = await api(bankRevenueApiPath(refresh), {
+    const res = await window.api(bankRevenueApiPath(refresh), {
       cache: refresh ? "no-store" : "default",
       headers: refresh ? { "Cache-Control": "no-cache", Pragma: "no-cache" } : undefined,
     });
@@ -380,14 +375,14 @@ async function loadBankRevenueDashboard(options = {}) {
     }
 
     if (!data.bankRevenue.isMerchant) {
-      const meRes = await api("/api/auth/me");
+      const meRes = await window.api("/api/auth/me");
       if (meRes.ok) {
         const me = await meRes.json();
         if (me.user?.email) {
           data.bankRevenue.loggedInEmail = me.user.email;
           const granted = await claimBankMerchantAccess();
           if (granted) {
-            const retry = await api(bankRevenueApiPath(refresh), {
+            const retry = await window.api(bankRevenueApiPath(refresh), {
               cache: refresh ? "no-store" : "default",
             });
             const retryData = await retry.json();
@@ -448,7 +443,7 @@ async function handleBankMerchantLogin(e) {
   }
 
   try {
-    const res = await api("/api/auth/login", {
+    const res = await window.api("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, source: BANK_AUTH_SOURCE }),
@@ -572,7 +567,7 @@ async function handleBankMerchantRegister(e) {
   }
 
   try {
-    const res = await api("/api/auth/register", {
+    const res = await window.api("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, idea: "商户收账仪表盘", source: BANK_AUTH_SOURCE }),
@@ -613,7 +608,7 @@ async function handleBankOtpVerify(e) {
   }
 
   try {
-    const res = await api("/api/auth/verify-otp", {
+    const res = await window.api("/api/auth/verify-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: bankAuthPending.email, code }),
@@ -652,7 +647,7 @@ async function handleBankResendOtp() {
   if (btn) btn.disabled = true;
 
   try {
-    const res = await api("/api/auth/resend-otp", {
+    const res = await window.api("/api/auth/resend-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
