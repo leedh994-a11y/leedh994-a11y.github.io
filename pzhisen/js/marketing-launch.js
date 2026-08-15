@@ -77,6 +77,7 @@ async function launchAllMarketing() {
 
     if (data.marketing) renderMarketingDashboard(data.marketing);
     if (data.contentMarketing) renderContentMarketingDashboard(data.contentMarketing);
+    if (data.analytics) renderAnalyticsDashboard(data.analytics);
     if (data.logs) renderLogs(data.logs);
     else await fetchLogs();
 

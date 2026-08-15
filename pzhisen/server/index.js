@@ -56,6 +56,7 @@ import {
   bumpContentMarketingActivity,
 } from "./content-marketing-dashboard.js";
 import { launchAllMarketing, getLaunchMethodsCatalog } from "./marketing-launch-all.js";
+import { getMarketingAnalyticsDashboard } from "./marketing-analytics-dashboard.js";
 import {
   registerHandler,
   verifyOtpHandler,
@@ -314,6 +315,13 @@ app.get("/api/companies/:id/marketing/launch-catalog", requireAuth, requireCompa
   res.json({ success: true, catalog: getLaunchMethodsCatalog() });
 });
 
+app.get("/api/companies/:id/marketing/analytics/daily", requireAuth, requireCompanyAccess, (req, res) => {
+  res.json({
+    success: true,
+    analytics: getMarketingAnalyticsDashboard(req.company.id, req.company),
+  });
+});
+
 app.post("/api/companies/:id/marketing/launch-all", requireAuth, requireCompanyAccess, async (req, res) => {
   try {
     const company = req.company;
@@ -348,6 +356,7 @@ app.post("/api/companies/:id/marketing/launch-all", requireAuth, requireCompanyA
     res.json({
       success: true,
       ...result,
+      analytics: getMarketingAnalyticsDashboard(company.id, company),
       logs: getLogs(company.id, 50),
     });
   } catch (err) {

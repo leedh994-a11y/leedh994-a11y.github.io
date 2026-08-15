@@ -305,6 +305,85 @@
         </dialog>
       </section>
 
+      <section class="analytics-hub" id="analytics-hub" aria-label="每日推广数据与分析">
+        <header class="analytics-hub__header">
+          <div>
+            <h2 class="analytics-hub__title">📊 每日全渠道推广数据与分析</h2>
+            <p class="analytics-hub__subtitle">全部 <strong id="analytics-methods-count">33</strong> 种推广方式 · 每日精准数据 + 智能分析 · 零广告费 $0</p>
+          </div>
+          <button type="button" class="history-btn history-btn--primary" id="btn-analytics-refresh">↻ 刷新数据</button>
+        </header>
+
+        <div class="analytics-kpi-row" id="analytics-kpi-row">
+          <div class="analytics-kpi"><strong id="kpi-impressions">0</strong><span>今日曝光</span></div>
+          <div class="analytics-kpi"><strong id="kpi-clicks">0</strong><span>今日点击</span></div>
+          <div class="analytics-kpi"><strong id="kpi-engagement">0</strong><span>今日互动</span></div>
+          <div class="analytics-kpi"><strong id="kpi-posts">0</strong><span>内容发布</span></div>
+          <div class="analytics-kpi"><strong id="kpi-emails">0</strong><span>邮件外联</span></div>
+          <div class="analytics-kpi analytics-kpi--progress"><strong id="kpi-avg-progress">0%</strong><span>平均进度</span></div>
+          <div class="analytics-kpi analytics-kpi--zero"><strong>$0</strong><span>媒体花费</span></div>
+        </div>
+
+        <article class="analytics-panel analytics-panel--data">
+          <header class="analytics-panel__head">
+            <h3>📋 每日精准数据仪表盘</h3>
+            <span class="analytics-date" id="analytics-date">—</span>
+          </header>
+          <p class="analytics-panel__desc">每一种推广营销方式的今日精准执行数据（曝光、点击、进度、状态）</p>
+          <div class="analytics-table-wrap">
+            <table class="analytics-table" id="analytics-data-table">
+              <thead>
+                <tr>
+                  <th>推广方式</th>
+                  <th>类别</th>
+                  <th>进度</th>
+                  <th>状态</th>
+                  <th>曝光</th>
+                  <th>点击</th>
+                  <th>互动</th>
+                  <th>CTR</th>
+                  <th>内容</th>
+                  <th>花费</th>
+                </tr>
+              </thead>
+              <tbody id="analytics-data-tbody"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="analytics-panel analytics-panel--analysis">
+          <header class="analytics-panel__head">
+            <h3>🔬 每日数据分析仪表盘</h3>
+          </header>
+          <div class="analytics-analysis-grid">
+            <div class="analytics-block">
+              <h4>📈 增长对比（较昨日）</h4>
+              <div class="analytics-growth" id="analytics-growth"></div>
+            </div>
+            <div class="analytics-block">
+              <h4>📂 类别分析</h4>
+              <div class="analytics-categories" id="analytics-categories"></div>
+            </div>
+            <div class="analytics-block">
+              <h4>🏆 今日最佳渠道 Top 5</h4>
+              <ol class="analytics-top-list" id="analytics-top"></ol>
+            </div>
+            <div class="analytics-block">
+              <h4>⚠️ 需加强渠道</h4>
+              <ol class="analytics-attention-list" id="analytics-attention"></ol>
+            </div>
+            <div class="analytics-block analytics-block--wide">
+              <h4>📉 近 7 日趋势</h4>
+              <div class="analytics-trend" id="analytics-trend"></div>
+            </div>
+            <div class="analytics-block analytics-block--wide">
+              <h4>💡 智能分析洞察</h4>
+              <ul class="analytics-insights" id="analytics-insights"></ul>
+            </div>
+          </div>
+        </article>
+      </section>
+
       <section class="marketing-hub" id="marketing-hub" aria-label="AI 推广营销仪表盘">
         <header class="marketing-hub__header">
           <div>
@@ -505,6 +584,7 @@
 
   <script src="js/daily-quota-ticker.js"></script>
   <script src="js/marketing-launch.js"></script>
+  <script src="js/marketing-analytics-dashboard.js"></script>
   <script src="js/real-revenue-dashboard.js"></script>
   <script src="js/content-marketing-dashboard.js"></script>
   <script src="js/marketing-dashboard.js"></script>

@@ -459,6 +459,7 @@ async function loadCompany() {
   loadRealRevenueDashboard();
   loadContentMarketingDashboard();
   loadLaunchCatalog();
+  loadMarketingAnalytics();
 }
 
 async function runDaily() {
@@ -482,6 +483,7 @@ async function runDaily() {
     renderLogs(data.logs);
     if (data.marketing) renderMarketingDashboard(data.marketing);
     if (data.contentMarketing) renderContentMarketingDashboard(data.contentMarketing);
+    if (data.analytics) renderAnalyticsDashboard(data.analytics);
   } catch (e) {
     alert(e.message);
   } finally {
@@ -546,6 +548,7 @@ document.getElementById("chat-form").addEventListener("submit", async (e) => {
     respEl.textContent = data.result.content;
     if (data.marketing) renderMarketingDashboard(data.marketing);
     if (data.contentMarketing) renderContentMarketingDashboard(data.contentMarketing);
+    if (data.analytics) renderAnalyticsDashboard(data.analytics);
     historyFilter = "qa";
     document.getElementById("history-filter").value = "qa";
     document.getElementById("history-filter-modal").value = "qa";
@@ -567,6 +570,7 @@ renderAgentList();
 setupHistoryUi();
 setupMarketingDashboard();
 setupMarketingLaunch();
+setupMarketingAnalytics();
 setupRealRevenueDashboard();
 setupContentMarketingDashboard();
 loadConfig();
@@ -583,3 +587,4 @@ setInterval(fetchLogs, 15000);
 setInterval(loadMarketingDashboard, 45000);
 setInterval(loadRealRevenueDashboard, 30000);
 setInterval(loadContentMarketingDashboard, 45000);
+setInterval(loadMarketingAnalytics, 60000);
