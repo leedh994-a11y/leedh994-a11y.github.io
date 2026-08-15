@@ -51,6 +51,7 @@ import {
   setRealRevenueGoal,
 } from "./real-revenue-dashboard.js";
 import { getBankRevenueDashboard } from "./bank-revenue-dashboard.js";
+import { isMerchantUser } from "./marketing-real-metrics.js";
 import {
   getContentMarketingDashboard,
   setContentMarketingGoal,
@@ -300,6 +301,33 @@ app.get("/api/companies/:id/revenue/bank", requireAuth, requireCompanyAccess, (r
   res.json({
     success: true,
     bankRevenue: getBankRevenueDashboard(req.company.id, req.company, req.user?.email),
+  });
+});
+
+/** Merchant bank revenue — resolves company from logged-in user (for bank-revenue.html login entry). */
+app.get("/api/revenue/bank", requireAuth, (req, res) => {
+  const email = req.user?.email;
+  if (!isMerchantUser(email)) {
+    return res.json({
+      success: true,
+      bankRevenue: getBankRevenueDashboard(null, null, email),
+    });
+  }
+  const company = findCompanyByEmail(email) || (req.user?.companyId ? getCompany(req.user.companyId) : null);
+  if (!company) {
+    return res.json({
+      success: true,
+      bankRevenue: {
+        isMerchant: true,
+        accessMessage: "商户账户已登录，但未找到关联网站。请先在仪表盘创建公司。",
+        summary: null,
+        updatedAt: new Date().toISOString(),
+      },
+    });
+  }
+  res.json({
+    success: true,
+    bankRevenue: getBankRevenueDashboard(company.id, company, email),
   });
 });
 

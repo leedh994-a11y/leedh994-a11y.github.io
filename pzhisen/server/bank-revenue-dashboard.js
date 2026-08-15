@@ -222,6 +222,7 @@ export function getBankRevenueDashboard(companyId, company, userEmail) {
   return {
     companyId,
     isMerchant: true,
+    merchantEmail: userEmail,
     websiteName: company?.name || "我的网站",
     isReal: true,
     source: "bank_transfer_orders",

@@ -197,10 +197,31 @@
           </div>
           <div class="bank-revenue-hub__actions">
             <span class="real-badge real-badge--live">真实收账</span>
+            <a href="/bank-revenue.html" class="history-btn" style="text-decoration:none">商户登录入口</a>
             <button type="button" class="history-btn history-btn--primary" id="btn-bank-revenue-refresh">↻ 刷新</button>
           </div>
         </header>
-        <div id="bank-revenue-access" class="bank-revenue-access" hidden></div>
+        <div id="bank-revenue-access" class="bank-revenue-access" hidden>
+          <div class="bank-revenue-login">
+            <div class="bank-revenue-login__intro">
+              <h3>商户登录查看收账数据</h3>
+              <p>使用商户邮箱登录后，可查看全球用户 VISA 借记卡与中国用户借记卡的每日进账与累计结算收益（真实订单数据）。</p>
+            </div>
+            <form class="bank-revenue-login__form" id="bank-revenue-login-form">
+              <label class="bank-revenue-login__field">
+                <span>商户邮箱</span>
+                <input type="email" id="bank-login-email" name="email" required autocomplete="email" placeholder="例如 ddb1520@outlook.com" spellcheck="false">
+              </label>
+              <label class="bank-revenue-login__field">
+                <span>登录密码</span>
+                <input type="password" id="bank-login-password" name="password" required autocomplete="current-password" placeholder="请输入密码">
+              </label>
+              <p class="bank-revenue-login__error" id="bank-login-error" hidden></p>
+              <button type="submit" class="bank-revenue-login__btn" id="btn-bank-login-submit">登录查看收账仪表盘</button>
+            </form>
+            <p class="bank-revenue-login__hint">仅 ORDER_NOTIFY_EMAIL / MERCHANT_OWNER_EMAILS 配置的商户邮箱可查看。也可前往 <a href="/bank-revenue.html">独立收账登录页</a>。</p>
+          </div>
+        </div>
         <div id="bank-revenue-content" hidden>
           <div class="bank-revenue-total-banner">
             <div class="bank-revenue-total-stat bank-revenue-total-stat--today">

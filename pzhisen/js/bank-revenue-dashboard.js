@@ -1,4 +1,4 @@
-/* global companyId, api */
+/* global companyId, api, bankRevenueStandalone */
 
 function fmtCny(amount) {
   return `¥${Number(amount || 0).toLocaleString("zh-CN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
@@ -23,21 +23,75 @@ function fmtDate(iso) {
   });
 }
 
+function bankRevenueApiPath() {
+  if (typeof bankRevenueStandalone !== "undefined" && bankRevenueStandalone) {
+    return "/api/revenue/bank";
+  }
+  if (companyId) return `/api/companies/${companyId}/revenue/bank`;
+  return "/api/revenue/bank";
+}
+
+function showBankLoginError(msg) {
+  const el = document.getElementById("bank-login-error");
+  if (!el) return;
+  el.hidden = !msg;
+  el.textContent = msg || "";
+}
+
+function showBankLoginPanel(message) {
+  const access = document.getElementById("bank-revenue-access");
+  const content = document.getElementById("bank-revenue-content");
+  const refreshBtn = document.getElementById("btn-bank-revenue-refresh");
+  const logoutBtn = document.getElementById("btn-bank-logout");
+  const loggedAs = document.getElementById("bank-revenue-logged-as");
+
+  if (access) access.hidden = false;
+  if (content) content.hidden = true;
+  if (refreshBtn) refreshBtn.hidden = true;
+  if (logoutBtn) logoutBtn.hidden = true;
+  if (loggedAs) loggedAs.hidden = true;
+
+  const intro = access?.querySelector(".bank-revenue-login__intro p");
+  if (intro && message) {
+    intro.textContent = message;
+  }
+}
+
+function showBankDashboardPanel(userEmail) {
+  const access = document.getElementById("bank-revenue-access");
+  const content = document.getElementById("bank-revenue-content");
+  const refreshBtn = document.getElementById("btn-bank-revenue-refresh");
+  const logoutBtn = document.getElementById("btn-bank-logout");
+  const loggedAs = document.getElementById("bank-revenue-logged-as");
+
+  if (access) access.hidden = true;
+  if (content) content.hidden = false;
+  if (refreshBtn) refreshBtn.hidden = false;
+  if (logoutBtn) logoutBtn.hidden = false;
+  if (loggedAs && userEmail) {
+    loggedAs.hidden = false;
+    loggedAs.textContent = `已登录商户：${userEmail}`;
+  }
+  showBankLoginError("");
+}
+
 function renderBankRevenueDashboard(data) {
   const access = document.getElementById("bank-revenue-access");
   const content = document.getElementById("bank-revenue-content");
 
   if (!data?.isMerchant) {
-    if (access) {
-      access.hidden = false;
-      access.textContent = data?.accessMessage || "暂无权限查看中国银行收账数据。";
-    }
+    showBankLoginPanel(data?.accessMessage || "请使用商户邮箱登录后查看中国银行收账数据。");
+    if (access) access.hidden = false;
     if (content) content.hidden = true;
     return;
   }
 
-  if (access) access.hidden = true;
-  if (content) content.hidden = false;
+  if (data.accessMessage && !data.summary) {
+    showBankLoginPanel(data.accessMessage);
+    return;
+  }
+
+  showBankDashboardPanel(data.merchantEmail);
 
   const s = data.summary || {};
   const todayEl = document.getElementById("bank-today-total");
@@ -137,20 +191,88 @@ function renderBankRevenueDashboard(data) {
 }
 
 async function loadBankRevenueDashboard() {
-  if (!companyId) return;
   try {
-    const res = await api(`/api/companies/${companyId}/revenue/bank`);
+    const res = await api(bankRevenueApiPath());
+    if (res.status === 401) {
+      showBankLoginPanel("请使用商户邮箱和密码登录，查看中国银行收账数据。");
+      return;
+    }
     const data = await res.json();
-    if (data.success && data.bankRevenue) renderBankRevenueDashboard(data.bankRevenue);
+    if (data.success && data.bankRevenue) {
+      if (data.bankRevenue.companyId) window.companyId = data.bankRevenue.companyId;
+      renderBankRevenueDashboard(data.bankRevenue);
+    }
   } catch (_) {
-    /* ignore */
+    showBankLoginPanel("加载收账数据失败，请稍后重试。");
   }
+}
+
+async function handleBankMerchantLogin(e) {
+  e.preventDefault();
+  showBankLoginError("");
+
+  const email = document.getElementById("bank-login-email")?.value.trim();
+  const password = document.getElementById("bank-login-password")?.value;
+  const btn = document.getElementById("btn-bank-login-submit");
+
+  if (!email?.includes("@") || !password) {
+    showBankLoginError("请填写商户邮箱和密码");
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "登录中…";
+  }
+
+  try {
+    const res = await api("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "登录失败");
+
+    if (data.company?.id) window.companyId = data.company.id;
+    localStorage.setItem("pzhisen_email", email);
+    if (data.company?.id) localStorage.setItem("pzhisen_company_id", data.company.id);
+
+    await loadBankRevenueDashboard();
+
+    if (typeof bankRevenueStandalone === "undefined" || !bankRevenueStandalone) {
+      document.getElementById("bank-revenue-hub")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  } catch (err) {
+    showBankLoginError(err.message || "登录失败，请检查邮箱和密码");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent =
+        typeof bankRevenueStandalone !== "undefined" && bankRevenueStandalone
+          ? "登录查看收账数据"
+          : "登录查看收账仪表盘";
+    }
+  }
+}
+
+function setupBankRevenueLogin() {
+  const form = document.getElementById("bank-revenue-login-form");
+  if (!form || form.dataset.bound === "1") return;
+  form.dataset.bound = "1";
+  form.addEventListener("submit", handleBankMerchantLogin);
+
+  const saved = localStorage.getItem("pzhisen_email");
+  const emailInput = document.getElementById("bank-login-email");
+  if (saved && emailInput && !emailInput.value) emailInput.value = saved;
 }
 
 function setupBankRevenueDashboard() {
   document.getElementById("btn-bank-revenue-refresh")?.addEventListener("click", loadBankRevenueDashboard);
+  setupBankRevenueLogin();
 }
 
 window.loadBankRevenueDashboard = loadBankRevenueDashboard;
 window.renderBankRevenueDashboard = renderBankRevenueDashboard;
 window.setupBankRevenueDashboard = setupBankRevenueDashboard;
+window.setupBankRevenueLogin = setupBankRevenueLogin;

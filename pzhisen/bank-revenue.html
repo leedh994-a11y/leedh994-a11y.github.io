@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-VQ2VNH1FWY"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-VQ2VNH1FWY');
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中国银行收账仪表盘 — 商户登录</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body class="dashboard-body bank-revenue-page">
+  <header class="dashboard-nav">
+    <a href="/" class="logo">Pzhisen</a>
+    <div class="status-row" style="margin:0">
+      <a href="/dashboard.html" class="btn-primary" style="height:40px;padding:0 16px;font-size:13px;background:transparent;color:var(--heading);border:1px solid var(--border)">返回仪表盘</a>
+      <button type="button" id="btn-bank-logout" class="btn-primary" style="height:40px;padding:0 16px;font-size:13px;background:transparent;color:var(--heading);border:1px solid var(--border)" hidden>退出登录</button>
+    </div>
+  </header>
+
+  <main class="bank-revenue-page__main">
+    <section class="bank-revenue-hub" id="bank-revenue-hub" aria-label="中国银行收账仪表盘">
+      <header class="bank-revenue-hub__header">
+        <div>
+          <h1 class="bank-revenue-hub__title">🏦 中国银行收账仪表盘</h1>
+          <p class="bank-revenue-hub__subtitle">商户登录 · 真实银行卡转账结算 · 中国用户借记卡 &amp; 全球用户 VISA 借记卡分账统计</p>
+        </div>
+        <div class="bank-revenue-hub__actions">
+          <span class="real-badge real-badge--live">真实收账</span>
+          <button type="button" class="history-btn history-btn--primary" id="btn-bank-revenue-refresh" hidden>↻ 刷新</button>
+        </div>
+      </header>
+
+      <div id="bank-revenue-access" class="bank-revenue-access">
+        <div class="bank-revenue-login bank-revenue-login--hero">
+          <div class="bank-revenue-login__intro">
+            <h2>商户邮箱登录</h2>
+            <p>登录后即可查看收款账户的每日进账结算金额与累计收益：</p>
+            <ul class="bank-revenue-login__list">
+              <li><strong>中国银行借记卡</strong> — 中国用户订阅入账</li>
+              <li><strong>中国银行 VISA 借记卡</strong> — 全球用户订阅入账</li>
+            </ul>
+          </div>
+          <form class="bank-revenue-login__form" id="bank-revenue-login-form">
+            <label class="bank-revenue-login__field">
+              <span>商户邮箱</span>
+              <input type="email" id="bank-login-email" name="email" required autocomplete="email" placeholder="请输入商户邮箱" spellcheck="false">
+            </label>
+            <label class="bank-revenue-login__field">
+              <span>登录密码</span>
+              <input type="password" id="bank-login-password" name="password" required autocomplete="current-password" placeholder="请输入密码">
+            </label>
+            <p class="bank-revenue-login__error" id="bank-login-error" hidden></p>
+            <button type="submit" class="bank-revenue-login__btn" id="btn-bank-login-submit">登录查看收账数据</button>
+          </form>
+          <p class="bank-revenue-login__hint">使用在 Render 中配置的 ORDER_NOTIFY_EMAIL 或 MERCHANT_OWNER_EMAILS 商户邮箱登录。</p>
+        </div>
+      </div>
+
+      <div id="bank-revenue-content" hidden>
+        <p class="bank-revenue-logged-as" id="bank-revenue-logged-as" hidden></p>
+        <div class="bank-revenue-total-banner">
+          <div class="bank-revenue-total-stat bank-revenue-total-stat--today">
+            <span class="bank-revenue-total-label">今日银行卡结算进账</span>
+            <strong class="bank-revenue-total-num" id="bank-today-total">¥0</strong>
+            <span class="bank-revenue-total-sub" id="bank-today-count">0 笔</span>
+          </div>
+          <div class="bank-revenue-total-stat bank-revenue-total-stat--all">
+            <span class="bank-revenue-total-label">累计银行卡结算收益</span>
+            <strong class="bank-revenue-total-num" id="bank-all-total">¥0</strong>
+            <span class="bank-revenue-total-sub" id="bank-all-meta">0 笔 · 0 位客户</span>
+          </div>
+        </div>
+        <div class="bank-revenue-channels" id="bank-revenue-channels"></div>
+        <article class="bank-revenue-card bank-revenue-card--daily">
+          <h3>📅 每日进账结算明细（近 30 天）</h3>
+          <div class="bank-revenue-table-wrap">
+            <table class="bank-revenue-table">
+              <thead>
+                <tr>
+                  <th>日期</th>
+                  <th>中国用户 · 借记卡</th>
+                  <th>全球用户 · VISA</th>
+                  <th>当日合计</th>
+                  <th>笔数</th>
+                </tr>
+              </thead>
+              <tbody id="bank-daily-tbody"></tbody>
+            </table>
+          </div>
+        </article>
+        <article class="bank-revenue-card bank-revenue-card--orders">
+          <h3>🧾 银行卡转账订单（已结算）</h3>
+          <div class="bank-revenue-table-wrap">
+            <table class="bank-revenue-table">
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>客户</th>
+                  <th>入账卡</th>
+                  <th>方案</th>
+                  <th>金额</th>
+                  <th>备注码</th>
+                </tr>
+              </thead>
+              <tbody id="bank-orders-tbody"></tbody>
+            </table>
+          </div>
+        </article>
+        <p class="bank-revenue-footnote" id="bank-revenue-footnote"></p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    window.bankRevenueStandalone = true;
+    window.companyId = null;
+    const api = (path, options = {}) => fetch(path, { credentials: "include", ...options });
+  </script>
+  <script src="js/bank-revenue-dashboard.js"></script>
+  <script src="js/bank-revenue-page.js"></script>
+</body>
+</html>
