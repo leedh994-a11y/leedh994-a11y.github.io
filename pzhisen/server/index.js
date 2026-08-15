@@ -451,6 +451,7 @@ app.post("/api/companies/:id/marketing/launch-all", requireAuth, requireCompanyA
     res.json({
       success: true,
       ...result,
+      dailySales: getDailySalesDashboard(company.id),
       analytics: getMarketingAnalyticsDashboard(company.id, company, req.user?.email),
       logs: getLogs(company.id, 50),
     });

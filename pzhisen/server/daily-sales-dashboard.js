@@ -1,7 +1,9 @@
 import { loadJson, saveJson } from "./store.js";
-import { getRealOrderMetrics } from "./marketing-real-metrics.js";
+import { getRealOrderMetrics, getCompanyMarketingActivity } from "./marketing-real-metrics.js";
+import { getMarketingState } from "./marketing-dashboard.js";
 
 const GOALS_FILE = "daily-sales-goals.json";
+const LAUNCH_LOG = "marketing-launch-log.json";
 
 function loadGoals() {
   return loadJson(GOALS_FILE, { companies: {} });
@@ -76,30 +78,95 @@ function countdownToEndOfDay() {
   };
 }
 
-function estimateHoursToComplete(remainingUsd, todayUsd) {
+function estimateHoursToComplete(remainingUsd, todayUsd, launchContext = null) {
   const start = startOfLocalDay().getTime();
   const hoursElapsed = Math.max(0.25, (Date.now() - start) / 3600000);
+  const eod = countdownToEndOfDay();
+  const hoursLeft = eod.hours + eod.minutes / 60 + eod.seconds / 3600;
+
   if (remainingUsd <= 0) {
-    return { hours: 0, label: "已达成今日目标", onTrack: true, pacePerHour: todayUsd / hoursElapsed };
-  }
-  if (todayUsd <= 0) {
     return {
-      hours: null,
-      label: "暂无销售增速，建议加大推广",
-      onTrack: false,
-      pacePerHour: 0,
+      hours: 0,
+      label: "已达成今日目标",
+      onTrack: true,
+      pacePerHour: todayUsd / hoursElapsed,
+      source: "sales",
     };
   }
-  const pacePerHour = todayUsd / hoursElapsed;
-  const hoursNeeded = remainingUsd / pacePerHour;
-  const eod = countdownToEndOfDay();
-  const onTrack = !eod.expired && hoursNeeded <= eod.hours + eod.minutes / 60;
-  const hoursRounded = Math.max(0.1, Math.round(hoursNeeded * 10) / 10);
+
+  if (todayUsd > 0) {
+    const pacePerHour = todayUsd / hoursElapsed;
+    const hoursNeeded = remainingUsd / pacePerHour;
+    const onTrack = !eod.expired && hoursNeeded <= hoursLeft;
+    const hoursRounded = Math.max(0.1, Math.round(hoursNeeded * 10) / 10);
+    return {
+      hours: hoursRounded,
+      label: `${hoursRounded} 小时`,
+      onTrack,
+      pacePerHour: Math.round(pacePerHour * 100) / 100,
+      source: "sales",
+    };
+  }
+
+  if (launchContext?.launchedToday) {
+    const marketingProgress = Math.max(5, launchContext.marketingProgress || 15);
+    const hoursSinceLaunch = Math.max(
+      0.25,
+      (Date.now() - new Date(launchContext.launchedAt).getTime()) / 3600000
+    );
+    const pacePerHour = (launchContext.dailyTargetUsd * (marketingProgress / 100)) / hoursSinceLaunch;
+    const hoursNeeded = Math.min(
+      hoursLeft + hoursElapsed,
+      Math.max(1, Math.round(((remainingUsd / Math.max(pacePerHour, 0.01)) * 10)) / 10)
+    );
+    const onTrack = hoursNeeded <= hoursLeft;
+    return {
+      hours: hoursNeeded,
+      label: `${hoursNeeded} 小时`,
+      onTrack,
+      pacePerHour: Math.round(pacePerHour * 100) / 100,
+      source: "marketing",
+      marketingProgress,
+      launchedAt: launchContext.launchedAt,
+      websiteUrl: launchContext.websiteUrl,
+    };
+  }
+
   return {
-    hours: hoursRounded,
-    label: `${hoursRounded} 小时`,
-    onTrack,
-    pacePerHour: Math.round(pacePerHour * 100) / 100,
+    hours: null,
+    label: "—",
+    onTrack: false,
+    pacePerHour: 0,
+    source: "idle",
+  };
+}
+
+function getTodayLaunchInfo(companyId, dailyTargetUsd) {
+  const today = new Date().toISOString().slice(0, 10);
+  const activity = getCompanyMarketingActivity(companyId);
+  const log = loadJson(LAUNCH_LOG, { launches: [] });
+  const todayLaunches = (log.launches || []).filter(
+    (l) => l.companyId === companyId && (l.at || l.startedAt || "").slice(0, 10) === today
+  );
+  const latest = todayLaunches.length ? todayLaunches[todayLaunches.length - 1] : null;
+  if (!latest && !activity.launchesToday) return null;
+
+  const state = getMarketingState(companyId);
+  const tasks = state.tasks || [];
+  const marketingProgress =
+    latest?.marketingProgress ??
+    (tasks.length
+      ? Math.round(tasks.reduce((s, t) => s + (t.progress || 0), 0) / tasks.length)
+      : 15);
+
+  return {
+    launchedToday: true,
+    launchedAt: latest?.startedAt || latest?.at || new Date().toISOString(),
+    marketingProgress,
+    websiteUrl: latest?.websiteUrl || null,
+    methodsTotal: latest?.methodsTotal || latest?.methodsCount || 0,
+    dailyTargetUsd,
+    agentRunsToday: activity.agentRunsToday || 0,
   };
 }
 
@@ -112,14 +179,19 @@ export function getDailySalesDashboard(companyId) {
   const progress = dailyTargetUsd > 0 ? Math.min(100, Math.round((todayRevenueUsd / dailyTargetUsd) * 100)) : 0;
   const timeProgress = dayProgressPct();
   const endOfDay = countdownToEndOfDay();
-  const estimate = estimateHoursToComplete(remainingUsd, todayRevenueUsd);
+  const launch = getTodayLaunchInfo(companyId, dailyTargetUsd);
+  const estimate = estimateHoursToComplete(remainingUsd, todayRevenueUsd, launch);
   const expectedProgress = timeProgress;
-  const paceProgress =
+  let paceProgress =
     progress >= 100
       ? 100
       : expectedProgress > 0
         ? Math.min(100, Math.round((progress / expectedProgress) * 100))
         : 0;
+
+  if (estimate.source === "marketing" && launch) {
+    paceProgress = Math.min(100, Math.max(paceProgress, launch.marketingProgress || 0));
+  }
 
   return {
     companyId,
@@ -136,6 +208,7 @@ export function getDailySalesDashboard(companyId) {
       remainingUsd,
       targetUsd: dailyTargetUsd,
     },
+    launch,
     time: {
       progressPct: timeProgress,
       endOfDay,
@@ -149,7 +222,7 @@ export function getDailySalesDashboard(companyId) {
       aheadOfSchedule: progress >= expectedProgress,
     },
     isReal: true,
-    source: "payment_orders",
+    source: estimate.source === "sales" ? "payment_orders" : estimate.source === "marketing" ? "marketing_launch" : "pending",
     updatedAt: new Date().toISOString(),
   };
 }

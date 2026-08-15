@@ -62,6 +62,7 @@ function renderDailySalesHero(data) {
   const goal = data.goal || {};
   const time = data.time || {};
   const est = data.estimate || {};
+  const launch = data.launch || null;
 
   setText("dsh-today-revenue", fmtUsd(today.revenueUsd));
   setText("dsh-today-revenue-side", fmtUsd(today.revenueUsd));
@@ -82,18 +83,42 @@ function renderDailySalesHero(data) {
 
   setText("dsh-pace-pct", `${est.paceProgress || 0}%`);
   setBar("dsh-pace-bar", est.paceProgress);
-  setText(
-    "dsh-hours-needed",
-    today.progress >= 100 ? "0（已达成）" : est.hours != null ? `${est.hours}` : "—"
-  );
-  setText(
-    "dsh-pace-label",
-    today.progress >= 100
-      ? "恭喜！今日销售收益目标已达成"
-      : est.hours != null
-        ? `按当前 $${est.pacePerHour || 0}/小时 增速，预计还需 ${est.hours} 小时完成今日 $${goal.dailyTargetUsd} 目标`
-        : "今日尚无销售记录，启动推广后可查看达标预估"
-  );
+
+  const paceBlock = document.getElementById("dsh-pace-block");
+  const hoursEl = document.getElementById("dsh-hours-needed");
+  if (today.progress >= 100) {
+    if (hoursEl) hoursEl.textContent = "0";
+    setText(
+      "dsh-pace-label",
+      "恭喜！今日销售收益目标已达成"
+    );
+    paceBlock?.classList.remove("dsh-progress-block--pace-active");
+    paceBlock?.classList.add("dsh-progress-block--pace-done");
+  } else if (est.source === "sales" && est.hours != null) {
+    if (hoursEl) hoursEl.textContent = String(est.hours);
+    setText(
+      "dsh-pace-label",
+      `按当前 $${est.pacePerHour || 0}/小时 销售增速，预计还需 ${est.hours} 小时完成今日 $${goal.dailyTargetUsd} 目标`
+    );
+    paceBlock?.classList.add("dsh-progress-block--pace-active");
+    paceBlock?.classList.remove("dsh-progress-block--pace-done", "dsh-progress-block--pace-idle");
+  } else if (est.source === "marketing" && launch?.launchedToday && est.hours != null) {
+    if (hoursEl) hoursEl.textContent = String(est.hours);
+    setText(
+      "dsh-pace-label",
+      `推广已启动（${launch.methodsTotal || "全部"} 种方式 · 营销进度 ${launch.marketingProgress || 0}%），按当前执行增速预估还需 ${est.hours} 小时完成今日 $${goal.dailyTargetUsd} 目标`
+    );
+    paceBlock?.classList.add("dsh-progress-block--pace-active");
+    paceBlock?.classList.remove("dsh-progress-block--pace-done", "dsh-progress-block--pace-idle");
+  } else {
+    if (hoursEl) hoursEl.textContent = "—";
+    setText(
+      "dsh-pace-label",
+      "今日尚无销售记录，启动推广后可查看达标预估"
+    );
+    paceBlock?.classList.add("dsh-progress-block--pace-idle");
+    paceBlock?.classList.remove("dsh-progress-block--pace-active", "dsh-progress-block--pace-done");
+  }
 
   const statusEl = document.getElementById("dsh-status-badge");
   if (statusEl) {

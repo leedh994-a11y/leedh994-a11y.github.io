@@ -3590,9 +3590,48 @@
   gap: 4px;
 }
 
-.dsh-progress-meta--stack small {
-  font-size: 12px;
-  color: rgba(226, 232, 240, 0.55);
+.dsh-progress-block--pace {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.dsh-progress-block--pace-active {
+  border-color: rgba(52, 211, 153, 0.55);
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.15), 0 8px 24px rgba(16, 185, 129, 0.12);
+}
+
+.dsh-progress-block--pace-idle {
+  border-color: rgba(148, 163, 184, 0.25);
+}
+
+.dsh-progress-block--pace-done {
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.dsh-pace-hours-line {
+  font-size: 15px;
+  color: #e2e8f0;
+}
+
+.dsh-pace-hours {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #fef08a;
+  letter-spacing: -0.02em;
+  margin: 0 4px;
+}
+
+.dsh-progress-block--pace-active .dsh-pace-hours {
+  color: #6ee7b7;
+  text-shadow: 0 0 20px rgba(52, 211, 153, 0.35);
+}
+
+.dsh-progress-block--pace-idle .dsh-pace-hours {
+  color: rgba(226, 232, 240, 0.45);
+}
+
+.dsh-pace-meta small {
+  line-height: 1.55;
 }
 
 .daily-sales-hero__footnote {

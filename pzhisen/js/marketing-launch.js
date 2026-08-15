@@ -152,6 +152,12 @@ async function launchAllMarketing() {
     if (data.logs) renderLogs(data.logs);
     else await fetchLogs();
 
+    if (typeof window.loadDailySalesHero === "function") {
+      await window.loadDailySalesHero({ refresh: true });
+    } else if (data.dailySales && typeof window.renderDailySalesHero === "function") {
+      window.renderDailySalesHero(data.dailySales);
+    }
+
     showLaunchResult(data.launch);
     setLaunchStatus(`✅ 已为 ${websiteUrl} 成功启动全部 ${data.launch?.methodsTotal || ""} 种推广方式！`, "success");
   } catch (err) {
