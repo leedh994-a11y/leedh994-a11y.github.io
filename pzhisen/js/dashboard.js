@@ -450,6 +450,9 @@ async function loadCompany() {
   document.getElementById("company-idea").textContent = company.idea;
   localStorage.setItem("pzhisen_company_id", company.id);
   if (company.email) localStorage.setItem("pzhisen_email", company.email);
+  if (company.websiteUrl && typeof prefillLaunchWebsiteUrl === "function") {
+    prefillLaunchWebsiteUrl(company.websiteUrl);
+  }
   renderLogs(data.logs);
   updateSubscriptionUi(Boolean(data.subscriptionActive), data.subscription, {
     onTrial: data.onTrial,

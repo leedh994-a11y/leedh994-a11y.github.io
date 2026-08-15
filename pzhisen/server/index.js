@@ -389,12 +389,24 @@ app.post("/api/companies/:id/marketing/launch-all", requireAuth, requireCompanyA
     const company = req.company;
     if (!requireSubscription(company, res)) return;
 
+    const websiteUrl = normalizeWebsiteUrl(req.body?.websiteUrl);
+    if (!websiteUrl) {
+      return res.status(400).json({
+        success: false,
+        error: "请先输入有效的个人或企业网站网址",
+        errorZh: "请先输入有效的个人或企业网站网址（例如 https://example.com）",
+      });
+    }
+
+    company.websiteUrl = websiteUrl;
+    upsertCompany(company);
+
     appendLog(company.id, {
       agent: "System",
-      message: `🚀 一键启动全渠道推广 — 正在部署 ${getLaunchMethodsCatalog().total} 种零成本推广方式…`,
+      message: `🚀 一键启动全渠道推广 — 目标网站 ${websiteUrl} · 正在部署 ${getLaunchMethodsCatalog().total} 种零成本推广方式…`,
     });
 
-    const result = await launchAllMarketing(company.id, company, { runAiAgents: true });
+    const result = await launchAllMarketing(company.id, company, { runAiAgents: true, websiteUrl });
 
     for (const r of result.launch.agentResults || []) {
       appendLog(company.id, {
@@ -425,6 +437,21 @@ app.post("/api/companies/:id/marketing/launch-all", requireAuth, requireCompanyA
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+function normalizeWebsiteUrl(raw) {
+  if (!raw || typeof raw !== "string") return null;
+  let value = raw.trim();
+  if (!value) return null;
+  if (!/^https?:\/\//i.test(value)) value = `https://${value}`;
+  try {
+    const url = new URL(value);
+    if (!["http:", "https:"].includes(url.protocol)) return null;
+    if (!url.hostname || !url.hostname.includes(".")) return null;
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return null;
+  }
+}
 
 function subscriptionPayload(email) {
   const active = isSubscriptionActive(email);

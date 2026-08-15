@@ -41,11 +41,13 @@ export const ALL_MARKETING_METHODS = [
 
 const LAUNCH_AGENTS = ["ceo", "marketing", "ads"];
 
-const LAUNCH_PROMPT = `一键启动全渠道零成本推广。请立即为该公司部署并执行以下全部方式（禁止任何付费广告）：
-1) 内容营销自动化：SEO 文章、博客、落地页、社媒帖子
+const LAUNCH_PROMPT = (websiteUrl) => `一键启动全渠道零成本推广。请立即为该公司部署并执行以下全部方式（禁止任何付费广告）：
+目标推广网站：${websiteUrl}
+1) 内容营销自动化：SEO 文章、博客、落地页、社媒帖子（全部围绕上述网站）
 2) 免费渠道：SEO、有机社媒、Google Business、免费目录
 3) 自动化外联：冷邮件、目录提交、社区推广、HARO、口碑推荐
 4) 全平台：小红书、抖音、X、YouTube、微信视频号等有机发帖
+所有推广内容、外链与 CTA 必须指向：${websiteUrl}
 输出今日已启动的渠道清单、执行步骤与预计完成天数。`;
 
 function loadLog() {
@@ -77,15 +79,17 @@ function kickstartDashboards(companyId, company) {
   }
 }
 
-export async function launchAllMarketing(companyId, company, { runAiAgents = true } = {}) {
+export async function launchAllMarketing(companyId, company, { runAiAgents = true, websiteUrl = null } = {}) {
   const startedAt = new Date().toISOString();
+  const targetUrl = websiteUrl || company.websiteUrl || null;
   kickstartDashboards(companyId, company);
 
   const agentResults = [];
   if (runAiAgents) {
+    const prompt = targetUrl ? LAUNCH_PROMPT(targetUrl) : LAUNCH_PROMPT(company.websiteUrl || "（未提供网站 URL）");
     for (const agentId of LAUNCH_AGENTS) {
       try {
-        const result = await runAgent(agentId, company, LAUNCH_PROMPT, [], { deploy: true });
+        const result = await runAgent(agentId, company, prompt, [], { deploy: true });
         agentResults.push(result);
       } catch (err) {
         agentResults.push({
@@ -103,6 +107,7 @@ export async function launchAllMarketing(companyId, company, { runAiAgents = tru
 
   const summary = {
     startedAt,
+    websiteUrl: targetUrl,
     methods: ALL_MARKETING_METHODS,
     methodsTotal: ALL_MARKETING_METHODS.length,
     categories: [...new Set(ALL_MARKETING_METHODS.map((m) => m.category))],

@@ -1,6 +1,53 @@
 /* global companyId, api, subscriptionActive, checkoutUrl, renderMarketingDashboard, renderContentMarketingDashboard, renderLogs, fetchLogs */
 
+const LAUNCH_URL_STORAGE_KEY = "pzhisen_launch_website_url";
+
 let launchCatalog = null;
+
+function normalizeWebsiteUrl(raw) {
+  if (!raw || typeof raw !== "string") return null;
+  let value = raw.trim();
+  if (!value) return null;
+  if (!/^https?:\/\//i.test(value)) {
+    value = `https://${value}`;
+  }
+  try {
+    const url = new URL(value);
+    if (!["http:", "https:"].includes(url.protocol)) return null;
+    if (!url.hostname || !url.hostname.includes(".")) return null;
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return null;
+  }
+}
+
+function getLaunchWebsiteUrlInput() {
+  return document.getElementById("launch-website-url");
+}
+
+function getLaunchWebsiteUrl() {
+  return normalizeWebsiteUrl(getLaunchWebsiteUrlInput()?.value);
+}
+
+function prefillLaunchWebsiteUrl(url) {
+  const input = getLaunchWebsiteUrlInput();
+  if (!input || !url) return;
+  const normalized = normalizeWebsiteUrl(url);
+  if (normalized) input.value = normalized;
+}
+
+function rememberLaunchWebsiteUrl(url) {
+  const normalized = normalizeWebsiteUrl(url);
+  if (normalized) localStorage.setItem(LAUNCH_URL_STORAGE_KEY, normalized);
+}
+
+function restoreLaunchWebsiteUrl() {
+  const saved = localStorage.getItem(LAUNCH_URL_STORAGE_KEY);
+  const input = getLaunchWebsiteUrlInput();
+  if (saved && input && !input.value) {
+    input.value = saved;
+  }
+}
 
 function renderMethodChips(methods) {
   const el = document.getElementById("launch-methods-preview");
@@ -40,9 +87,13 @@ function showLaunchResult(launch) {
   const agents = (launch.agentResults || [])
     .map((a) => `<li><strong>${a.agentName}</strong> ${a.ai ? "✓ AI 已启动" : "已排队"}</li>`)
     .join("");
+  const websiteLine = launch.websiteUrl
+    ? `<p class="launch-all-result__site">推广网站：<a href="${launch.websiteUrl}" target="_blank" rel="noopener noreferrer">${launch.websiteUrl}</a></p>`
+    : "";
   el.innerHTML = `
     <div class="launch-all-result__inner">
       <h3>✅ 已启动 ${launch.methodsTotal} 种推广方式</h3>
+      ${websiteLine}
       <p>推广总进度 ${launch.marketingProgress}% · 内容营销 ${launch.contentMarketingProgress}% · ${launch.zeroCostPledge}</p>
       <ul class="launch-all-result__agents">${agents}</ul>
       <p class="launch-all-result__time">启动时间：${new Date(launch.startedAt).toLocaleString("zh-CN")}</p>
@@ -58,15 +109,29 @@ async function launchAllMarketing() {
     return;
   }
 
+  const websiteUrl = getLaunchWebsiteUrl();
+  if (!websiteUrl) {
+    const input = getLaunchWebsiteUrlInput();
+    input?.focus();
+    input?.reportValidity?.();
+    setLaunchStatus("请先输入有效的个人或企业网站网址（例如 https://example.com）", "error");
+    return;
+  }
+
   const btn = document.getElementById("btn-launch-all-marketing");
   if (!btn || btn.disabled) return;
 
+  rememberLaunchWebsiteUrl(websiteUrl);
   btn.disabled = true;
   btn.classList.add("launch-all-btn--loading");
-  setLaunchStatus("正在一键部署并启动所有推广营销方式，请稍候…", "loading");
+  setLaunchStatus(`正在为 ${websiteUrl} 一键部署并启动所有推广营销方式，请稍候…`, "loading");
 
   try {
-    const res = await api(`/api/companies/${companyId}/marketing/launch-all`, { method: "POST" });
+    const res = await api(`/api/companies/${companyId}/marketing/launch-all`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ websiteUrl }),
+    });
     const data = await res.json();
     if (res.status === 402) {
       alert(data.errorZh || data.error || "请先订阅专业版");
@@ -82,7 +147,7 @@ async function launchAllMarketing() {
     else await fetchLogs();
 
     showLaunchResult(data.launch);
-    setLaunchStatus(`✅ 已成功启动全部 ${data.launch?.methodsTotal || ""} 种推广方式！`, "success");
+    setLaunchStatus(`✅ 已为 ${websiteUrl} 成功启动全部 ${data.launch?.methodsTotal || ""} 种推广方式！`, "success");
   } catch (err) {
     setLaunchStatus(`启动失败：${err.message}`, "error");
   } finally {
@@ -92,10 +157,18 @@ async function launchAllMarketing() {
 }
 
 function setupMarketingLaunch() {
+  restoreLaunchWebsiteUrl();
   document.getElementById("btn-launch-all-marketing")?.addEventListener("click", launchAllMarketing);
+  getLaunchWebsiteUrlInput()?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      launchAllMarketing();
+    }
+  });
   loadLaunchCatalog();
 }
 
 window.setupMarketingLaunch = setupMarketingLaunch;
 window.launchAllMarketing = launchAllMarketing;
 window.loadLaunchCatalog = loadLaunchCatalog;
+window.prefillLaunchWebsiteUrl = prefillLaunchWebsiteUrl;

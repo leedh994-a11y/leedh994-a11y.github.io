@@ -89,11 +89,15 @@ ${AGENT_REPLY_POLICY}`,
 };
 
 function companyContext(company) {
-  return `Company: ${company.name}
-Idea: ${company.idea}
-Industry: ${company.industry || "General"}
-Stage: ${company.stage || "idea"}
-Email: ${company.email}`;
+  const lines = [
+    `Company: ${company.name}`,
+    `Idea: ${company.idea}`,
+    `Industry: ${company.industry || "General"}`,
+    `Stage: ${company.stage || "idea"}`,
+    `Email: ${company.email}`,
+  ];
+  if (company.websiteUrl) lines.push(`Website: ${company.websiteUrl}`);
+  return lines.join("\n");
 }
 
 const TEMPLATE_RESPONSES = {
