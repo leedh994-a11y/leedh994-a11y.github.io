@@ -42,9 +42,13 @@ services:
       - key: BANK_LABEL
         value: 中国银行借记卡
       - key: BANK_VISA_SAME_AS_PRIMARY
-        value: "true"
+        value: "false"
       - key: BANK_VISA_LABEL
-        value: Visa 借记卡（同中国银行卡）
+        value: 中国银行 VISA 借记卡
+      - key: BANK_VISA_NAME
+        value: 中国银行
+      - key: BANK_VISA_ACCOUNT_NUMBER
+        value: "4002216500080470"
       - key: BILLING_ADMIN_SECRET
         sync: false
       - key: ORDER_NOTIFY_EMAIL

@@ -43,21 +43,34 @@ export function getPrimaryBankAccount() {
  */
 export function getVisaBankAccount() {
   const primary = getPrimaryBankAccount();
+  const envVisaNumber = trim(process.env.BANK_VISA_ACCOUNT_NUMBER);
   const rawSame = process.env.BANK_VISA_SAME_AS_PRIMARY;
   const sameAsPrimary =
-    rawSame === undefined || rawSame === ""
-      ? /中国银行/.test(primary.bankName || "")
-      : String(rawSame).toLowerCase() === "true" || rawSame === "1";
+    envVisaNumber
+      ? false
+      : rawSame === undefined || rawSame === ""
+        ? false
+        : String(rawSame).toLowerCase() === "true" || rawSame === "1";
 
   const visa = accountFromEnv("BANK_VISA", {
     id: "visa",
-    label: "Visa 借记卡",
+    label: "中国银行 VISA 借记卡",
     network: "Visa",
+    bankName: "中国银行",
+    accountNumber: "4002216500080470",
     accountName: sameAsPrimary ? primary.accountName : "",
-    bankName: sameAsPrimary ? primary.bankName || "中国银行" : "Visa",
-    accountNumber: sameAsPrimary ? primary.accountNumber : "",
     branch: sameAsPrimary ? primary.branch : "",
   });
+
+  if (!visa.accountName && primary.accountName) {
+    visa.accountName = primary.accountName;
+  }
+  if (!visa.branch && primary.branch) {
+    visa.branch = primary.branch;
+  }
+  if (visa.accountNumber && visa.bankName && visa.accountName) {
+    visa.configured = true;
+  }
 
   if (!visa.configured && sameAsPrimary && primary.configured) {
     return {
