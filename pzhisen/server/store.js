@@ -89,7 +89,13 @@ export function appendLog(companyId, entry) {
 
 export function getLogs(companyId, limit = 50) {
   const logs = loadJson(`logs-${companyId}.json`, { entries: [] });
-  return logs.entries.slice(-limit);
+  const max = Math.min(Math.max(1, limit), 500);
+  return logs.entries.slice(-max);
+}
+
+export function getLogCount(companyId) {
+  const logs = loadJson(`logs-${companyId}.json`, { entries: [] });
+  return logs.entries.length;
 }
 
 export function getGlobalLogs(limit = 30) {

@@ -12,6 +12,7 @@ import {
   getCompany,
   appendLog,
   getLogs,
+  getLogCount,
   getGlobalLogs,
   findCompanyByEmail,
 } from "./store.js";
@@ -143,7 +144,8 @@ app.get("/api/companies/:id", requireAuth, requireCompanyAccess, (req, res) => {
   res.json({
     success: true,
     company,
-    logs: getLogs(company.id, 100),
+    logs: getLogs(company.id, 500),
+    logCount: getLogCount(company.id),
     ...subscriptionPayload(company.email),
   });
 });
@@ -175,6 +177,17 @@ app.post("/api/companies/:id/agents/:agentId", requireAuth, requireCompanyAccess
     if (!requireSubscription(company, res)) return;
 
     const { message, images, imageNames } = req.body || {};
+    const userMessage = (message || "").trim();
+    if (userMessage) {
+      const agentMeta = AGENTS[req.params.agentId];
+      appendLog(company.id, {
+        agent: "You",
+        role: "user",
+        agentId: req.params.agentId,
+        message: `→ ${agentMeta?.name || req.params.agentId}: ${userMessage}`,
+        ai: false,
+      });
+    }
     const result = await runAgent(req.params.agentId, company, message || null, images, {
       imageNames: imageNames || [],
     });
@@ -183,6 +196,8 @@ app.post("/api/companies/:id/agents/:agentId", requireAuth, requireCompanyAccess
       : "";
     appendLog(company.id, {
       agent: result.agentName,
+      role: "agent",
+      agentId: req.params.agentId,
       message: result.content + deployNote,
       ai: result.ai,
     });
@@ -194,7 +209,12 @@ app.post("/api/companies/:id/agents/:agentId", requireAuth, requireCompanyAccess
 });
 
 app.get("/api/companies/:id/logs", requireAuth, requireCompanyAccess, (req, res) => {
-  res.json({ success: true, logs: getLogs(req.company.id, 100) });
+  const limit = Math.min(Math.max(1, Number(req.query.limit) || 500), 500);
+  res.json({
+    success: true,
+    logs: getLogs(req.company.id, limit),
+    total: getLogCount(req.company.id),
+  });
 });
 
 function subscriptionPayload(email) {

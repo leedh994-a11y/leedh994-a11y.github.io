@@ -16,6 +16,189 @@ let activeAgent = "ceo";
 let company = null;
 let subscriptionActive = false;
 let checkoutUrl = "/checkout.html?plan=pro&cycle=monthly";
+let allLogs = [];
+let historySearch = "";
+let historyFilter = "all";
+
+function agentClass(agent, role) {
+  if (role === "user" || agent === "You") return "log-line--user";
+  const a = (agent || "").toLowerCase();
+  if (a.includes("system")) return "log-line--system";
+  if (a.includes("ceo")) return "log-line--ceo";
+  if (a.includes("engineering")) return "log-line--engineering";
+  if (a.includes("marketing")) return "log-line--marketing";
+  if (a.includes("growth") || a.includes("ads")) return "log-line--growth";
+  if (a.includes("support")) return "log-line--support";
+  if (a.includes("ops")) return "log-line--ops";
+  return "";
+}
+
+function formatDateLabel(iso) {
+  if (!iso) return "未知日期";
+  const d = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const sameDay = (a, b) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+  if (sameDay(d, today)) return "今天";
+  if (sameDay(d, yesterday)) return "昨天";
+  return d.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric", weekday: "short" });
+}
+
+function formatDateTime(iso) {
+  if (!iso) return "--:--";
+  const d = new Date(iso);
+  return d.toLocaleString("zh-CN", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function filterLogs(logs, search, filter) {
+  let list = [...logs];
+  if (filter === "user") {
+    list = list.filter((l) => l.role === "user" || l.agent === "You");
+  } else if (filter !== "all") {
+    list = list.filter((l) => l.agent === filter);
+  }
+  const q = (search || "").trim().toLowerCase();
+  if (q) {
+    list = list.filter(
+      (l) =>
+        (l.message || "").toLowerCase().includes(q) ||
+        (l.agent || "").toLowerCase().includes(q)
+    );
+  }
+  return list;
+}
+
+function buildLogHtml(logs) {
+  if (!logs?.length) {
+    return `<div class="log-line empty-history">暂无匹配的历史记录。发送指令或运行每日站会后，记录将显示在这里。</div>`;
+  }
+  const groups = new Map();
+  for (const l of logs) {
+    const key = formatDateLabel(l.at);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(l);
+  }
+  let html = "";
+  for (const [label, entries] of groups) {
+    html += `<div class="history-date-group"><div class="history-date-label">${escapeHtml(label)}</div>`;
+    html += entries
+      .map((l) => {
+        const cls = agentClass(l.agent, l.role);
+        return `
+    <div class="log-line ${cls}${l.ai ? " ai" : ""}">
+      <span class="time">${formatDateTime(l.at)}</span>
+      <span class="agent">[${escapeHtml(l.agent)}]</span>
+      <span class="log-line__message">${escapeHtml(l.message)}</span>
+      ${l.ai ? '<span class="badge">AI</span>' : ""}
+    </div>`;
+      })
+      .join("");
+    html += `</div>`;
+  }
+  return html;
+}
+
+function updateHistoryCount(shown, total) {
+  const el = document.getElementById("history-count");
+  if (!el) return;
+  if (shown === total) {
+    el.textContent = `${total} 条记录`;
+  } else {
+    el.textContent = `显示 ${shown} / ${total} 条`;
+  }
+}
+
+function renderLogs(logs, { scrollTo = "bottom", targetId = "log-body" } = {}) {
+  allLogs = logs || [];
+  const filtered = filterLogs(allLogs, historySearch, historyFilter);
+  const html = buildLogHtml(filtered);
+  const body = document.getElementById(targetId);
+  if (!body) return;
+  const prevScroll = body.scrollTop;
+  const wasAtBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 48;
+  body.innerHTML = html;
+  if (targetId === "log-body") {
+    updateHistoryCount(filtered.length, allLogs.length);
+    const modalBody = document.getElementById("log-body-modal");
+    if (modalBody && document.getElementById("history-modal")?.open) {
+      modalBody.innerHTML = html;
+    }
+  }
+  if (scrollTo === "bottom" || wasAtBottom) {
+    body.scrollTop = body.scrollHeight;
+  } else if (scrollTo === "top") {
+    body.scrollTop = 0;
+  } else {
+    body.scrollTop = prevScroll;
+  }
+}
+
+function syncHistoryControls() {
+  const modal = document.getElementById("history-modal");
+  const searchModal = document.getElementById("history-search-modal");
+  const filterModal = document.getElementById("history-filter-modal");
+  if (searchModal) searchModal.value = historySearch;
+  if (filterModal) filterModal.value = historyFilter;
+  document.getElementById("history-search").value = historySearch;
+  document.getElementById("history-filter").value = historyFilter;
+  renderLogs(allLogs);
+  if (modal?.open) {
+    const filtered = filterLogs(allLogs, historySearch, historyFilter);
+    document.getElementById("log-body-modal").innerHTML = buildLogHtml(filtered);
+    document.getElementById("log-body-modal").scrollTop =
+      document.getElementById("log-body-modal").scrollHeight;
+  }
+}
+
+function setupHistoryUi() {
+  const onSearch = (e) => {
+    historySearch = e.target.value;
+    document.getElementById("history-search").value = historySearch;
+    document.getElementById("history-search-modal").value = historySearch;
+    syncHistoryControls();
+  };
+  const onFilter = (e) => {
+    historyFilter = e.target.value;
+    document.getElementById("history-filter").value = historyFilter;
+    document.getElementById("history-filter-modal").value = historyFilter;
+    syncHistoryControls();
+  };
+
+  document.getElementById("history-search")?.addEventListener("input", onSearch);
+  document.getElementById("history-search-modal")?.addEventListener("input", onSearch);
+  document.getElementById("history-filter")?.addEventListener("change", onFilter);
+  document.getElementById("history-filter-modal")?.addEventListener("change", onFilter);
+
+  document.getElementById("btn-history-top")?.addEventListener("click", () => {
+    const body = document.getElementById("log-body");
+    body.scrollTop = 0;
+  });
+  document.getElementById("btn-history-bottom")?.addEventListener("click", () => {
+    const body = document.getElementById("log-body");
+    body.scrollTop = body.scrollHeight;
+  });
+
+  const modal = document.getElementById("history-modal");
+  document.getElementById("btn-history-fullscreen")?.addEventListener("click", () => {
+    syncHistoryControls();
+    modal?.showModal();
+    const modalBody = document.getElementById("log-body-modal");
+    if (modalBody) modalBody.scrollTop = modalBody.scrollHeight;
+  });
+  document.getElementById("btn-history-close")?.addEventListener("click", () => modal?.close());
+  modal?.addEventListener("click", (e) => {
+    if (e.target === modal) modal.close();
+  });
+}
 
 function formatExpiry(iso) {
   if (!iso) return "";
@@ -35,9 +218,7 @@ function subscriptionLabel(sub) {
 }
 
 function formatTime(iso) {
-  if (!iso) return "--:--";
-  const d = new Date(iso);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return formatDateTime(iso);
 }
 
 function escapeHtml(s) {
@@ -46,24 +227,11 @@ function escapeHtml(s) {
   return d.innerHTML;
 }
 
-function renderLogs(logs) {
-  const body = document.getElementById("log-body");
-  if (!logs?.length) {
-    body.innerHTML = `<div class="log-line"><span class="agent">[System]</span> No activity yet. Run daily standup to deploy agents.</div>`;
-    return;
-  }
-  body.innerHTML = logs
-    .map(
-      (l) => `
-    <div class="log-line${l.ai ? " ai" : ""}">
-      <span class="time">${formatTime(l.at)}</span>
-      <span class="agent">[${escapeHtml(l.agent)}]</span>
-      ${escapeHtml(l.message)}
-      ${l.ai ? '<span class="badge">AI</span>' : ""}
-    </div>`
-    )
-    .join("");
-  body.scrollTop = body.scrollHeight;
+async function fetchLogs() {
+  if (!companyId) return;
+  const res = await api(`/api/companies/${companyId}/logs?limit=500`);
+  const data = await res.json();
+  if (data.success) renderLogs(data.logs);
 }
 
 function renderAgentList() {
@@ -237,6 +405,17 @@ document.getElementById("chat-form").addEventListener("submit", async (e) => {
   const message = input.value.trim();
   if (!message || !companyId) return;
 
+  const agentName = AGENTS.find((a) => a.id === activeAgent)?.name || activeAgent;
+  renderLogs([
+    ...allLogs,
+    {
+      agent: "You",
+      role: "user",
+      message: `→ ${agentName}: ${message}`,
+      at: new Date().toISOString(),
+    },
+  ]);
+
   const respEl = document.getElementById("chat-response");
   respEl.classList.add("visible");
   respEl.textContent = "AI 智能体正在处理…";
@@ -252,9 +431,7 @@ document.getElementById("chat-form").addEventListener("submit", async (e) => {
     if (res.status === 402) throw new Error(handleSubscriptionError(data));
     if (!data.success) throw new Error(data.error);
     respEl.textContent = data.result.content;
-    const logsRes = await api(`/api/companies/${companyId}/logs`);
-    const logsData = await logsRes.json();
-    if (logsData.success) renderLogs(logsData.logs);
+    await fetchLogs();
   } catch (err) {
     respEl.textContent = `Error: ${err.message}`;
   }
@@ -267,6 +444,7 @@ document.getElementById("btn-logout")?.addEventListener("click", async () => {
 });
 
 renderAgentList();
+setupHistoryUi();
 loadConfig();
 loadCompany();
 
@@ -277,9 +455,4 @@ setInterval(async () => {
   if (data.success) updateSubscriptionUi(Boolean(data.subscriptionActive), data.subscription);
 }, 10000);
 
-setInterval(async () => {
-  if (!companyId) return;
-  const res = await api(`/api/companies/${companyId}/logs`);
-  const data = await res.json();
-  if (data.success) renderLogs(data.logs);
-}, 15000);
+setInterval(fetchLogs, 15000);
