@@ -54,7 +54,7 @@ import {
 } from "./real-revenue-dashboard.js";
 import { getBankRevenueDashboard } from "./bank-revenue-dashboard.js";
 import { isMerchantUser } from "./marketing-real-metrics.js";
-import { grantMerchantOwner, syncEnvMerchantOwners } from "./merchant-owners-store.js";
+import { grantMerchantOwner, syncEnvMerchantOwners, isEnvMerchant } from "./merchant-owners-store.js";
 import {
   getContentMarketingDashboard,
   setContentMarketingGoal,

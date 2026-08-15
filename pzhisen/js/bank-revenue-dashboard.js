@@ -506,12 +506,14 @@ async function handleBankMerchantLogin(e) {
     localStorage.setItem("pzhisen_email", email);
     if (data.company?.id) localStorage.setItem("pzhisen_company_id", data.company.id);
 
+    // Switch to dashboard immediately so login never appears to do nothing
+    showBankDashboardPanel(email);
+    showBankAuthStatus("登录成功，正在加载收账数据…", "info");
+
     await loadBankRevenueDashboard({ force: true });
     showBankAuthStatus("登录成功", "info");
 
-    if (typeof bankRevenueStandalone === "undefined" || !bankRevenueStandalone) {
-      document.getElementById("bank-revenue-hub")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    document.getElementById("bank-revenue-content")?.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (err) {
     showBankAuthStatus("");
     showBankLoginError(err.message || "登录失败，请检查邮箱和密码");
@@ -535,6 +537,10 @@ function bindBankAuthForms() {
 
   loginForm.setAttribute("novalidate", "novalidate");
   loginForm.addEventListener("submit", handleBankMerchantLogin);
+  document.getElementById("btn-bank-login-submit")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    handleBankMerchantLogin(e);
+  });
 
   const registerForm = document.getElementById("bank-revenue-register-form");
   if (registerForm) {
