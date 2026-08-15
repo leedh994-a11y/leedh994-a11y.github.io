@@ -66,3 +66,18 @@ SMTP_FROM=你的Gmail
 - 银行卡：显示 `4002 **** **** 0470`（已接入）
 
 若显示「未配置」，请检查 Render 环境变量是否保存并重新部署。
+
+## 4. 真实收益仪表盘（商户可见）
+
+Dashboard 顶部 **「💵 网站真实收益仪表盘」** 显示真实客户付款订单（非模拟数据）。
+
+仅以下邮箱可查看：
+- `ORDER_NOTIFY_EMAIL` 中的邮箱
+- 或 `MERCHANT_OWNER_EMAILS` 中额外配置的邮箱
+
+```env
+ORDER_NOTIFY_EMAIL=LeeDh994@gmail.com
+MERCHANT_OWNER_EMAILS=ddb1520@outlook.com
+```
+
+用商户邮箱登录 Dashboard 即可看到真实订单统计。
