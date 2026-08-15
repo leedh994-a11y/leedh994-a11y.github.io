@@ -80,6 +80,120 @@
         </div>
       </section>
 
+      <section class="marketing-hub" id="marketing-hub" aria-label="AI 推广营销仪表盘">
+        <header class="marketing-hub__header">
+          <div>
+            <h2 class="marketing-hub__title">📊 AI 每日推广营销仪表盘</h2>
+            <p class="marketing-hub__subtitle">实时查看推广进程、平台任务与销售收益进度</p>
+          </div>
+          <button type="button" class="history-btn history-btn--primary" id="btn-marketing-refresh" title="刷新数据">↻ 刷新</button>
+        </header>
+
+        <div class="marketing-grid">
+          <article class="mkt-card mkt-card--progress" id="mkt-progress-card">
+            <header class="mkt-card__head">
+              <h3>🚀 每日推广进程</h3>
+              <span class="mkt-badge mkt-badge--live" id="mkt-campaign-day">第 1 天</span>
+            </header>
+            <div class="mkt-countdown mkt-countdown--campaign" id="mkt-campaign-countdown">
+              <span class="mkt-countdown__label">目标截止倒计时</span>
+              <div class="mkt-countdown__digits">
+                <span class="mkt-digit"><strong id="mkt-cd-days">--</strong><small>天</small></span>
+                <span class="mkt-digit"><strong id="mkt-cd-hours">--</strong><small>时</small></span>
+                <span class="mkt-digit"><strong id="mkt-cd-mins">--</strong><small>分</small></span>
+              </div>
+            </div>
+            <div class="mkt-overall">
+              <div class="mkt-overall__row">
+                <span>整体推广进度</span>
+                <strong id="mkt-overall-pct">0%</strong>
+              </div>
+              <div class="mkt-bar"><div class="mkt-bar__fill" id="mkt-overall-bar" style="width:0%"></div></div>
+            </div>
+            <ol class="mkt-steps" id="mkt-steps"></ol>
+          </article>
+
+          <article class="mkt-card mkt-card--tasks" id="mkt-tasks-card">
+            <header class="mkt-card__head">
+              <h3>📋 推广任务清单</h3>
+              <div class="mkt-task-stats">
+                <span class="mkt-stat"><strong id="mkt-task-total">0</strong> 总任务</span>
+                <span class="mkt-stat mkt-stat--done"><strong id="mkt-task-done">0</strong> 已完成</span>
+                <span class="mkt-stat mkt-stat--active"><strong id="mkt-task-active">0</strong> 进行中</span>
+                <span class="mkt-stat mkt-stat--pending"><strong id="mkt-task-pending">0</strong> 待开始</span>
+              </div>
+            </header>
+            <div class="mkt-table-wrap">
+              <table class="mkt-table" id="mkt-task-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>平台</th>
+                    <th>推广方式</th>
+                    <th>渠道</th>
+                    <th>进度</th>
+                    <th>状态</th>
+                    <th>截止倒计时</th>
+                  </tr>
+                </thead>
+                <tbody id="mkt-task-tbody"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="mkt-card mkt-card--revenue" id="mkt-revenue-card">
+            <header class="mkt-card__head">
+              <h3>💰 销售收益仪表盘</h3>
+              <button type="button" class="mkt-goal-btn" id="btn-edit-goal" title="设置目标">设置目标</button>
+            </header>
+            <div class="mkt-revenue-hero">
+              <div class="mkt-revenue-today">
+                <span class="mkt-revenue-label">今日 AI 推广收益</span>
+                <strong class="mkt-revenue-num" id="mkt-today-revenue">$0</strong>
+              </div>
+              <div class="mkt-revenue-target">
+                <span class="mkt-revenue-label">目标销售收益额</span>
+                <strong class="mkt-revenue-num mkt-revenue-num--target" id="mkt-target-revenue">$5,000</strong>
+              </div>
+            </div>
+            <div class="mkt-overall mkt-overall--revenue">
+              <div class="mkt-overall__row">
+                <span>收益目标完成进度 <strong id="mkt-revenue-pct">0%</strong></span>
+                <span>累计 <strong id="mkt-total-revenue">$0</strong> · 还差 <strong id="mkt-remaining-revenue">$5,000</strong></span>
+              </div>
+              <div class="mkt-bar mkt-bar--revenue"><div class="mkt-bar__fill" id="mkt-revenue-bar" style="width:0%"></div></div>
+            </div>
+            <div class="mkt-countdown mkt-countdown--revenue" id="mkt-revenue-countdown">
+              <span class="mkt-countdown__label">预计完成目标收益还需</span>
+              <div class="mkt-countdown__digits">
+                <span class="mkt-digit"><strong id="mkt-rev-days">--</strong><small>天</small></span>
+                <span class="mkt-digit"><strong id="mkt-rev-hours">--</strong><small>时</small></span>
+                <span class="mkt-digit"><strong id="mkt-rev-mins">--</strong><small>分</small></span>
+              </div>
+              <p class="mkt-estimate" id="mkt-days-estimate">按当前进度估算约需 30 天</p>
+            </div>
+          </article>
+        </div>
+
+        <dialog class="mkt-goal-dialog" id="mkt-goal-dialog">
+          <form class="mkt-goal-form" id="mkt-goal-form">
+            <h3>设置销售收益目标</h3>
+            <label>目标收益额 <input type="number" id="mkt-goal-amount" min="100" step="100" required></label>
+            <label>目标天数 <input type="number" id="mkt-goal-days" min="7" max="365" step="1" required></label>
+            <label>货币
+              <select id="mkt-goal-currency">
+                <option value="USD">USD ($)</option>
+                <option value="CNY">CNY (¥)</option>
+              </select>
+            </label>
+            <div class="mkt-goal-actions">
+              <button type="button" class="history-btn" id="btn-goal-cancel">取消</button>
+              <button type="submit" class="history-btn history-btn--primary">保存</button>
+            </div>
+          </form>
+        </dialog>
+      </section>
+
       <section class="history-panel" id="history-panel" aria-label="Command and activity history">
         <div class="history-panel__header">
           <div class="history-panel__title-row">
@@ -156,6 +270,7 @@
   </div>
 
   <script src="js/daily-quota-ticker.js"></script>
+  <script src="js/marketing-dashboard.js"></script>
   <script src="js/dashboard.js"></script>
 </body>
 </html>

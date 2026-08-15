@@ -41,6 +41,11 @@ import {
 } from "./billing-store.js";
 import { DEFAULT_PLAN_ID, DEFAULT_CYCLE, isValidCycle } from "./plans.js";
 import {
+  getMarketingDashboard,
+  setRevenueGoal,
+  bumpMarketingActivity,
+} from "./marketing-dashboard.js";
+import {
   registerHandler,
   verifyOtpHandler,
   resendOtpHandler,
@@ -165,7 +170,15 @@ app.post("/api/companies/:id/run-daily", requireAuth, requireCompanyAccess, asyn
     company.lastRunAt = new Date().toISOString();
     upsertCompany(company);
 
-    res.json({ success: true, results, logs: getLogs(company.id, 50) });
+    bumpMarketingActivity(company.id, company, { agentId: "marketing" });
+    bumpMarketingActivity(company.id, company, { agentId: "ads" });
+
+    res.json({
+      success: true,
+      results,
+      logs: getLogs(company.id, 50),
+      marketing: getMarketingDashboard(company.id, company),
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -208,7 +221,13 @@ app.post("/api/companies/:id/agents/:agentId", requireAuth, requireCompanyAccess
       ai: result.ai,
     });
 
-    res.json({ success: true, result: { ...result, content: answerText } });
+    bumpMarketingActivity(company.id, company, { agentId: req.params.agentId });
+
+    res.json({
+      success: true,
+      result: { ...result, content: answerText },
+      marketing: getMarketingDashboard(company.id, company),
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -220,6 +239,22 @@ app.get("/api/companies/:id/logs", requireAuth, requireCompanyAccess, (req, res)
     success: true,
     logs: getLogs(req.company.id, limit),
     total: getLogCount(req.company.id),
+  });
+});
+
+app.get("/api/companies/:id/marketing/dashboard", requireAuth, requireCompanyAccess, (req, res) => {
+  res.json({
+    success: true,
+    marketing: getMarketingDashboard(req.company.id, req.company),
+  });
+});
+
+app.put("/api/companies/:id/marketing/goal", requireAuth, requireCompanyAccess, (req, res) => {
+  const { revenueTarget, targetDays, currency } = req.body || {};
+  setRevenueGoal(req.company.id, req.company, { revenueTarget, targetDays, currency });
+  res.json({
+    success: true,
+    marketing: getMarketingDashboard(req.company.id, req.company),
   });
 });
 

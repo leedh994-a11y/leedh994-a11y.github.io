@@ -455,6 +455,7 @@ async function loadCompany() {
     trialDays: data.trialDays,
     trialDaysLeft: data.trialDaysLeft,
   });
+  loadMarketingDashboard();
 }
 
 async function runDaily() {
@@ -476,6 +477,7 @@ async function runDaily() {
     if (res.status === 402) throw new Error(handleSubscriptionError(data));
     if (!data.success) throw new Error(data.error);
     renderLogs(data.logs);
+    if (data.marketing) renderMarketingDashboard(data.marketing);
   } catch (e) {
     alert(e.message);
   } finally {
@@ -538,6 +540,7 @@ document.getElementById("chat-form").addEventListener("submit", async (e) => {
     if (res.status === 402) throw new Error(handleSubscriptionError(data));
     if (!data.success) throw new Error(data.error);
     respEl.textContent = data.result.content;
+    if (data.marketing) renderMarketingDashboard(data.marketing);
     historyFilter = "qa";
     document.getElementById("history-filter").value = "qa";
     document.getElementById("history-filter-modal").value = "qa";
@@ -557,6 +560,7 @@ document.getElementById("btn-logout")?.addEventListener("click", async () => {
 
 renderAgentList();
 setupHistoryUi();
+setupMarketingDashboard();
 loadConfig();
 loadCompany();
 
@@ -568,3 +572,4 @@ setInterval(async () => {
 }, 10000);
 
 setInterval(fetchLogs, 15000);
+setInterval(loadMarketingDashboard, 45000);
