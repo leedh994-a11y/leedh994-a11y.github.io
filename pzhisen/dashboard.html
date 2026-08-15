@@ -80,11 +80,95 @@
         </div>
       </section>
 
+      <section class="real-revenue-hub" id="real-revenue-hub" aria-label="网站真实收益仪表盘">
+        <header class="real-revenue-hub__header">
+          <div>
+            <h2 class="real-revenue-hub__title">💵 网站真实收益仪表盘</h2>
+            <p class="real-revenue-hub__subtitle">真实客户付款订单统计 · 非模拟数据</p>
+          </div>
+          <div class="real-revenue-hub__actions">
+            <span class="real-badge real-badge--live" id="real-data-badge">真实数据</span>
+            <button type="button" class="history-btn history-btn--primary" id="btn-real-revenue-refresh">↻ 刷新</button>
+          </div>
+        </header>
+        <div id="real-revenue-access" class="real-revenue-access" hidden></div>
+        <div class="real-revenue-grid" id="real-revenue-content" hidden>
+          <article class="real-card real-card--hero">
+            <div class="real-hero-stats">
+              <div class="real-hero-stat real-hero-stat--today">
+                <span class="real-hero-label">今日真实收款</span>
+                <strong class="real-hero-num" id="real-today-primary">$0</strong>
+                <span class="real-hero-sub" id="real-today-secondary"></span>
+              </div>
+              <div class="real-hero-stat real-hero-stat--total">
+                <span class="real-hero-label">累计真实收益</span>
+                <strong class="real-hero-num" id="real-total-primary">$0</strong>
+                <span class="real-hero-sub" id="real-total-secondary"></span>
+              </div>
+            </div>
+            <div class="real-goal-block">
+              <div class="real-goal-row">
+                <span>真实目标收益 <strong id="real-goal-target">$10,000</strong></span>
+                <span>完成 <strong id="real-goal-pct">0%</strong> · 还差 <strong id="real-goal-remaining">$10,000</strong></span>
+              </div>
+              <div class="real-bar"><div class="real-bar__fill" id="real-goal-bar" style="width:0%"></div></div>
+              <button type="button" class="real-goal-btn" id="btn-real-goal-edit">设置真实目标</button>
+            </div>
+          </article>
+          <article class="real-card real-card--counts">
+            <h3>📈 订单与客户统计</h3>
+            <div class="real-count-grid">
+              <div class="real-count"><strong id="real-count-paid">0</strong><span>已付款订单</span></div>
+              <div class="real-count"><strong id="real-count-pending">0</strong><span>待处理订单</span></div>
+              <div class="real-count"><strong id="real-count-today">0</strong><span>今日付款</span></div>
+              <div class="real-count"><strong id="real-count-customers">0</strong><span>付费客户数</span></div>
+              <div class="real-count"><strong id="real-count-total">0</strong><span>订单总数</span></div>
+            </div>
+            <div class="real-provider-breakdown" id="real-provider-breakdown"></div>
+          </article>
+          <article class="real-card real-card--orders">
+            <h3>🧾 真实客户付款订单</h3>
+            <div class="real-table-wrap">
+              <table class="real-table">
+                <thead>
+                  <tr>
+                    <th>时间</th>
+                    <th>客户</th>
+                    <th>方案</th>
+                    <th>金额</th>
+                    <th>支付方式</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody id="real-orders-tbody"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+        <dialog class="real-goal-dialog" id="real-goal-dialog">
+          <form class="real-goal-form" id="real-goal-form">
+            <h3>设置真实目标收益</h3>
+            <label>目标金额 <input type="number" id="real-goal-amount" min="100" step="100" required></label>
+            <label>目标天数 <input type="number" id="real-goal-days" min="7" max="365" step="1" required></label>
+            <label>主货币
+              <select id="real-goal-currency">
+                <option value="USD">USD ($)</option>
+                <option value="CNY">CNY (¥)</option>
+              </select>
+            </label>
+            <div class="real-goal-actions">
+              <button type="button" class="history-btn" id="btn-real-goal-cancel">取消</button>
+              <button type="submit" class="history-btn history-btn--primary">保存</button>
+            </div>
+          </form>
+        </dialog>
+      </section>
+
       <section class="marketing-hub" id="marketing-hub" aria-label="AI 推广营销仪表盘">
         <header class="marketing-hub__header">
           <div>
-            <h2 class="marketing-hub__title">📊 AI 每日推广营销仪表盘</h2>
-            <p class="marketing-hub__subtitle">实时查看推广进程、平台任务与销售收益进度</p>
+            <h2 class="marketing-hub__title">📊 AI 推广营销仪表盘（进度模拟）</h2>
+            <p class="marketing-hub__subtitle">推广进程与任务进度参考 · 上方「真实收益」为实际客户付款数据</p>
           </div>
           <button type="button" class="history-btn history-btn--primary" id="btn-marketing-refresh" title="刷新数据">↻ 刷新</button>
         </header>
@@ -279,6 +363,7 @@
   </div>
 
   <script src="js/daily-quota-ticker.js"></script>
+  <script src="js/real-revenue-dashboard.js"></script>
   <script src="js/marketing-dashboard.js"></script>
   <script src="js/dashboard.js"></script>
 </body>

@@ -47,6 +47,10 @@ import {
 } from "./marketing-dashboard.js";
 import { getSettlementAccounts } from "./settlement-accounts.js";
 import {
+  getRealRevenueDashboard,
+  setRealRevenueGoal,
+} from "./real-revenue-dashboard.js";
+import {
   registerHandler,
   verifyOtpHandler,
   resendOtpHandler,
@@ -261,6 +265,22 @@ app.put("/api/companies/:id/marketing/goal", requireAuth, requireCompanyAccess, 
 
 app.get("/api/billing/settlement-accounts", requireAuth, (_req, res) => {
   res.json({ success: true, settlement: getSettlementAccounts() });
+});
+
+app.get("/api/companies/:id/revenue/real", requireAuth, requireCompanyAccess, (req, res) => {
+  res.json({
+    success: true,
+    revenue: getRealRevenueDashboard(req.company.id, req.company, req.user?.email),
+  });
+});
+
+app.put("/api/companies/:id/revenue/goal", requireAuth, requireCompanyAccess, (req, res) => {
+  const { revenueTarget, targetDays, currency } = req.body || {};
+  setRealRevenueGoal(req.company.id, { revenueTarget, targetDays, currency });
+  res.json({
+    success: true,
+    revenue: getRealRevenueDashboard(req.company.id, req.company, req.user?.email),
+  });
 });
 
 function subscriptionPayload(email) {

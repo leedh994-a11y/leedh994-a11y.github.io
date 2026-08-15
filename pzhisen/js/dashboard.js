@@ -456,6 +456,7 @@ async function loadCompany() {
     trialDaysLeft: data.trialDaysLeft,
   });
   loadMarketingDashboard();
+  loadRealRevenueDashboard();
 }
 
 async function runDaily() {
@@ -561,6 +562,7 @@ document.getElementById("btn-logout")?.addEventListener("click", async () => {
 renderAgentList();
 setupHistoryUi();
 setupMarketingDashboard();
+setupRealRevenueDashboard();
 loadConfig();
 loadCompany();
 
@@ -573,3 +575,4 @@ setInterval(async () => {
 
 setInterval(fetchLogs, 15000);
 setInterval(loadMarketingDashboard, 45000);
+setInterval(loadRealRevenueDashboard, 30000);
