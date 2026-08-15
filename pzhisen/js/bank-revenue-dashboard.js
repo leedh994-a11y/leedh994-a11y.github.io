@@ -1,5 +1,7 @@
 /* global companyId, api, bankRevenueStandalone */
 
+const BANK_AUTH_SOURCE = "bank-revenue";
+
 function fmtCny(amount) {
   return `¥${Number(amount || 0).toLocaleString("zh-CN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
@@ -50,6 +52,21 @@ function showBankOtpError(msg) {
   if (!el) return;
   el.hidden = !msg;
   el.textContent = msg || "";
+}
+
+function showBankAuthStatus(msg, type = "info") {
+  let el = document.getElementById("bank-auth-status");
+  const access = document.getElementById("bank-revenue-access");
+  if (!el && access) {
+    el = document.createElement("p");
+    el.id = "bank-auth-status";
+    el.className = "bank-revenue-auth-status";
+    access.querySelector(".bank-revenue-login")?.prepend(el);
+  }
+  if (!el) return;
+  el.hidden = !msg;
+  el.textContent = msg || "";
+  el.className = `bank-revenue-auth-status bank-revenue-auth-status--${type}`;
 }
 
 function normalizeBankEmail(email) {
@@ -118,11 +135,22 @@ function renderBankRevenueDashboard(data) {
   const content = document.getElementById("bank-revenue-content");
 
   if (!data?.isMerchant) {
-    showBankLoginPanel(data?.accessMessage || "请使用商户邮箱登录后查看中国银行收账数据。");
+    const msg =
+      data?.accessMessage ||
+      "请使用商户邮箱登录或注册。若已注册，请确认已完成邮箱验证码验证。";
+    showBankLoginPanel(msg);
+    showBankAuthStatus(
+      data?.loggedInEmail
+        ? `您已登录为 ${data.loggedInEmail}，但该邮箱暂无商户收账权限。请使用 ORDER_NOTIFY_EMAIL 配置的商户邮箱。`
+        : "",
+      "warn"
+    );
     if (access) access.hidden = false;
     if (content) content.hidden = true;
     return;
   }
+
+  showBankAuthStatus("");
 
   if (data.accessMessage && !data.summary) {
     showBankLoginPanel(data.accessMessage);
@@ -228,15 +256,49 @@ function renderBankRevenueDashboard(data) {
   }
 }
 
+async function claimBankMerchantAccess() {
+  try {
+    const res = await api("/api/revenue/bank/claim-merchant", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const data = await res.json();
+    return data.granted === true;
+  } catch (_) {
+    return false;
+  }
+}
+
 async function loadBankRevenueDashboard() {
   try {
     const res = await api(bankRevenueApiPath());
     if (res.status === 401) {
-      showBankLoginPanel("请使用商户邮箱和密码登录，查看中国银行收账数据。");
+      showBankLoginPanel("请使用商户邮箱和密码登录，或注册新商户账户。");
+      showBankAuthStatus("");
       return;
     }
     const data = await res.json();
     if (data.success && data.bankRevenue) {
+      if (!data.bankRevenue.isMerchant) {
+        const meRes = await api("/api/auth/me");
+        if (meRes.ok) {
+          const me = await meRes.json();
+          if (me.user?.email) {
+            data.bankRevenue.loggedInEmail = me.user.email;
+            const granted = await claimBankMerchantAccess();
+            if (granted) {
+              const retry = await api(bankRevenueApiPath());
+              const retryData = await retry.json();
+              if (retryData.success && retryData.bankRevenue?.isMerchant) {
+                if (retryData.bankRevenue.companyId) window.companyId = retryData.bankRevenue.companyId;
+                renderBankRevenueDashboard(retryData.bankRevenue);
+                return;
+              }
+            }
+          }
+        }
+      }
       if (data.bankRevenue.companyId) window.companyId = data.bankRevenue.companyId;
       renderBankRevenueDashboard(data.bankRevenue);
     }
@@ -249,11 +311,11 @@ async function handleBankMerchantLogin(e) {
   e.preventDefault();
   showBankLoginError("");
 
-  const email = document.getElementById("bank-login-email")?.value.trim();
+  const email = normalizeBankEmail(document.getElementById("bank-login-email")?.value);
   const password = document.getElementById("bank-login-password")?.value;
   const btn = document.getElementById("btn-bank-login-submit");
 
-  if (!email?.includes("@") || !password) {
+  if (!email || !password) {
     showBankLoginError("请填写商户邮箱和密码");
     return;
   }
@@ -267,10 +329,25 @@ async function handleBankMerchantLogin(e) {
     const res = await api("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, source: BANK_AUTH_SOURCE }),
     });
     const data = await res.json();
-    if (!data.success) throw new Error(data.error || "登录失败");
+    if (!data.success) {
+      if (data.needsVerification && data.email) {
+        bankAuthPending = { email: data.email, password };
+        const hint = document.getElementById("bank-otp-hint");
+        if (hint) {
+          hint.textContent = `该邮箱尚未完成验证。请查收 ${data.email} 的邮件并填写 6 位验证码。`;
+        }
+        switchBankAuthPanel("otp");
+        showBankLoginError("");
+        showBankOtpError("注册尚未完成，请在下方输入邮箱验证码");
+        return;
+      }
+      throw new Error(data.error || "登录失败");
+    }
+
+    await claimBankMerchantAccess();
 
     if (data.company?.id) window.companyId = data.company.id;
     localStorage.setItem("pzhisen_email", email);
@@ -356,7 +433,7 @@ async function handleBankMerchantRegister(e) {
     const res = await api("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, idea: "商户收账仪表盘" }),
+      body: JSON.stringify({ email, password, idea: "商户收账仪表盘", source: BANK_AUTH_SOURCE }),
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || "注册失败");
@@ -402,6 +479,8 @@ async function handleBankOtpVerify(e) {
     const data = await res.json();
     if (!data.success) throw new Error(data.error || "验证失败");
 
+    await claimBankMerchantAccess();
+
     localStorage.setItem("pzhisen_email", bankAuthPending.email);
     if (data.company?.id) {
       window.companyId = data.company.id;
@@ -438,6 +517,7 @@ async function handleBankResendOtp() {
         email: bankAuthPending.email,
         password: bankAuthPending.password,
         idea: "商户收账仪表盘",
+        source: BANK_AUTH_SOURCE,
       }),
     });
     const data = await res.json();

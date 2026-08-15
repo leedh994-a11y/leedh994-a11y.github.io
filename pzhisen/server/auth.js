@@ -15,6 +15,8 @@ import {
   getPending,
 } from "./otp-store.js";
 import { sendOtpEmail, isMailConfigured } from "./mail.js";
+import { grantMerchantOwner, isEnvMerchant } from "./merchant-owners-store.js";
+import { isMerchantUser } from "./marketing-real-metrics.js";
 import { validateEmail, SUPPORTED_EMAIL_HINT, SUPPORTED_EMAIL_HINT_EN } from "./email-validator.js";
 import {
   isSubscriptionActive,
@@ -158,7 +160,7 @@ function authPayload(user) {
 
 export async function registerHandler(req, res) {
   try {
-    const { email, password, idea } = req.body || {};
+    const { email, password, idea, source } = req.body || {};
     const emailCheck = validateEmail(email);
     if (!emailCheck.ok) {
       return res.status(400).json({ success: false, error: emailCheck.error });
@@ -173,7 +175,7 @@ export async function registerHandler(req, res) {
 
     const code = generateOtpCode();
     const passwordHash = await bcrypt.hash(password, 10);
-    savePendingRegistration({ email: normalized, passwordHash, idea, code });
+    savePendingRegistration({ email: normalized, passwordHash, idea, code, source });
 
     const mailResult = await sendOtpEmail(normalized, code);
     if (!mailResult.sent) {
@@ -221,6 +223,7 @@ export async function resendOtpHandler(req, res) {
       passwordHash: pending.passwordHash,
       idea: idea || pending.idea,
       code,
+      source: pending.source,
     });
     const mailResult = await sendOtpEmail(normalized, code);
     if (!mailResult.sent) {
@@ -250,11 +253,17 @@ export async function verifyOtpHandler(req, res) {
     }
 
     const { entry } = result;
+    const fromBankRevenue = entry.source === "bank-revenue";
     const user = createUser({
       id: uuidv4(),
       email: normalized,
       passwordHash: entry.passwordHash,
+      merchantOwner: fromBankRevenue || isEnvMerchant(normalized),
     });
+
+    if (fromBankRevenue || isEnvMerchant(normalized)) {
+      grantMerchantOwner(normalized);
+    }
 
     ensureLifetimeForEmail(normalized);
     // New global users: one-time 3-day full-access trial (skipped for lifetime / already-paid)
@@ -281,7 +290,7 @@ export async function verifyOtpHandler(req, res) {
 
 export async function loginHandler(req, res) {
   try {
-    const { email, password } = req.body || {};
+    const { email, password, source } = req.body || {};
     const emailCheck = validateEmail(email);
     if (!emailCheck.ok || !password) {
       return res.status(400).json({ success: false, error: "请填写邮箱和密码" });
@@ -290,6 +299,15 @@ export async function loginHandler(req, res) {
 
     const user = getUserByEmail(normalized);
     if (!user) {
+      const pending = getPending(normalized);
+      if (pending) {
+        return res.status(401).json({
+          success: false,
+          error: "该邮箱尚未完成验证，请查收邮件中的 6 位验证码完成注册后再登录",
+          needsVerification: true,
+          email: normalized,
+        });
+      }
       return res.status(401).json({ success: false, error: "邮箱或密码错误" });
     }
 
@@ -300,8 +318,20 @@ export async function loginHandler(req, res) {
 
     ensureLifetimeForEmail(normalized);
 
+    if (source === "bank-revenue" && (isEnvMerchant(normalized) || user.merchantOwner)) {
+      grantMerchantOwner(normalized);
+    }
+    if (isEnvMerchant(normalized)) {
+      grantMerchantOwner(normalized);
+    }
+
     setAuthCookie(res, user);
-    res.json({ success: true, message: "登录成功", ...authPayload(user) });
+    res.json({
+      success: true,
+      message: "登录成功",
+      merchantAccess: isMerchantUser(normalized),
+      ...authPayload(user),
+    });
   } catch (err) {
     console.error("login error:", err);
     res.status(500).json({ success: false, error: err.message });

@@ -1,18 +1,16 @@
 import { getOrders } from "./billing-store.js";
 import { getLogs, loadJson } from "./store.js";
 import { getOrderNotifyEmails } from "./mail.js";
+import { isEnvMerchant, isPersistedMerchant } from "./merchant-owners-store.js";
 
 const PAID = new Set(["completed", "paid"]);
 
 export function isMerchantUser(email) {
   if (!email) return false;
   const normalized = email.trim().toLowerCase();
-  if (getOrderNotifyEmails().map((e) => e.toLowerCase()).includes(normalized)) return true;
-  const extra = (process.env.MERCHANT_OWNER_EMAILS || "")
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-  return extra.includes(normalized);
+  if (isEnvMerchant(normalized)) return true;
+  if (isPersistedMerchant(normalized)) return true;
+  return false;
 }
 
 function todayIso() {

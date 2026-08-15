@@ -23,7 +23,7 @@ export function generateOtpCode() {
   return String(crypto.randomInt(100000, 1000000));
 }
 
-export function savePendingRegistration({ email, passwordHash, idea, code }) {
+export function savePendingRegistration({ email, passwordHash, idea, code, source }) {
   const normalized = email.trim().toLowerCase();
   const d = data();
   d.pending = d.pending.filter((p) => p.email !== normalized);
@@ -31,6 +31,7 @@ export function savePendingRegistration({ email, passwordHash, idea, code }) {
     email: normalized,
     passwordHash,
     idea: idea?.trim().slice(0, 2000) || "",
+    source: source || "",
     codeHash: hashCode(code),
     expiresAt: new Date(Date.now() + OTP_TTL_MS).toISOString(),
     attempts: 0,

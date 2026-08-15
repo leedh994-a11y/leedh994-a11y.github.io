@@ -52,6 +52,7 @@ import {
 } from "./real-revenue-dashboard.js";
 import { getBankRevenueDashboard } from "./bank-revenue-dashboard.js";
 import { isMerchantUser } from "./marketing-real-metrics.js";
+import { grantMerchantOwner, syncEnvMerchantOwners } from "./merchant-owners-store.js";
 import {
   getContentMarketingDashboard,
   setContentMarketingGoal,
@@ -331,6 +332,31 @@ app.get("/api/revenue/bank", requireAuth, (req, res) => {
   });
 });
 
+/** Claim merchant access after bank-revenue registration/login (retroactive fix). */
+app.post("/api/revenue/bank/claim-merchant", requireAuth, (req, res) => {
+  const email = req.user?.email;
+  if (!email) return res.status(401).json({ success: false, error: "请先登录" });
+
+  if (isMerchantUser(email)) {
+    grantMerchantOwner(email);
+    return res.json({ success: true, granted: true, email });
+  }
+
+  const company = findCompanyByEmail(email) || (req.user?.companyId ? getCompany(req.user.companyId) : null);
+  const fromBankRegistration = company?.idea?.includes("商户收账");
+  if (fromBankRegistration) {
+    grantMerchantOwner(email);
+    return res.json({ success: true, granted: true, email, retroactive: true });
+  }
+
+  res.json({
+    success: true,
+    granted: false,
+    message:
+      "登录成功，但该邮箱尚未开通商户收账权限。请使用 ORDER_NOTIFY_EMAIL 或 MERCHANT_OWNER_EMAILS 中配置的商户邮箱。",
+  });
+});
+
 app.get("/api/companies/:id/content-marketing/dashboard", requireAuth, requireCompanyAccess, (req, res) => {
   res.json({
     success: true,
@@ -451,6 +477,7 @@ app.get("*", (req, res, next) => {
 });
 
 app.listen(PORT, () => {
+  syncEnvMerchantOwners();
   const restored = ensureGrandfatheredLifetimeAccess();
   if (restored.length) {
     console.log(`Restored lifetime access for: ${restored.map((s) => s.email).join(", ")}`);

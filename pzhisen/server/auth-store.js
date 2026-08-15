@@ -20,13 +20,14 @@ export function getUserById(id) {
   return data().users.find((u) => u.id === id) || null;
 }
 
-export function createUser({ id, email, passwordHash, companyId = null }) {
+export function createUser({ id, email, passwordHash, companyId = null, merchantOwner = false }) {
   const user = {
     id,
     email: email.trim().toLowerCase(),
     passwordHash,
     emailVerified: true,
     companyId,
+    merchantOwner: Boolean(merchantOwner),
     createdAt: new Date().toISOString(),
   };
   const d = data();
