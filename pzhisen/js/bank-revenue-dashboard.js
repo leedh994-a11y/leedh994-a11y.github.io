@@ -10,6 +10,21 @@ function fmtCny(amount) {
   return `¥${Number(amount || 0).toLocaleString("zh-CN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
+function fmtUsd(amount) {
+  return `$${Number(amount || 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
+function fmtMoney(amount, currency) {
+  return (currency || "CNY").toUpperCase() === "USD" ? fmtUsd(amount) : fmtCny(amount);
+}
+
+function fmtDualTotals(cnyAmount, usdAmount) {
+  const parts = [];
+  if (Number(cnyAmount || 0) > 0) parts.push(fmtCny(cnyAmount));
+  if (Number(usdAmount || 0) > 0) parts.push(fmtUsd(usdAmount));
+  return parts.length ? parts.join(" + ") : fmtCny(0);
+}
+
 function fmtDateTime(iso) {
   if (!iso) return "—";
   return new Date(iso).toLocaleString("zh-CN", {
@@ -228,8 +243,8 @@ function renderBankRevenueDashboard(data) {
   const s = data.summary || {};
   const todayEl = document.getElementById("bank-today-total");
   const allEl = document.getElementById("bank-all-total");
-  if (todayEl) todayEl.textContent = fmtCny(s.todayTotal);
-  if (allEl) allEl.textContent = fmtCny(s.totalAmount);
+  if (todayEl) todayEl.textContent = fmtDualTotals(s.todayTotalCny, s.todayTotalUsd);
+  if (allEl) allEl.textContent = fmtDualTotals(s.totalAmountCny, s.totalAmountUsd);
 
   const todayCount = document.getElementById("bank-today-count");
   if (todayCount) todayCount.textContent = `${s.todayCount || 0} 笔今日结算`;
@@ -265,13 +280,13 @@ function renderBankRevenueDashboard(data) {
           <div class="bank-channel-card__stats">
             <div class="bank-channel-stat">
               <span class="bank-channel-stat__label">今日进账</span>
-              <strong class="bank-channel-stat__value">${fmtCny(ch.todayAmount)}</strong>
-              <span class="bank-channel-stat__meta">${ch.todayCount || 0} 笔</span>
+              <strong class="bank-channel-stat__value">${fmtMoney(ch.todayAmount, ch.currency)}</strong>
+              <span class="bank-channel-stat__meta">${ch.todayCount || 0} 笔 · ${ch.currency}</span>
             </div>
             <div class="bank-channel-stat">
               <span class="bank-channel-stat__label">累计收益</span>
-              <strong class="bank-channel-stat__value">${fmtCny(ch.totalAmount)}</strong>
-              <span class="bank-channel-stat__meta">${ch.totalCount || 0} 笔 · ${ch.customerCount || 0} 客户</span>
+              <strong class="bank-channel-stat__value">${fmtMoney(ch.totalAmount, ch.currency)}</strong>
+              <span class="bank-channel-stat__meta">${ch.totalCount || 0} 笔 · ${ch.customerCount || 0} 客户 · ${ch.currency}</span>
             </div>
           </div>
         </article>`;
@@ -287,8 +302,8 @@ function renderBankRevenueDashboard(data) {
       <tr>
         <td>${fmtDate(d.date)}</td>
         <td class="bank-amount">${d.boc > 0 ? fmtCny(d.boc) : "—"}</td>
-        <td class="bank-amount" style="color:#1d4ed8">${d.visa > 0 ? fmtCny(d.visa) : "—"}</td>
-        <td><strong>${fmtCny(d.total)}</strong></td>
+        <td class="bank-amount" style="color:#1d4ed8">${d.visa > 0 ? fmtUsd(d.visa) : "—"}</td>
+        <td><strong>${fmtDualTotals(d.boc, d.visa)}</strong></td>
         <td>${d.count}</td>
       </tr>`
       )
@@ -306,7 +321,7 @@ function renderBankRevenueDashboard(data) {
         <td>${o.customerEmailMask}</td>
         <td><span class="bank-channel-tag ${tagCls}">${o.channelLabel}</span></td>
         <td>${o.planLabel} · ${o.cycle || "—"}</td>
-        <td class="bank-amount">${fmtCny(o.amount)}</td>
+        <td class="bank-amount">${fmtMoney(o.amount, o.currency)}</td>
         <td><code>${o.transferCode}</code></td>
       </tr>`;
       })
@@ -317,8 +332,8 @@ function renderBankRevenueDashboard(data) {
   if (footnote) {
     const same = data.accounts?.samePhysicalCard;
     footnote.textContent = same
-      ? "数据来源：真实银行卡转账订单（orders.json）。中国用户与全球用户可能共用同一张双标卡入账，系统按用户类型分账统计。新订单在结账时会记录入账通道；历史订单按邮箱域名自动归类。"
-      : "数据来源：真实银行卡转账订单（orders.json）。中国用户入账至中国银行借记卡，全球用户入账至 VISA 借记卡。新订单在结账时记录入账通道；历史订单按邮箱域名自动归类。";
+      ? "数据来源：真实银行卡转账订单（orders.json）。中国用户与全球用户可能共用同一张双标卡入账，系统按用户类型分账统计（人民币 CNY / 美元 USD）。新订单在结账时会记录入账通道与币种；历史订单按邮箱域名自动归类。"
+      : "数据来源：真实银行卡转账订单（orders.json）。中国用户入账至中国银行借记卡（CNY），全球用户入账至 VISA 借记卡（USD）。新订单在结账时记录入账通道与币种；历史订单按邮箱域名自动归类。";
   }
 
   updateBankRevenueLastRefreshed(data.updatedAt || new Date().toISOString());

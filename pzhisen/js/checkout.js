@@ -45,12 +45,15 @@ function getPrices() {
 
 function buildMethods() {
   const { cny, usd } = getPrices();
+  const china = isChinaUser();
   return [
     {
       id: "bank",
       icon: "🏦",
-      name: "银行卡转账",
-      desc: `¥${cny} · 中国银行/Visa 借记卡，中国内地用户`,
+      name: china ? "银行卡转账" : "Bank transfer (Visa)",
+      desc: china
+        ? `¥${cny} · 中国银行借记卡，人民币 CNY 入账`
+        : `$${usd} · 中国银行 VISA 借记卡，美元 USD 入账`,
       providerKey: "bankCard",
     },
     {
@@ -101,16 +104,20 @@ async function loadPlan() {
 
 function renderSummary() {
   const { cny, usd } = getPrices();
+  const china = isChinaUser();
+  const bankUsesUsd = selectedProvider === "bank" && !china;
   document.getElementById("checkout-title").textContent =
     selectedProvider === "bank"
-      ? `支付 ¥${cny} 开通${cycleLabelZh(cycle)}`
+      ? bankUsesUsd
+        ? `Pay $${usd} — ${cycle === "annual" ? "Annual" : "Monthly"} Pro (Visa)`
+        : `支付 ¥${cny} 开通${cycleLabelZh(cycle)}`
       : `Pay $${usd} — ${cycle === "annual" ? "Annual" : "Monthly"} Pro`;
   document.getElementById("checkout-subtitle").textContent = plan.descriptionZh || plan.description;
   document.getElementById("sum-plan").textContent = plan.nameZh || plan.name;
   document.getElementById("sum-cycle").textContent =
     cycle === "annual" ? "年付（365 天）" : "月付（30 天）";
   document.getElementById("sum-total").textContent =
-    selectedProvider === "paypal" ? `$${usd} USD` : `¥${cny} CNY`;
+    selectedProvider === "paypal" || bankUsesUsd ? `$${usd} USD` : `¥${cny} CNY`;
   setBusy(false);
 }
 
@@ -162,6 +169,8 @@ function showBankPanel(data) {
   const accounts = (data.bankAccounts && data.bankAccounts.length)
     ? data.bankAccounts
     : [data.bankAccount];
+  const isUsd = (data.currency || "").toUpperCase() === "USD";
+  const amountLabel = isUsd ? `$${data.amount} USD` : `¥${data.amount} CNY`;
   const accountsHtml = accounts.map((acc, i) => `
     <div class="checkout-summary" style="margin-top:${i === 0 ? "16px" : "12px"};text-align:left">
       <p style="margin:0 0 12px;font-weight:600">${acc.label || "收款银行卡"} ${acc.network ? `<small style="color:var(--muted);font-weight:400">(${acc.network})</small>` : ""}</p>
@@ -171,14 +180,20 @@ function showBankPanel(data) {
       <div class="checkout-line"><span>卡号</span><strong style="font-family:monospace;letter-spacing:1px">${acc.accountNumber}</strong></div>
     </div>
   `).join("");
+  const transferIntro = isUsd
+    ? "Please transfer USD to the following Bank of China VISA debit card (online / mobile banking):"
+    : "请转账至以下中国银行借记卡（手机银行 / 网银均可）：";
+  const hint = isUsd
+    ? `Include memo <strong>${data.transferCode}</strong> when transferring. After payment, click below to activate your ${cycle === "annual" ? "annual" : "monthly"} subscription.`
+    : `转账时务必填写备注 <strong>${data.transferCode}</strong>。完成转账后点击下方按钮开通${cycleLabelZh(cycle)}订阅（${cycle === "annual" ? "365" : "30"} 天）。到期后需续费方可继续使用。商家会同步收到订单邮件通知。`;
   panel.innerHTML = `
-    <p style="margin:16px 0 0;font-weight:600">请转账至以下中国银行 / Visa 借记卡（手机银行 / 网银均可）：</p>
+    <p style="margin:16px 0 0;font-weight:600">${transferIntro}</p>
     ${accountsHtml}
     <div class="checkout-summary" style="margin-top:12px;text-align:left">
-      <div class="checkout-line"><span>金额</span><strong style="color:#dc2626">¥${data.amount}</strong></div>
-      <div class="checkout-line total"><span>转账备注（必填）</span><strong style="color:#dc2626">${data.transferCode}</strong></div>
+      <div class="checkout-line"><span>${isUsd ? "Amount" : "金额"}</span><strong style="color:#dc2626">${amountLabel}</strong></div>
+      <div class="checkout-line total"><span>${isUsd ? "Transfer memo (required)" : "转账备注（必填）"}</span><strong style="color:#dc2626">${data.transferCode}</strong></div>
     </div>
-    <p class="checkout-hint">转账时务必填写备注 <strong>${data.transferCode}</strong>。完成转账后点击下方按钮开通${cycleLabelZh(cycle)}订阅（${cycle === "annual" ? "365" : "30"} 天）。到期后需续费方可继续使用。商家会同步收到订单邮件通知。</p>
+    <p class="checkout-hint">${hint}</p>
   `;
   setBusy(false);
 }

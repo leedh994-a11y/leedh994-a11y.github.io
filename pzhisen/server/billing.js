@@ -52,7 +52,22 @@ function publicBankAccounts() {
     accountNumber: a.accountNumber,
     accountNumberMask: maskAccount(a.accountNumber),
     branch: a.branch,
+    settlementCurrency: a.settlementCurrency || (a.id === "visa" ? "USD" : "CNY"),
   }));
+}
+
+function bankAccountsForChannel(channel, accounts = publicBankAccounts()) {
+  if (channel === "visa") {
+    const visa = accounts.find((a) => a.id === "visa" || a.id === "boc-visa");
+    return visa ? [visa] : accounts;
+  }
+  const boc = accounts.find((a) => a.id === "boc" || a.id === "boc-visa");
+  return boc ? [boc] : accounts;
+}
+
+function formatTransferAmount(amount, currency) {
+  const sym = (currency || "CNY").toUpperCase() === "USD" ? "$" : "¥";
+  return `${sym}${amount}`;
 }
 
 function fireNotify(event, order, extra) {
@@ -180,12 +195,13 @@ export async function checkoutHandler(req, res) {
           error: "银行卡收款信息未配置。请在 Render 设置 BANK_ACCOUNT_NAME、BANK_NAME、BANK_ACCOUNT_NUMBER（及可选 BANK_VISA_*）。",
         });
       }
-      const { amount, currency } = getAmount(planId, cycle, "cny");
       const { userSegment, receivingChannel } = req.body || {};
       let channel = receivingChannel;
       if (!channel && userSegment) {
         channel = userSegment === "china" || userSegment === "cn" ? "boc" : "visa";
       }
+      channel = channel || "boc";
+      const { amount, currency } = getAmount(planId, cycle, channel === "visa" ? "usd" : "cny");
       const order = createPendingOrder({
         email,
         planId,
@@ -195,16 +211,22 @@ export async function checkoutHandler(req, res) {
         provider: "bankcard",
         meta: {
           userSegment: userSegment || (channel === "boc" ? "china" : "global"),
-          receivingChannel: channel || "boc",
+          receivingChannel: channel,
         },
       });
       const transferCode = makeTransferCode(order.id);
       const updated = updateOrder(order.id, { status: "awaiting_transfer", transferCode });
 
-      const bank = getBankAccountConfig();
-      const accounts = publicBankAccounts();
+      const accounts = bankAccountsForChannel(channel);
+      const primaryAccount = accounts[0] || {};
+      const amountLabel = formatTransferAmount(amount, currency);
+      const accountLabel =
+        channel === "visa" ? "中国银行 VISA 借记卡" : primaryAccount.label || "中国银行借记卡";
       fireNotify("awaiting_transfer", updated || { ...order, status: "awaiting_transfer", transferCode }, {
-        message: "用户将向中国银行/Visa 借记卡转账，请留意银行到账短信并核对手注",
+        message:
+          channel === "visa"
+            ? "全球用户将向 VISA 借记卡转账美元，请留意银行到账短信并核对手注"
+            : "用户将向中国银行借记卡转账人民币，请留意银行到账短信并核对手注",
       });
       return res.json({
         success: true,
@@ -214,15 +236,18 @@ export async function checkoutHandler(req, res) {
         amount,
         currency,
         cycle,
+        receivingChannel: channel,
         bankAccount: {
-          accountName: bank.accountName,
-          bankName: bank.bankName,
-          accountNumber: bank.accountNumber,
-          branch: bank.branch,
-          label: accounts[0]?.label || "中国银行借记卡",
+          accountName: primaryAccount.accountName,
+          bankName: primaryAccount.bankName,
+          accountNumber: primaryAccount.accountNumber,
+          branch: primaryAccount.branch,
+          label: accountLabel,
+          network: primaryAccount.network,
+          settlementCurrency: currency,
         },
         bankAccounts: accounts,
-        instructions: `请转账 ¥${amount} 至以下中国银行/Visa 借记卡账户，备注填写：${transferCode}`,
+        instructions: `请转账 ${amountLabel} ${currency} 至以下${accountLabel}账户，备注填写：${transferCode}`,
       });
     }
 

@@ -36,6 +36,8 @@ export function getSettlementAccounts() {
 
   if (bankAccounts.length) {
     for (const bank of bankAccounts) {
+      const isVisaOnly = bank.id === "visa";
+      const isDual = bank.id === "boc-visa";
       accounts.push({
         id: bank.id,
         type: "bank",
@@ -45,8 +47,17 @@ export function getSettlementAccounts() {
         accountName: bank.accountName,
         accountNumberMask: maskAccount(bank.accountNumber),
         network: bank.network,
-        channels: ["中国内地银行卡转账", "人民币 CNY 收款"],
-        settlementNote: "用户转账备注码匹配后，款项入账此银行卡",
+        settlementCurrency: bank.settlementCurrency || (isVisaOnly || isDual ? "USD" : "CNY"),
+        channels: isDual
+          ? ["中国用户 CNY 转账", "全球用户 USD 转账"]
+          : isVisaOnly
+            ? ["全球用户银行卡转账", "美元 USD 收款"]
+            : ["中国内地银行卡转账", "人民币 CNY 收款"],
+        settlementNote: isDual
+          ? "同卡双标：中国用户人民币入账，全球用户美元入账"
+          : isVisaOnly
+            ? "全球用户订阅转账备注码匹配后，款项以美元入账此 VISA 借记卡"
+            : "中国用户转账备注码匹配后，款项以人民币入账此银行卡",
       });
     }
   } else {

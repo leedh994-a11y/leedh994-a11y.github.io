@@ -23,6 +23,7 @@ function accountFromEnv(prefix, defaults = {}) {
     bankName,
     accountNumber,
     branch,
+    settlementCurrency: defaults.settlementCurrency || "CNY",
   };
 }
 
@@ -33,6 +34,7 @@ export function getPrimaryBankAccount() {
     label: "中国银行借记卡",
     network: "UnionPay / 中国银行",
     bankName: "中国银行",
+    settlementCurrency: "CNY",
   });
 }
 
@@ -60,6 +62,7 @@ export function getVisaBankAccount() {
     accountNumber: "4002216500080470",
     accountName: sameAsPrimary ? primary.accountName : "",
     branch: sameAsPrimary ? primary.branch : "",
+    settlementCurrency: "USD",
   });
 
   if (!visa.accountName && primary.accountName) {
@@ -78,6 +81,7 @@ export function getVisaBankAccount() {
       id: "visa",
       label: trim(process.env.BANK_VISA_LABEL) || "Visa 借记卡（同中国银行卡）",
       network: "Visa",
+      settlementCurrency: "USD",
       configured: true,
     };
   }
@@ -103,6 +107,8 @@ export function listReceivingBankAccounts() {
         id: "boc-visa",
         label: "中国银行借记卡 / Visa 借记卡",
         network: "UnionPay + Visa",
+        settlementCurrency: "CNY",
+        visaSettlementCurrency: "USD",
       };
     } else {
       accounts.push(visa);

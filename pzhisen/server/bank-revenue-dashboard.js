@@ -79,6 +79,18 @@ function sumAmount(orders) {
   return orders.reduce((s, o) => s + Number(o.amount || 0), 0);
 }
 
+function sumAmountByCurrency(orders, currency) {
+  const cur = currency.toUpperCase();
+  return orders
+    .filter((o) => (o.currency || "CNY").toUpperCase() === cur)
+    .reduce((s, o) => s + Number(o.amount || 0), 0);
+}
+
+function orderCurrency(order, channel) {
+  if (order.currency) return order.currency.toUpperCase();
+  return channel === "visa" ? "USD" : "CNY";
+}
+
 function channelMeta(id) {
   if (id === "boc") {
     return {
@@ -92,7 +104,7 @@ function channelMeta(id) {
   return {
     id: "visa",
     label: "中国银行 VISA 借记卡",
-    subtitle: "全球用户订阅 · Visa 网络入账",
+    subtitle: "全球用户订阅 · Visa 网络 · 美元 USD 入账",
     icon: "💳",
     audience: "全球用户",
   };
@@ -123,6 +135,7 @@ function buildAccountInfo() {
       accountName: visa.accountName,
       accountNumberMask: maskAccount(visa.accountNumber),
       network: visa.network || "Visa",
+      settlementCurrency: "USD",
     },
     samePhysicalCard: sameCard,
   };
@@ -164,6 +177,7 @@ export function getBankRevenueDashboard(companyId, company, userEmail) {
     const meta = channelMeta(id);
     const paid = channels[id];
     const todayList = todayChannels[id];
+    const currency = id === "visa" ? "USD" : "CNY";
     return {
       ...meta,
       account: accounts[id],
@@ -172,7 +186,7 @@ export function getBankRevenueDashboard(companyId, company, userEmail) {
       totalAmount: sumAmount(paid),
       totalCount: paid.length,
       customerCount: new Set(paid.map((o) => o.email)).size,
-      currency: "CNY",
+      currency,
     };
   });
 
@@ -182,10 +196,9 @@ export function getBankRevenueDashboard(companyId, company, userEmail) {
     if (!date) continue;
     const ch = getBankReceivingChannel(o);
     if (!byDayMap[date]) {
-      byDayMap[date] = { date, boc: 0, visa: 0, total: 0, count: 0 };
+      byDayMap[date] = { date, boc: 0, visa: 0, count: 0 };
     }
     byDayMap[date][ch] += Number(o.amount || 0);
-    byDayMap[date].total += Number(o.amount || 0);
     byDayMap[date].count += 1;
   }
   const byDay = Object.values(byDayMap)
@@ -208,7 +221,7 @@ export function getBankRevenueDashboard(companyId, company, userEmail) {
         date: o.paidAt || o.updatedAt || o.createdAt,
         customerEmailMask: maskEmail(o.email),
         amount: Number(o.amount || 0),
-        currency: o.currency || "CNY",
+        currency: orderCurrency(o, ch),
         channel: ch,
         channelLabel: meta.label,
         planLabel: plan?.nameZh || plan?.name || o.planId,
@@ -228,13 +241,14 @@ export function getBankRevenueDashboard(companyId, company, userEmail) {
     source: "bank_transfer_orders",
     accounts,
     summary: {
-      todayTotal: sumAmount(todayPaid),
+      todayTotalCny: sumAmountByCurrency(todayPaid, "CNY"),
+      todayTotalUsd: sumAmountByCurrency(todayPaid, "USD"),
+      totalAmountCny: sumAmountByCurrency(paidOrders, "CNY"),
+      totalAmountUsd: sumAmountByCurrency(paidOrders, "USD"),
       todayCount: todayPaid.length,
-      totalAmount: sumAmount(paidOrders),
       totalCount: paidOrders.length,
       pendingCount,
       customerCount: new Set(paidOrders.map((o) => o.email)).size,
-      currency: "CNY",
     },
     channels: channelSummaries,
     byDay,
