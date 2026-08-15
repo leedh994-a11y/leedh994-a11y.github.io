@@ -160,6 +160,7 @@ async function launchAllMarketing() {
 
     showLaunchResult(data.launch);
     setLaunchStatus(`✅ 已为 ${websiteUrl} 成功启动全部 ${data.launch?.methodsTotal || ""} 种推广方式！`, "success");
+    document.getElementById("dsh-pace-block")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   } catch (err) {
     setLaunchStatus(`启动失败：${err.message}`, "error");
   } finally {
