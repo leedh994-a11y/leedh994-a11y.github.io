@@ -516,7 +516,10 @@ async function handleBankMerchantLogin(e) {
     document.getElementById("bank-revenue-content")?.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (err) {
     showBankAuthStatus("");
-    showBankLoginError(err.message || "登录失败，请检查邮箱和密码");
+    showBankLoginError(
+      (err.message || "登录失败，请检查邮箱和密码") +
+        "。若忘记密码，请切换到「注册商户」用同一邮箱重新设置密码。"
+    );
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -619,7 +622,11 @@ async function handleBankMerchantRegister(e) {
 
     bankAuthPending = { email, password };
     const hint = document.getElementById("bank-otp-hint");
-    if (hint) hint.textContent = `验证码已发送至 ${email}，请填写 6 位数字。`;
+    if (hint) {
+      hint.textContent = data.passwordReset
+        ? `验证码已发送至 ${email}，验证后将重置商户登录密码。`
+        : `验证码已发送至 ${email}，请填写 6 位数字。`;
+    }
     switchBankAuthPanel("otp");
     document.getElementById("bank-otp-code")?.focus();
   } catch (err) {

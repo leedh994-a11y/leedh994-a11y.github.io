@@ -173,13 +173,25 @@ export async function registerHandler(req, res) {
     if (pwdErr) return res.status(400).json({ success: false, error: pwdErr });
 
     const normalized = emailCheck.email;
-    if (getUserByEmail(normalized)) {
-      return res.status(400).json({ success: false, error: "该邮箱已注册，请直接登录" });
+    const existing = getUserByEmail(normalized);
+    if (existing) {
+      const allowMerchantReset =
+        source === "bank-revenue" && (isEnvMerchant(normalized) || existing.merchantOwner);
+      if (!allowMerchantReset) {
+        return res.status(400).json({ success: false, error: "该邮箱已注册，请直接登录" });
+      }
     }
 
     const code = generateOtpCode();
     const passwordHash = await bcrypt.hash(password, 10);
-    savePendingRegistration({ email: normalized, passwordHash, idea, code, source });
+    savePendingRegistration({
+      email: normalized,
+      passwordHash,
+      idea,
+      code,
+      source,
+      resetPassword: Boolean(existing),
+    });
 
     const mailResult = await sendOtpEmail(normalized, code);
     if (!mailResult.sent) {
@@ -193,7 +205,10 @@ export async function registerHandler(req, res) {
       success: true,
       needsVerification: true,
       email: normalized,
-      message: "验证码已发送至您的邮箱，请查收并填写 6 位验证码",
+      message: existing
+        ? "验证码已发送至您的邮箱，验证后将重置商户登录密码"
+        : "验证码已发送至您的邮箱，请查收并填写 6 位验证码",
+      passwordReset: Boolean(existing),
       mailConfigured: true,
       mailSent: true,
       supportedEmailHint: SUPPORTED_EMAIL_HINT,
@@ -228,6 +243,7 @@ export async function resendOtpHandler(req, res) {
       idea: idea || pending.idea,
       code,
       source: pending.source,
+      resetPassword: pending.resetPassword,
     });
     const mailResult = await sendOtpEmail(normalized, code);
     if (!mailResult.sent) {
@@ -258,6 +274,29 @@ export async function verifyOtpHandler(req, res) {
 
     const { entry } = result;
     const fromBankRevenue = entry.source === "bank-revenue";
+    const existing = getUserByEmail(normalized);
+
+    if (existing && entry.resetPassword) {
+      updateUser(existing.id, {
+        passwordHash: entry.passwordHash,
+        merchantOwner: existing.merchantOwner || fromBankRevenue || isEnvMerchant(normalized),
+      });
+      if (fromBankRevenue || isEnvMerchant(normalized)) {
+        grantMerchantOwner(normalized);
+      }
+      const freshUser = getUserById(existing.id);
+      setAuthCookie(res, freshUser);
+      return res.json({
+        success: true,
+        message: "密码已重置，登录成功",
+        ...authPayload(freshUser),
+      });
+    }
+
+    if (existing) {
+      return res.status(400).json({ success: false, error: "该邮箱已注册，请直接登录" });
+    }
+
     const user = createUser({
       id: uuidv4(),
       email: normalized,
