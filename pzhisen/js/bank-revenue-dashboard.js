@@ -58,6 +58,7 @@ function bankRevenueApiPath(cacheBust = false) {
 }
 
 let bankRevenueRefreshing = false;
+let bankRevenueLoadSeq = 0;
 let bankRevenueMerchantView = false;
 
 function setBankRefreshLoading(loading) {
@@ -233,11 +234,6 @@ function renderBankRevenueDashboard(data) {
 
   showBankAuthStatus("");
 
-  if (data.accessMessage && !data.summary) {
-    showBankLoginPanel(data.accessMessage);
-    return;
-  }
-
   showBankDashboardPanel(data.merchantEmail);
 
   const s = data.summary || {};
@@ -354,8 +350,9 @@ async function claimBankMerchantAccess() {
 }
 
 async function loadBankRevenueDashboard(options = {}) {
-  const { refresh = false } = options;
-  if (bankRevenueRefreshing) return;
+  const { refresh = false, force = false } = options;
+  if (bankRevenueRefreshing && !force) return;
+  const seq = ++bankRevenueLoadSeq;
   bankRevenueRefreshing = true;
 
   const keepDashboard = refresh && bankRevenueMerchantView;
@@ -369,7 +366,25 @@ async function loadBankRevenueDashboard(options = {}) {
       cache: refresh ? "no-store" : "default",
       headers: refresh ? { "Cache-Control": "no-cache", Pragma: "no-cache" } : undefined,
     });
+    if (seq !== bankRevenueLoadSeq) return;
+
     if (res.status === 401) {
+      const meRes = await window.api("/api/auth/me");
+      if (seq !== bankRevenueLoadSeq) return;
+      if (meRes.ok) {
+        const retry = await window.api(bankRevenueApiPath(refresh), {
+          cache: refresh ? "no-store" : "default",
+        });
+        if (seq !== bankRevenueLoadSeq) return;
+        if (retry.ok) {
+          const retryData = await retry.json();
+          if (retryData.success && retryData.bankRevenue) {
+            if (retryData.bankRevenue.companyId) syncCompanyId(retryData.bankRevenue.companyId);
+            renderBankRevenueDashboard(retryData.bankRevenue);
+            return;
+          }
+        }
+      }
       if (!keepDashboard) {
         showBankLoginPanel("请使用商户邮箱和密码登录，或注册新商户账户。");
         showBankAuthStatus("");
@@ -379,6 +394,7 @@ async function loadBankRevenueDashboard(options = {}) {
       return;
     }
     const data = await res.json();
+    if (seq !== bankRevenueLoadSeq) return;
     if (!data.success || !data.bankRevenue) {
       const msg = data.error || "加载收账数据失败，请稍后重试。";
       if (keepDashboard) {
@@ -391,6 +407,7 @@ async function loadBankRevenueDashboard(options = {}) {
 
     if (!data.bankRevenue.isMerchant) {
       const meRes = await window.api("/api/auth/me");
+      if (seq !== bankRevenueLoadSeq) return;
       if (meRes.ok) {
         const me = await meRes.json();
         if (me.user?.email) {
@@ -400,6 +417,7 @@ async function loadBankRevenueDashboard(options = {}) {
             const retry = await window.api(bankRevenueApiPath(refresh), {
               cache: refresh ? "no-store" : "default",
             });
+            if (seq !== bankRevenueLoadSeq) return;
             const retryData = await retry.json();
             if (retryData.success && retryData.bankRevenue?.isMerchant) {
               if (retryData.bankRevenue.companyId) syncCompanyId(retryData.bankRevenue.companyId);
@@ -413,6 +431,7 @@ async function loadBankRevenueDashboard(options = {}) {
     if (data.bankRevenue.companyId) syncCompanyId(data.bankRevenue.companyId);
     renderBankRevenueDashboard(data.bankRevenue);
   } catch (_) {
+    if (seq !== bankRevenueLoadSeq) return;
     const msg = "加载收账数据失败，请稍后重试。";
     if (keepDashboard) {
       updateBankRevenueLastRefreshed(null, msg);
@@ -420,8 +439,10 @@ async function loadBankRevenueDashboard(options = {}) {
       showBankLoginPanel(msg);
     }
   } finally {
-    bankRevenueRefreshing = false;
-    if (refresh) setBankRefreshLoading(false);
+    if (seq === bankRevenueLoadSeq) {
+      bankRevenueRefreshing = false;
+      if (refresh) setBankRefreshLoading(false);
+    }
   }
 }
 
@@ -485,7 +506,7 @@ async function handleBankMerchantLogin(e) {
     localStorage.setItem("pzhisen_email", email);
     if (data.company?.id) localStorage.setItem("pzhisen_company_id", data.company.id);
 
-    await loadBankRevenueDashboard();
+    await loadBankRevenueDashboard({ force: true });
     showBankAuthStatus("登录成功", "info");
 
     if (typeof bankRevenueStandalone === "undefined" || !bankRevenueStandalone) {
@@ -640,7 +661,7 @@ async function handleBankOtpVerify(e) {
     }
 
     bankAuthPending = { email: "", password: "" };
-    await loadBankRevenueDashboard();
+    await loadBankRevenueDashboard({ force: true });
   } catch (err) {
     showBankOtpError(err.message || "验证码错误或已过期");
   } finally {

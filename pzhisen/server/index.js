@@ -338,20 +338,9 @@ app.get("/api/revenue/bank", requireAuth, (req, res) => {
     });
   }
   const company = findCompanyByEmail(email) || (req.user?.companyId ? getCompany(req.user.companyId) : null);
-  if (!company) {
-    return res.json({
-      success: true,
-      bankRevenue: {
-        isMerchant: true,
-        accessMessage: "商户账户已登录，但未找到关联网站。请先在仪表盘创建公司。",
-        summary: null,
-        updatedAt: new Date().toISOString(),
-      },
-    });
-  }
   res.json({
     success: true,
-    bankRevenue: getBankRevenueDashboard(company.id, company, email),
+    bankRevenue: getBankRevenueDashboard(company?.id || null, company, email),
   });
 });
 
