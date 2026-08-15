@@ -3,6 +3,10 @@
 let dshTimer = null;
 let dshBound = false;
 
+/** Capture dashboard helper before this file defines any globals. */
+const getDashboardCompanyId =
+  typeof window.getCompanyId === "function" ? window.getCompanyId.bind(window) : null;
+
 function fmtUsd(amount) {
   return `$${Number(amount || 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
@@ -17,10 +21,14 @@ function setBar(id, pct) {
   if (el) el.style.width = `${Math.min(100, Math.max(0, pct || 0))}%`;
 }
 
-function getCompanyId() {
-  if (typeof window.getCompanyId === "function") {
-    const id = window.getCompanyId();
-    if (id) return id;
+function resolveDshCompanyId() {
+  if (getDashboardCompanyId) {
+    try {
+      const id = getDashboardCompanyId();
+      if (id) return id;
+    } catch (_) {
+      /* dashboard helper unavailable */
+    }
   }
   const fromUrl = new URLSearchParams(location.search).get("company");
   if (fromUrl) return fromUrl;
@@ -116,7 +124,7 @@ function renderDailySalesHero(data) {
 }
 
 async function loadDailySalesHero(options = {}) {
-  const id = getCompanyId();
+  const id = resolveDshCompanyId();
   if (!id) return;
   const suffix = options.refresh ? `?_=${Date.now()}` : "";
   const fetchApi = window.api || api;
@@ -139,7 +147,7 @@ async function saveDailySalesGoal(e) {
   e?.preventDefault?.();
   e?.stopPropagation?.();
 
-  const id = getCompanyId();
+  const id = resolveDshCompanyId();
   if (!id) {
     showDshToast("无法保存：缺少公司 ID，请刷新页面或重新登录", "error");
     return;

@@ -732,7 +732,7 @@ setInterval(async () => {
 
 setInterval(fetchLogs, 15000);
 setInterval(loadMarketingDashboard, 45000);
-setInterval(loadDailySalesHero, 15000);
+setInterval(() => window.loadDailySalesHero?.(), 15000);
 setInterval(loadRealRevenueDashboard, 30000);
 setInterval(loadBankRevenueDashboard, 30000);
 setInterval(loadContentMarketingDashboard, 45000);
