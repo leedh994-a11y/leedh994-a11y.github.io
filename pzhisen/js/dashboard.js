@@ -498,6 +498,7 @@ async function loadCompany() {
   setCompanyId(getCompanyId());
 
   await refreshCompanySnapshot({ redirectOnFail: true });
+  setupDailySalesHero();
   loadMarketingDashboard();
   loadDailySalesHero();
   loadRealRevenueDashboard();

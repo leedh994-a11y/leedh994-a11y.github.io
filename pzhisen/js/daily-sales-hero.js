@@ -1,6 +1,7 @@
-/* global companyId, api */
+/* global api */
 
 let dshTimer = null;
+let dshBound = false;
 
 function fmtUsd(amount) {
   return `$${Number(amount || 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
@@ -17,7 +18,33 @@ function setBar(id, pct) {
 }
 
 function getCompanyId() {
-  return window.getCompanyId?.() || window.companyId || companyId;
+  if (typeof window.getCompanyId === "function") {
+    const id = window.getCompanyId();
+    if (id) return id;
+  }
+  const fromUrl = new URLSearchParams(location.search).get("company");
+  if (fromUrl) return fromUrl;
+  if (window.companyId) return window.companyId;
+  try {
+    return localStorage.getItem("pzhisen_company_id") || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function showDshToast(message, type = "info") {
+  if (typeof window.showDashboardRefreshToast === "function") {
+    window.showDashboardRefreshToast(message, type);
+    return;
+  }
+  const el = document.getElementById("dashboard-refresh-toast");
+  if (el) {
+    el.hidden = false;
+    el.textContent = message;
+    el.className = `dashboard-refresh-toast dashboard-refresh-toast--${type}`;
+    return;
+  }
+  alert(message);
 }
 
 function renderDailySalesHero(data) {
@@ -92,8 +119,9 @@ async function loadDailySalesHero(options = {}) {
   const id = getCompanyId();
   if (!id) return;
   const suffix = options.refresh ? `?_=${Date.now()}` : "";
+  const fetchApi = window.api || api;
   try {
-    const res = await (window.api || api)(`/api/companies/${id}/marketing/daily-sales${suffix}`, {
+    const res = await fetchApi(`/api/companies/${id}/marketing/daily-sales${suffix}`, {
       cache: options.refresh ? "no-store" : "default",
       headers: options.refresh ? { "Cache-Control": "no-cache", Pragma: "no-cache" } : undefined,
     });
@@ -109,30 +137,51 @@ async function loadDailySalesHero(options = {}) {
 
 async function saveDailySalesGoal(e) {
   e?.preventDefault?.();
+  e?.stopPropagation?.();
+
   const id = getCompanyId();
-  if (!id) return;
-  const input = document.getElementById("dsh-goal-input");
-  const btn = document.getElementById("dsh-goal-submit");
-  const amount = Number(input?.value);
-  if (!Number.isFinite(amount) || amount < 1) {
-    alert("请输入大于 0 的每日目标金额（美元）");
+  if (!id) {
+    showDshToast("无法保存：缺少公司 ID，请刷新页面或重新登录", "error");
     return;
   }
+
+  const input = document.getElementById("dsh-goal-input");
+  const btn = document.getElementById("dsh-goal-submit");
+  const amount = Number(String(input?.value || "").trim());
+
+  if (!Number.isFinite(amount) || amount < 1) {
+    showDshToast("请输入大于 0 的每日目标金额（美元）", "error");
+    input?.focus();
+    return;
+  }
+
   if (btn) {
     btn.disabled = true;
     btn.textContent = "保存中…";
   }
+
+  const fetchApi = window.api || api;
   try {
-    const res = await (window.api || api)(`/api/companies/${id}/marketing/daily-sales/goal`, {
+    const res = await fetchApi(`/api/companies/${id}/marketing/daily-sales/goal`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ dailyTargetUsd: amount }),
     });
+
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      throw new Error(res.status === 401 ? "登录已过期，请重新登录" : `保存失败（HTTP ${res.status}）`);
+    }
+
     const data = await res.json();
-    if (!data.success) throw new Error(data.error || "保存失败");
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || data.errorZh || "保存失败");
+    }
+
     renderDailySalesHero(data.dailySales);
+    showDshToast(`每日目标已保存：${fmtUsd(amount)}`, "success");
   } catch (err) {
-    alert(err.message || "保存每日目标失败");
+    showDshToast(err.message || "保存每日目标失败，请稍后重试", "error");
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -142,8 +191,20 @@ async function saveDailySalesGoal(e) {
 }
 
 function setupDailySalesHero() {
-  document.getElementById("dsh-goal-form")?.addEventListener("submit", saveDailySalesGoal);
-  document.getElementById("btn-dsh-refresh")?.addEventListener("click", () => loadDailySalesHero({ refresh: true }));
+  if (dshBound) return;
+  const form = document.getElementById("dsh-goal-form");
+  const btn = document.getElementById("dsh-goal-submit");
+  const refreshBtn = document.getElementById("btn-dsh-refresh");
+  if (!form && !btn) return;
+
+  dshBound = true;
+  form?.setAttribute("novalidate", "novalidate");
+  form?.addEventListener("submit", saveDailySalesGoal);
+  btn?.addEventListener("click", saveDailySalesGoal);
+  refreshBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    loadDailySalesHero({ refresh: true });
+  });
 
   if (dshTimer) clearInterval(dshTimer);
   dshTimer = setInterval(() => loadDailySalesHero(), 15000);
@@ -152,6 +213,7 @@ function setupDailySalesHero() {
 window.loadDailySalesHero = loadDailySalesHero;
 window.renderDailySalesHero = renderDailySalesHero;
 window.setupDailySalesHero = setupDailySalesHero;
+window.saveDailySalesGoal = saveDailySalesGoal;
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", setupDailySalesHero);

@@ -150,14 +150,15 @@
           <aside class="daily-sales-hero__goal-panel">
             <h3 class="dsh-goal-panel__title">🎯 设置每日目标销售收益</h3>
             <p class="dsh-goal-panel__desc">输入推广营销网站每日希望达成的销售收益目标金额（美元 USD）</p>
-            <form class="dsh-goal-form" id="dsh-goal-form">
+            <form class="dsh-goal-form" id="dsh-goal-form" novalidate>
               <label class="dsh-goal-input-wrap" for="dsh-goal-input">
                 <span class="dsh-goal-currency">$</span>
                 <input
                   type="number"
                   id="dsh-goal-input"
+                  name="dailyTargetUsd"
                   min="1"
-                  step="1"
+                  step="any"
                   value="500"
                   required
                   inputmode="decimal"
@@ -165,7 +166,7 @@
                 >
                 <span class="dsh-goal-suffix">USD / 天</span>
               </label>
-              <button type="submit" class="dsh-goal-submit" id="dsh-goal-submit">保存每日目标</button>
+              <button type="button" class="dsh-goal-submit" id="dsh-goal-submit">保存每日目标</button>
             </form>
             <div class="dsh-goal-summary">
               <div class="dsh-goal-summary__item">
@@ -828,7 +829,6 @@
   </div>
 
   <script src="js/daily-quota-ticker.js"></script>
-  <script src="js/daily-sales-hero.js"></script>
   <script src="js/marketing-launch.js"></script>
   <script src="js/marketing-analytics-dashboard.js"></script>
   <script src="js/real-revenue-dashboard.js"></script>
@@ -836,6 +836,7 @@
   <script src="js/content-marketing-dashboard.js"></script>
   <script src="js/marketing-dashboard.js"></script>
   <script src="js/dashboard.js"></script>
+  <script src="js/daily-sales-hero.js"></script>
   <script src="js/dashboard-refresh-hub.js"></script>
 </body>
 </html>
