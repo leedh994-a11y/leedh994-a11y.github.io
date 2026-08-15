@@ -432,16 +432,49 @@ async function loadCompany() {
     return;
   }
 
-  const res = await api(`/api/companies/${companyId}`);
+  await refreshCompanySnapshot({ redirectOnFail: true });
+  loadMarketingDashboard();
+  loadRealRevenueDashboard();
+  loadBankRevenueDashboard();
+  loadContentMarketingDashboard();
+  loadLaunchCatalog();
+  loadMarketingAnalytics();
+}
+
+let dashboardRefreshing = false;
+
+function setDashboardRefreshLoading(loading) {
+  const btn = document.getElementById("btn-dashboard-refresh");
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.classList.toggle("is-refreshing", loading);
+  btn.setAttribute("aria-busy", loading ? "true" : "false");
+  if (loading) {
+    btn.dataset.defaultLabel = btn.dataset.defaultLabel || btn.textContent;
+    btn.textContent = "刷新中…";
+  } else {
+    btn.textContent = btn.dataset.defaultLabel || "↻ 刷新";
+  }
+}
+
+async function refreshCompanySnapshot({ redirectOnFail = false } = {}) {
+  if (!companyId) return false;
+
+  const res = await api(`/api/companies/${companyId}?_=${Date.now()}`, {
+    cache: "no-store",
+    headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+  });
   if (res.status === 401) {
-    window.location.href = "/login.html";
-    return;
+    if (redirectOnFail) window.location.href = "/login.html";
+    return false;
   }
   const data = await res.json();
   if (!data.success) {
-    alert(data.errorZh || data.error || "Company not found");
-    window.location.href = "/login.html";
-    return;
+    if (redirectOnFail) {
+      alert(data.errorZh || data.error || "Company not found");
+      window.location.href = "/login.html";
+    }
+    throw new Error(data.errorZh || data.error || "刷新失败");
   }
 
   company = data.company;
@@ -459,12 +492,37 @@ async function loadCompany() {
     trialDays: data.trialDays,
     trialDaysLeft: data.trialDaysLeft,
   });
-  loadMarketingDashboard();
-  loadRealRevenueDashboard();
-  loadBankRevenueDashboard();
-  loadContentMarketingDashboard();
-  loadLaunchCatalog();
-  loadMarketingAnalytics();
+  return true;
+}
+
+async function refreshAllDashboards() {
+  if (dashboardRefreshing || !companyId) return;
+  dashboardRefreshing = true;
+  setDashboardRefreshLoading(true);
+
+  try {
+    await Promise.all([
+      loadConfig(),
+      refreshCompanySnapshot(),
+      fetchLogs(),
+      loadMarketingDashboard(),
+      loadRealRevenueDashboard(),
+      loadBankRevenueDashboard({ refresh: true }),
+      loadContentMarketingDashboard(),
+      loadLaunchCatalog(),
+      loadMarketingAnalytics(),
+    ]);
+    const btn = document.getElementById("btn-dashboard-refresh");
+    if (btn) {
+      const time = new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+      btn.title = `刷新全部仪表盘数据 · 最后更新 ${time}`;
+    }
+  } catch (err) {
+    alert(err.message || "刷新失败，请稍后重试");
+  } finally {
+    dashboardRefreshing = false;
+    setDashboardRefreshLoading(false);
+  }
 }
 
 async function runDaily() {
@@ -570,6 +628,9 @@ document.getElementById("btn-logout")?.addEventListener("click", async () => {
   localStorage.removeItem("pzhisen_company_id");
   location.href = "/login.html";
 });
+
+document.getElementById("btn-dashboard-refresh")?.addEventListener("click", refreshAllDashboards);
+window.refreshAllDashboards = refreshAllDashboards;
 
 renderAgentList();
 setupHistoryUi();
