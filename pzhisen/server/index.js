@@ -183,8 +183,10 @@ app.post("/api/companies/:id/agents/:agentId", requireAuth, requireCompanyAccess
       appendLog(company.id, {
         agent: "You",
         role: "user",
+        type: "question",
         agentId: req.params.agentId,
-        message: `→ ${agentMeta?.name || req.params.agentId}: ${userMessage}`,
+        agentName: agentMeta?.name || req.params.agentId,
+        message: userMessage,
         ai: false,
       });
     }
@@ -194,15 +196,19 @@ app.post("/api/companies/:id/agents/:agentId", requireAuth, requireCompanyAccess
     const deployNote = result.deployed?.deployedImages
       ? ` [Deployed ${result.deployed.deployedImages} image(s) to ${result.agentName} backend]`
       : "";
+    const answerText = result.content + deployNote;
     appendLog(company.id, {
       agent: result.agentName,
       role: "agent",
+      type: "answer",
       agentId: req.params.agentId,
-      message: result.content + deployNote,
+      question: userMessage || null,
+      message: answerText,
+      etaDays: result.etaDays || null,
       ai: result.ai,
     });
 
-    res.json({ success: true, result });
+    res.json({ success: true, result: { ...result, content: answerText } });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

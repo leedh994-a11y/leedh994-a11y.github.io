@@ -18,7 +18,66 @@ let subscriptionActive = false;
 let checkoutUrl = "/checkout.html?plan=pro&cycle=monthly";
 let allLogs = [];
 let historySearch = "";
-let historyFilter = "all";
+let historyFilter = "qa";
+
+function isUserLog(l) {
+  return l.role === "user" || l.type === "question" || l.agent === "You";
+}
+
+function isAnswerLog(l) {
+  return l.role === "agent" || l.type === "answer" || (l.ai && !isUserLog(l));
+}
+
+function pairLogsIntoItems(logs) {
+  const items = [];
+  let i = 0;
+  while (i < logs.length) {
+    const log = logs[i];
+    if (isUserLog(log)) {
+      const next = logs[i + 1];
+      if (next && isAnswerLog(next)) {
+        items.push({ kind: "qa", question: log, answer: next });
+        i += 2;
+        continue;
+      }
+      items.push({ kind: "question-only", log });
+      i += 1;
+      continue;
+    }
+    items.push({ kind: "log", log });
+    i += 1;
+  }
+  return items;
+}
+
+function formatEtaBadge(etaDays) {
+  if (!etaDays) return "";
+  const label = etaDays.label || (etaDays.min === etaDays.max ? `${etaDays.min} 天` : `${etaDays.min}-${etaDays.max} 天`);
+  return `<span class="qa-eta-badge" title="预计完成时间">⏱ 预计 ${escapeHtml(label)} 完成</span>`;
+}
+
+function renderQaCard(q, a) {
+  const agentName = a?.agent || q?.agentName || "AI";
+  const eta = a?.etaDays ? formatEtaBadge(a.etaDays) : "";
+  const answerText = a?.message || "（等待 AI 回复…）";
+  const waiting = !a;
+  return `
+  <article class="qa-card${waiting ? " qa-card--waiting" : ""}">
+    <header class="qa-card__header">
+      <span class="qa-card__time">${formatDateTime(q.at)}</span>
+      <span class="qa-card__agent">${escapeHtml(agentName)}</span>
+      ${eta}
+    </header>
+    <div class="qa-card__question">
+      <span class="qa-card__label">您的问题 / 指令</span>
+      <p class="qa-card__text">${escapeHtml(q.message?.replace(/^→\s*[^:]+:\s*/, "") || q.message || "")}</p>
+    </div>
+    <div class="qa-card__answer">
+      <span class="qa-card__label">AI 完整回复 ${a?.ai ? '<span class="badge">AI</span>' : ""}</span>
+      <pre class="qa-card__text qa-card__text--answer">${escapeHtml(answerText)}</pre>
+    </div>
+  </article>`;
+}
 
 function agentClass(agent, role) {
   if (role === "user" || agent === "You") return "log-line--user";
@@ -62,7 +121,9 @@ function formatDateTime(iso) {
 function filterLogs(logs, search, filter) {
   let list = [...logs];
   if (filter === "user") {
-    list = list.filter((l) => l.role === "user" || l.agent === "You");
+    list = list.filter((l) => isUserLog(l));
+  } else if (filter === "qa") {
+    // keep all for pairing; qa view filters in buildLogHtml
   } else if (filter !== "all") {
     list = list.filter((l) => l.agent === filter);
   }
@@ -71,7 +132,8 @@ function filterLogs(logs, search, filter) {
     list = list.filter(
       (l) =>
         (l.message || "").toLowerCase().includes(q) ||
-        (l.agent || "").toLowerCase().includes(q)
+        (l.agent || "").toLowerCase().includes(q) ||
+        (l.question || "").toLowerCase().includes(q)
     );
   }
   return list;
@@ -79,8 +141,34 @@ function filterLogs(logs, search, filter) {
 
 function buildLogHtml(logs) {
   if (!logs?.length) {
-    return `<div class="log-line empty-history">暂无匹配的历史记录。发送指令或运行每日站会后，记录将显示在这里。</div>`;
+    return `<div class="log-line empty-history">暂无历史记录。在下方输入问题或指令，AI 完整回复与预计完成天数将显示在这里。</div>`;
   }
+
+  if (historyFilter === "qa") {
+    const items = pairLogsIntoItems(logs).filter((item) => item.kind === "qa" || item.kind === "question-only");
+    if (!items.length) {
+      return `<div class="log-line empty-history">暂无问答对话。发送第一个问题开始吧。</div>`;
+    }
+    const groups = new Map();
+    for (const item of items) {
+      const key = formatDateLabel((item.question || item.log)?.at);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(item);
+    }
+    let html = "";
+    for (const [label, entries] of groups) {
+      html += `<div class="history-date-group"><div class="history-date-label">${escapeHtml(label)} · ${entries.length} 条对话</div>`;
+      html += entries
+        .map((item) => {
+          if (item.kind === "qa") return renderQaCard(item.question, item.answer);
+          return renderQaCard(item.log, null);
+        })
+        .join("");
+      html += `</div>`;
+    }
+    return html;
+  }
+
   const groups = new Map();
   for (const l of logs) {
     const key = formatDateLabel(l.at);
@@ -110,6 +198,13 @@ function buildLogHtml(logs) {
 function updateHistoryCount(shown, total) {
   const el = document.getElementById("history-count");
   if (!el) return;
+  if (historyFilter === "qa") {
+    const qaCount = pairLogsIntoItems(allLogs).filter(
+      (i) => i.kind === "qa" || i.kind === "question-only"
+    ).length;
+    el.textContent = `${qaCount} 条问答对话`;
+    return;
+  }
   if (shown === total) {
     el.textContent = `${total} 条记录`;
   } else {
@@ -406,19 +501,31 @@ document.getElementById("chat-form").addEventListener("submit", async (e) => {
   if (!message || !companyId) return;
 
   const agentName = AGENTS.find((a) => a.id === activeAgent)?.name || activeAgent;
+  const now = new Date().toISOString();
   renderLogs([
     ...allLogs,
     {
       agent: "You",
       role: "user",
-      message: `→ ${agentName}: ${message}`,
-      at: new Date().toISOString(),
+      type: "question",
+      agentName,
+      message,
+      at: now,
+    },
+    {
+      agent: agentName,
+      role: "agent",
+      type: "answer",
+      message: "AI 智能体正在认真分析您的问题，请稍候…",
+      at: now,
+      ai: true,
+      pending: true,
     },
   ]);
 
   const respEl = document.getElementById("chat-response");
   respEl.classList.add("visible");
-  respEl.textContent = "AI 智能体正在处理…";
+  respEl.textContent = "AI 正在生成完整回复（含预计完成天数）…";
   input.value = "";
 
   try {
@@ -431,7 +538,12 @@ document.getElementById("chat-form").addEventListener("submit", async (e) => {
     if (res.status === 402) throw new Error(handleSubscriptionError(data));
     if (!data.success) throw new Error(data.error);
     respEl.textContent = data.result.content;
+    historyFilter = "qa";
+    document.getElementById("history-filter").value = "qa";
+    document.getElementById("history-filter-modal").value = "qa";
     await fetchLogs();
+    const body = document.getElementById("log-body");
+    if (body) body.scrollTop = body.scrollHeight;
   } catch (err) {
     respEl.textContent = `Error: ${err.message}`;
   }

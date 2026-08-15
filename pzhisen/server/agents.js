@@ -3,6 +3,27 @@ import { normalizeChatImages, buildVisionUserContent, getVisionModel } from "./i
 import { deployChatToAgent, getAgentDeployContext } from "./agent-instructions.js";
 import { ZERO_COST_MARKETING_POLICY, zeroCostMarketingContext, isPromotionAgent } from "./marketing-policy.js";
 
+/** Every agent must answer user questions completely with a timeline estimate. */
+export const AGENT_REPLY_POLICY = `
+When the user asks a question or gives an instruction, you MUST:
+1) Answer sincerely, completely, and clearly in the same language the user used (Chinese if they write Chinese).
+2) Structure your reply: 理解确认 → 详细回答 → 具体执行步骤 → 风险/注意事项.
+3) End EVERY reply with these two lines exactly (fill in realistic numbers):
+⏱ 预计完成时间：X 天
+📋 任务分解：（按天列出 Day1…DayX 要做什么）
+Be honest about timelines. If uncertain, give a range like "3-7 天" and explain why.`;
+
+export function extractEtaDays(text) {
+  if (!text) return null;
+  const m =
+    text.match(/预计完成时间[：:]\s*(\d+)\s*[-~～至到]\s*(\d+)\s*天/) ||
+    text.match(/预计完成时间[：:]\s*(\d+)\s*天/) ||
+    text.match(/ETA[：:]\s*(\d+)\s*days?/i);
+  if (!m) return null;
+  if (m[2]) return { min: Number(m[1]), max: Number(m[2]), label: `${m[1]}-${m[2]} 天` };
+  return { min: Number(m[1]), max: Number(m[1]), label: `${m[1]} 天` };
+}
+
 export const AGENTS = {
   ceo: {
     id: "ceo",
@@ -11,8 +32,9 @@ export const AGENTS = {
     modelKey: "ceo",
     system: `You are the CEO Agent at Pzhisen — an AI executive for a solo founder's company.
 Your job: assess company state, set daily priorities, allocate work across agents, and write concise strategic briefs.
-Be decisive, numbered, and actionable. Max 200 words unless asked for more.
-Prioritize zero-cost organic growth — never assign paid ad budgets.`,
+Be decisive, numbered, and actionable. Give complete answers — do not truncate.
+Prioritize zero-cost organic growth — never assign paid ad budgets.
+${AGENT_REPLY_POLICY}`,
   },
   engineering: {
     id: "engineering",
@@ -21,7 +43,8 @@ Prioritize zero-cost organic growth — never assign paid ad budgets.`,
     modelKey: "default",
     system: `You are the Engineering Agent at Pzhisen. You ship code, fix bugs, and improve the product.
 Output: specific technical tasks, file/feature suggestions, and deployment steps. Be practical for a small team.
-When the user deploys reference images via dashboard chat, treat them as design specs: output concrete HTML/CSS/JS or framework code snippets that implement the UI shown in the images.`,
+When the user deploys reference images via dashboard chat, treat them as design specs: output concrete HTML/CSS/JS or framework code snippets that implement the UI shown in the images.
+${AGENT_REPLY_POLICY}`,
   },
   marketing: {
     id: "marketing",
@@ -31,7 +54,8 @@ When the user deploys reference images via dashboard chat, treat them as design 
     system: `You are the Marketing Agent at Pzhisen. You promote companies using 100% FREE organic marketing only.
 ${ZERO_COST_MARKETING_POLICY}
 Output: ready-to-use copy snippets, free channel recommendations, SEO titles, social post drafts, and a weekly content calendar — all with $0 / ¥0 spend.
-Use deployed reference images as creative direction for organic campaigns.`,
+Use deployed reference images as creative direction for organic campaigns.
+${AGENT_REPLY_POLICY}`,
   },
   ads: {
     id: "ads",
@@ -41,7 +65,8 @@ Use deployed reference images as creative direction for organic campaigns.`,
     system: `You are the Growth Agent at Pzhisen (zero-cost promotion — NOT paid ads).
 ${ZERO_COST_MARKETING_POLICY}
 You do NOT run paid Meta/Facebook/Google ad campaigns. Instead: organic social growth, free listings, SEO landing pages, community posts, and referral loops — all $0 spend.
-Output: organic post copy, free channel checklist, audience targeting for organic reach, and optimization tips without any budget.`,
+Output: organic post copy, free channel checklist, audience targeting for organic reach, and optimization tips without any budget.
+${AGENT_REPLY_POLICY}`,
   },
   support: {
     id: "support",
@@ -49,7 +74,8 @@ Output: organic post copy, free channel checklist, audience targeting for organi
     icon: "◎",
     modelKey: "default",
     system: `You are the Support Agent at Pzhisen. You handle customer emails and tickets with empathy and speed.
-Output: draft replies, FAQ additions, escalation criteria, and satisfaction improvements.`,
+Output: draft replies, FAQ additions, escalation criteria, and satisfaction improvements.
+${AGENT_REPLY_POLICY}`,
   },
   ops: {
     id: "ops",
@@ -57,7 +83,8 @@ Output: draft replies, FAQ additions, escalation criteria, and satisfaction impr
     icon: "⚡",
     modelKey: "default",
     system: `You are the Ops Agent at Pzhisen. You configure infrastructure: domains, Stripe, email, analytics, GitHub.
-Output: checklist of setup steps, tools to use, and verification steps.`,
+Output: checklist of setup steps, tools to use, and verification steps.
+${AGENT_REPLY_POLICY}`,
   },
 };
 
@@ -152,15 +179,17 @@ export async function runAgent(agentId, company, userMessage = null, images = []
         { role: "system", content: systemPrompt },
         { role: "user", content: userContent },
       ],
-      maxTokens: 1200,
+      maxTokens: 2200,
     });
 
     if (ai && content) {
+      const etaDays = extractEtaDays(content);
       return {
         agentId,
         agentName: agent.name,
         content,
         ai: true,
+        etaDays,
         deployed: deployMeta,
         deployedImageCount: deployCtx.deployedImageCount,
       };
@@ -176,11 +205,13 @@ export async function runAgent(agentId, company, userMessage = null, images = []
   const aiNote = allImages.length
     ? " Image analysis requires OPENROUTER_API_KEY and a vision-capable model."
     : "";
+  const fullContent = template + imageNote + "\n\n⏱ 预计完成时间：3 天\n📋 任务分解：Day1 规划 → Day2 执行 → Day3 验收";
   return {
     agentId,
     agentName: agent.name,
-    content: template + imageNote,
+    content: fullContent,
     ai: false,
+    etaDays: extractEtaDays(fullContent),
     deployed: deployMeta,
     deployedImageCount: deployCtx.deployedImageCount,
     note: `AI offline — template response.${aiNote} Set OPENROUTER_API_KEY for live agents.`,

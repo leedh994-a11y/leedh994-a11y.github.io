@@ -86,12 +86,13 @@
             <h2 class="history-panel__title">📋 指令与活动历史</h2>
             <span class="history-panel__count" id="history-count">0 条记录</span>
           </div>
-          <p class="history-panel__subtitle">随时查看所有 AI 智能体执行记录与您发送的指令历史</p>
+          <p class="history-panel__subtitle">每日指令与 AI 完整回复均会保存于此，含预计完成天数</p>
           <div class="history-toolbar">
-            <input type="search" id="history-search" class="history-search" placeholder="搜索历史记录…" aria-label="搜索历史">
-            <select id="history-filter" class="history-filter" aria-label="按智能体筛选">
+            <input type="search" id="history-search" class="history-search" placeholder="搜索问题或回答…" aria-label="搜索历史">
+            <select id="history-filter" class="history-filter" aria-label="按类型筛选">
               <option value="all">全部记录</option>
-              <option value="user">我的指令</option>
+              <option value="qa" selected>问答对话</option>
+              <option value="user">仅我的提问</option>
               <option value="System">System</option>
               <option value="CEO Agent">CEO Agent</option>
               <option value="Engineering Agent">Engineering Agent</option>
@@ -121,9 +122,10 @@
           </header>
           <div class="history-modal__toolbar history-toolbar">
             <input type="search" id="history-search-modal" class="history-search" placeholder="搜索历史记录…" aria-label="搜索历史">
-            <select id="history-filter-modal" class="history-filter" aria-label="按智能体筛选">
+            <select id="history-filter-modal" class="history-filter" aria-label="按类型筛选">
               <option value="all">全部记录</option>
-              <option value="user">我的指令</option>
+              <option value="qa" selected>问答对话</option>
+              <option value="user">仅我的提问</option>
               <option value="System">System</option>
               <option value="CEO Agent">CEO Agent</option>
               <option value="Engineering Agent">Engineering Agent</option>
@@ -139,7 +141,7 @@
 
       <section class="chat-panel">
         <h3 id="chat-title">全自动AI智能体对话</h3>
-        <p class="chat-panel__hint checkout-hint">输入指令与 AI 智能体对话，系统将全自动分析并执行任务（仅支持文字，不支持上传图片）</p>
+        <p class="chat-panel__hint checkout-hint">输入问题或指令，AI 将完整诚恳回复并给出预计完成天数。问答全文显示在上方历史面板。</p>
         <form class="chat-form" id="chat-form">
           <div class="chat-compose">
             <div class="chat-compose__row">
