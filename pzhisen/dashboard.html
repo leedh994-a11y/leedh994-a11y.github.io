@@ -204,10 +204,14 @@
         <div id="bank-revenue-access" class="bank-revenue-access" hidden>
           <div class="bank-revenue-login">
             <div class="bank-revenue-login__intro">
-              <h3>商户登录查看收账数据</h3>
-              <p>使用商户邮箱登录后，可查看全球用户 VISA 借记卡与中国用户借记卡的每日进账与累计结算收益（真实订单数据）。</p>
+              <h3>商户账户</h3>
+              <p>登录或注册商户邮箱后，可查看全球用户 VISA 借记卡与中国用户借记卡的每日进账与累计结算收益（真实订单数据）。</p>
             </div>
-            <form class="bank-revenue-login__form" id="bank-revenue-login-form">
+            <div class="bank-revenue-auth__tabs" role="tablist">
+              <button type="button" class="bank-revenue-auth__tab active" id="bank-tab-login" data-tab="login">登录</button>
+              <button type="button" class="bank-revenue-auth__tab" id="bank-tab-register" data-tab="register">注册商户</button>
+            </div>
+            <form class="bank-revenue-login__form bank-revenue-auth-panel active" id="bank-revenue-login-form" data-panel="login">
               <label class="bank-revenue-login__field">
                 <span>商户邮箱</span>
                 <input type="email" id="bank-login-email" name="email" required autocomplete="email" placeholder="例如 ddb1520@outlook.com" spellcheck="false">
@@ -219,7 +223,34 @@
               <p class="bank-revenue-login__error" id="bank-login-error" hidden></p>
               <button type="submit" class="bank-revenue-login__btn" id="btn-bank-login-submit">登录查看收账仪表盘</button>
             </form>
-            <p class="bank-revenue-login__hint">仅 ORDER_NOTIFY_EMAIL / MERCHANT_OWNER_EMAILS 配置的商户邮箱可查看。也可前往 <a href="/bank-revenue.html">独立收账登录页</a>。</p>
+            <form class="bank-revenue-login__form bank-revenue-auth-panel" id="bank-revenue-register-form" data-panel="register" hidden>
+              <label class="bank-revenue-login__field">
+                <span>商户邮箱</span>
+                <input type="email" id="bank-register-email" name="email" required autocomplete="email" placeholder="Gmail / Outlook / QQ / 163 …" spellcheck="false">
+              </label>
+              <label class="bank-revenue-login__field">
+                <span>设置密码</span>
+                <input type="password" id="bank-register-password" name="password" required autocomplete="new-password" placeholder="至少 8 位" minlength="8">
+              </label>
+              <label class="bank-revenue-login__field">
+                <span>确认密码</span>
+                <input type="password" id="bank-register-password2" name="password2" required autocomplete="new-password" placeholder="再次输入密码" minlength="8">
+              </label>
+              <p class="bank-revenue-login__error" id="bank-register-error" hidden></p>
+              <button type="submit" class="bank-revenue-login__btn bank-revenue-login__btn--register" id="btn-bank-register-submit">注册商户账户</button>
+            </form>
+            <form class="bank-revenue-login__form bank-revenue-auth-panel" id="bank-revenue-otp-form" data-panel="otp" hidden>
+              <p class="bank-revenue-otp-hint" id="bank-otp-hint">验证码已发送至您的邮箱，请填写 6 位数字。</p>
+              <label class="bank-revenue-login__field">
+                <span>邮箱验证码</span>
+                <input type="text" id="bank-otp-code" class="bank-revenue-otp-input" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="000000" autocomplete="one-time-code">
+              </label>
+              <p class="bank-revenue-login__error" id="bank-otp-error" hidden></p>
+              <button type="submit" class="bank-revenue-login__btn" id="btn-bank-otp-submit">完成注册并查看收账</button>
+              <button type="button" class="bank-revenue-login__btn bank-revenue-login__btn--ghost" id="btn-bank-otp-resend">重新发送验证码</button>
+              <button type="button" class="bank-revenue-login__btn bank-revenue-login__btn--ghost" id="btn-bank-otp-back">返回注册</button>
+            </form>
+            <p class="bank-revenue-login__hint">注册后需验证邮箱。收账数据仅对商户邮箱开放。也可前往 <a href="/bank-revenue.html">独立收账页</a>。</p>
           </div>
         </div>
         <div id="bank-revenue-content" hidden>

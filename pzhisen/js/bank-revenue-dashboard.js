@@ -38,6 +38,42 @@ function showBankLoginError(msg) {
   el.textContent = msg || "";
 }
 
+function showBankRegisterError(msg) {
+  const el = document.getElementById("bank-register-error");
+  if (!el) return;
+  el.hidden = !msg;
+  el.textContent = msg || "";
+}
+
+function showBankOtpError(msg) {
+  const el = document.getElementById("bank-otp-error");
+  if (!el) return;
+  el.hidden = !msg;
+  el.textContent = msg || "";
+}
+
+function normalizeBankEmail(email) {
+  if (!email || typeof email !== "string") return null;
+  const trimmed = email.trim().toLowerCase();
+  return trimmed.includes("@") ? trimmed : null;
+}
+
+let bankAuthPending = { email: "", password: "" };
+
+function switchBankAuthPanel(panel) {
+  document.querySelectorAll(".bank-revenue-auth-panel").forEach((el) => {
+    const active = el.dataset.panel === panel;
+    el.hidden = !active;
+    el.classList.toggle("active", active);
+  });
+  document.querySelectorAll(".bank-revenue-auth__tab").forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.tab === panel && panel !== "otp");
+  });
+  if (panel === "otp") {
+    document.querySelectorAll(".bank-revenue-auth__tab").forEach((tab) => tab.classList.remove("active"));
+  }
+}
+
 function showBankLoginPanel(message) {
   const access = document.getElementById("bank-revenue-access");
   const content = document.getElementById("bank-revenue-content");
@@ -50,6 +86,8 @@ function showBankLoginPanel(message) {
   if (refreshBtn) refreshBtn.hidden = true;
   if (logoutBtn) logoutBtn.hidden = true;
   if (loggedAs) loggedAs.hidden = true;
+
+  switchBankAuthPanel("login");
 
   const intro = access?.querySelector(".bank-revenue-login__intro p");
   if (intro && message) {
@@ -257,14 +295,160 @@ async function handleBankMerchantLogin(e) {
 }
 
 function setupBankRevenueLogin() {
-  const form = document.getElementById("bank-revenue-login-form");
-  if (!form || form.dataset.bound === "1") return;
-  form.dataset.bound = "1";
-  form.addEventListener("submit", handleBankMerchantLogin);
+  const loginForm = document.getElementById("bank-revenue-login-form");
+  if (!loginForm || loginForm.dataset.bound === "1") return;
+  loginForm.dataset.bound = "1";
+  loginForm.addEventListener("submit", handleBankMerchantLogin);
+
+  document.getElementById("bank-revenue-register-form")?.addEventListener("submit", handleBankMerchantRegister);
+  document.getElementById("bank-revenue-otp-form")?.addEventListener("submit", handleBankOtpVerify);
+  document.getElementById("btn-bank-otp-resend")?.addEventListener("click", handleBankResendOtp);
+  document.getElementById("btn-bank-otp-back")?.addEventListener("click", () => {
+    showBankOtpError("");
+    switchBankAuthPanel("register");
+  });
+  document.getElementById("bank-tab-login")?.addEventListener("click", () => {
+    showBankLoginError("");
+    showBankRegisterError("");
+    switchBankAuthPanel("login");
+  });
+  document.getElementById("bank-tab-register")?.addEventListener("click", () => {
+    showBankLoginError("");
+    showBankRegisterError("");
+    switchBankAuthPanel("register");
+  });
 
   const saved = localStorage.getItem("pzhisen_email");
   const emailInput = document.getElementById("bank-login-email");
+  const regEmailInput = document.getElementById("bank-register-email");
   if (saved && emailInput && !emailInput.value) emailInput.value = saved;
+  if (saved && regEmailInput && !regEmailInput.value) regEmailInput.value = saved;
+}
+
+async function handleBankMerchantRegister(e) {
+  e.preventDefault();
+  showBankRegisterError("");
+
+  const email = normalizeBankEmail(document.getElementById("bank-register-email")?.value);
+  const password = document.getElementById("bank-register-password")?.value;
+  const password2 = document.getElementById("bank-register-password2")?.value;
+  const btn = document.getElementById("btn-bank-register-submit");
+
+  if (!email) {
+    showBankRegisterError("请填写有效的商户邮箱");
+    return;
+  }
+  if (!password || password.length < 8) {
+    showBankRegisterError("密码至少 8 位");
+    return;
+  }
+  if (password !== password2) {
+    showBankRegisterError("两次输入的密码不一致");
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "发送验证码中…";
+  }
+
+  try {
+    const res = await api("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, idea: "商户收账仪表盘" }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "注册失败");
+
+    bankAuthPending = { email, password };
+    const hint = document.getElementById("bank-otp-hint");
+    if (hint) hint.textContent = `验证码已发送至 ${email}，请填写 6 位数字。`;
+    switchBankAuthPanel("otp");
+    document.getElementById("bank-otp-code")?.focus();
+  } catch (err) {
+    showBankRegisterError(err.message || "注册失败，请稍后重试");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "注册商户账户";
+    }
+  }
+}
+
+async function handleBankOtpVerify(e) {
+  e.preventDefault();
+  showBankOtpError("");
+
+  const code = document.getElementById("bank-otp-code")?.value.trim();
+  const btn = document.getElementById("btn-bank-otp-submit");
+
+  if (!bankAuthPending.email || !code || code.length !== 6) {
+    showBankOtpError("请填写 6 位邮箱验证码");
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "验证中…";
+  }
+
+  try {
+    const res = await api("/api/auth/verify-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: bankAuthPending.email, code }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "验证失败");
+
+    localStorage.setItem("pzhisen_email", bankAuthPending.email);
+    if (data.company?.id) {
+      window.companyId = data.company.id;
+      localStorage.setItem("pzhisen_company_id", data.company.id);
+    }
+
+    bankAuthPending = { email: "", password: "" };
+    await loadBankRevenueDashboard();
+  } catch (err) {
+    showBankOtpError(err.message || "验证码错误或已过期");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "完成注册并查看收账";
+    }
+  }
+}
+
+async function handleBankResendOtp() {
+  showBankOtpError("");
+  if (!bankAuthPending.email || !bankAuthPending.password) {
+    showBankOtpError("请返回注册页重新填写信息");
+    return;
+  }
+
+  const btn = document.getElementById("btn-bank-otp-resend");
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await api("/api/auth/resend-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: bankAuthPending.email,
+        password: bankAuthPending.password,
+        idea: "商户收账仪表盘",
+      }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "发送失败");
+    const hint = document.getElementById("bank-otp-hint");
+    if (hint) hint.textContent = `验证码已重新发送至 ${bankAuthPending.email}`;
+  } catch (err) {
+    showBankOtpError(err.message || "重新发送失败");
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 function setupBankRevenueDashboard() {

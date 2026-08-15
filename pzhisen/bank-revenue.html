@@ -10,7 +10,7 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>中国银行收账仪表盘 — 商户登录</title>
+  <title>中国银行收账仪表盘 — 商户登录 / 注册</title>
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/dashboard.css">
 </head>
@@ -28,7 +28,7 @@
       <header class="bank-revenue-hub__header">
         <div>
           <h1 class="bank-revenue-hub__title">🏦 中国银行收账仪表盘</h1>
-          <p class="bank-revenue-hub__subtitle">商户登录 · 真实银行卡转账结算 · 中国用户借记卡 &amp; 全球用户 VISA 借记卡分账统计</p>
+          <p class="bank-revenue-hub__subtitle">商户登录 / 注册 · 真实银行卡转账结算 · 中国用户借记卡 &amp; 全球用户 VISA 借记卡分账统计</p>
         </div>
         <div class="bank-revenue-hub__actions">
           <span class="real-badge real-badge--live">真实收账</span>
@@ -39,14 +39,18 @@
       <div id="bank-revenue-access" class="bank-revenue-access">
         <div class="bank-revenue-login bank-revenue-login--hero">
           <div class="bank-revenue-login__intro">
-            <h2>商户邮箱登录</h2>
-            <p>登录后即可查看收款账户的每日进账结算金额与累计收益：</p>
+            <h2>商户账户</h2>
+            <p>登录或注册商户邮箱后，可查看收款账户的每日进账结算金额与累计收益：</p>
             <ul class="bank-revenue-login__list">
               <li><strong>中国银行借记卡</strong> — 中国用户订阅入账</li>
               <li><strong>中国银行 VISA 借记卡</strong> — 全球用户订阅入账</li>
             </ul>
           </div>
-          <form class="bank-revenue-login__form" id="bank-revenue-login-form">
+          <div class="bank-revenue-auth__tabs" role="tablist">
+            <button type="button" class="bank-revenue-auth__tab active" id="bank-tab-login" data-tab="login">登录</button>
+            <button type="button" class="bank-revenue-auth__tab" id="bank-tab-register" data-tab="register">注册商户</button>
+          </div>
+          <form class="bank-revenue-login__form bank-revenue-auth-panel active" id="bank-revenue-login-form" data-panel="login">
             <label class="bank-revenue-login__field">
               <span>商户邮箱</span>
               <input type="email" id="bank-login-email" name="email" required autocomplete="email" placeholder="请输入商户邮箱" spellcheck="false">
@@ -58,7 +62,34 @@
             <p class="bank-revenue-login__error" id="bank-login-error" hidden></p>
             <button type="submit" class="bank-revenue-login__btn" id="btn-bank-login-submit">登录查看收账数据</button>
           </form>
-          <p class="bank-revenue-login__hint">使用在 Render 中配置的 ORDER_NOTIFY_EMAIL 或 MERCHANT_OWNER_EMAILS 商户邮箱登录。</p>
+          <form class="bank-revenue-login__form bank-revenue-auth-panel" id="bank-revenue-register-form" data-panel="register" hidden>
+            <label class="bank-revenue-login__field">
+              <span>商户邮箱</span>
+              <input type="email" id="bank-register-email" name="email" required autocomplete="email" placeholder="Gmail / Outlook / QQ / 163 …" spellcheck="false">
+            </label>
+            <label class="bank-revenue-login__field">
+              <span>设置密码</span>
+              <input type="password" id="bank-register-password" name="password" required autocomplete="new-password" placeholder="至少 8 位" minlength="8">
+            </label>
+            <label class="bank-revenue-login__field">
+              <span>确认密码</span>
+              <input type="password" id="bank-register-password2" name="password2" required autocomplete="new-password" placeholder="再次输入密码" minlength="8">
+            </label>
+            <p class="bank-revenue-login__error" id="bank-register-error" hidden></p>
+            <button type="submit" class="bank-revenue-login__btn bank-revenue-login__btn--register" id="btn-bank-register-submit">注册商户账户</button>
+          </form>
+          <form class="bank-revenue-login__form bank-revenue-auth-panel" id="bank-revenue-otp-form" data-panel="otp" hidden>
+            <p class="bank-revenue-otp-hint" id="bank-otp-hint">验证码已发送至您的邮箱，请填写 6 位数字。</p>
+            <label class="bank-revenue-login__field">
+              <span>邮箱验证码</span>
+              <input type="text" id="bank-otp-code" class="bank-revenue-otp-input" required maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="000000" autocomplete="one-time-code">
+            </label>
+            <p class="bank-revenue-login__error" id="bank-otp-error" hidden></p>
+            <button type="submit" class="bank-revenue-login__btn" id="btn-bank-otp-submit">完成注册并查看收账</button>
+            <button type="button" class="bank-revenue-login__btn bank-revenue-login__btn--ghost" id="btn-bank-otp-resend">重新发送验证码</button>
+            <button type="button" class="bank-revenue-login__btn bank-revenue-login__btn--ghost" id="btn-bank-otp-back">返回注册</button>
+          </form>
+          <p class="bank-revenue-login__hint">注册后需验证邮箱。收账数据仅对 ORDER_NOTIFY_EMAIL / MERCHANT_OWNER_EMAILS 配置的商户邮箱开放。</p>
         </div>
       </div>
 
