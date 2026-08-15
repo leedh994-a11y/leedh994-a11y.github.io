@@ -151,7 +151,7 @@
   <script>
     window.bankRevenueStandalone = true;
     window.companyId = null;
-    const api = (path, options = {}) => fetch(path, { credentials: "include", ...options });
+    window.api = (path, options = {}) => fetch(path, { credentials: "include", ...options });
   </script>
   <script src="js/bank-revenue-dashboard.js"></script>
   <script src="js/bank-revenue-page.js"></script>

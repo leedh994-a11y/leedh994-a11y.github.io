@@ -1,30 +1,34 @@
-/* global api, loadBankRevenueDashboard, setupBankRevenueDashboard */
+/* global api, loadBankRevenueDashboard, setupBankRevenueDashboard, setupBankRevenueLogin */
 
-async function initBankRevenuePage() {
+function initBankRevenuePage() {
   setupBankRevenueDashboard();
-  setupBankRevenueLogin();
 
   const logoutBtn = document.getElementById("btn-bank-logout");
   logoutBtn?.addEventListener("click", async () => {
-    await api("/api/auth/logout", { method: "POST" });
+    await window.api("/api/auth/logout", { method: "POST" });
     location.reload();
   });
 
-  try {
-    const res = await api("/api/auth/me");
-    if (res.ok) {
-      const me = await res.json();
-      if (me.user?.email) {
-        const emailInput = document.getElementById("bank-login-email");
-        if (emailInput && !emailInput.value) emailInput.value = me.user.email;
+  (async () => {
+    try {
+      const res = await window.api("/api/auth/me");
+      if (res.ok) {
+        const me = await res.json();
+        if (me.user?.email) {
+          const emailInput = document.getElementById("bank-login-email");
+          if (emailInput && !emailInput.value) emailInput.value = me.user.email;
+        }
+        if (me.company?.id) window.companyId = me.company.id;
       }
-      if (me.company?.id) window.companyId = me.company.id;
+    } catch (_) {
+      /* ignore */
     }
-  } catch (_) {
-    /* ignore */
-  }
-
-  await loadBankRevenueDashboard();
+    await loadBankRevenueDashboard();
+  })();
 }
 
-initBankRevenuePage();
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initBankRevenuePage);
+} else {
+  initBankRevenuePage();
+}

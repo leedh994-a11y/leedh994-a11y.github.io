@@ -2,6 +2,7 @@ const params = new URLSearchParams(location.search);
 let companyId = params.get("company");
 
 const api = (path, options = {}) => fetch(path, { credentials: "include", ...options });
+window.api = api;
 
 const AGENTS = [
   { id: "ceo", name: "CEO Agent", icon: "◆" },

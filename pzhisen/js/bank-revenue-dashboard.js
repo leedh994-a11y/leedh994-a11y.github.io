@@ -1,6 +1,15 @@
-/* global companyId, api, bankRevenueStandalone */
+/* global companyId, bankRevenueStandalone */
 
 const BANK_AUTH_SOURCE = "bank-revenue";
+
+const api =
+  typeof window !== "undefined" && window.api
+    ? window.api
+    : (path, options = {}) => fetch(path, { credentials: "include", ...options });
+
+if (typeof window !== "undefined" && !window.api) {
+  window.api = api;
+}
 
 function fmtCny(amount) {
   return `¥${Number(amount || 0).toLocaleString("zh-CN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
@@ -36,8 +45,10 @@ function bankRevenueApiPath() {
 function showBankLoginError(msg) {
   const el = document.getElementById("bank-login-error");
   if (!el) return;
-  el.hidden = !msg;
-  el.textContent = msg || "";
+  const text = msg || "";
+  el.hidden = !text;
+  el.textContent = text;
+  if (text) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function showBankRegisterError(msg) {
@@ -308,20 +319,28 @@ async function loadBankRevenueDashboard() {
 }
 
 async function handleBankMerchantLogin(e) {
-  e.preventDefault();
+  e?.preventDefault?.();
   showBankLoginError("");
+  showBankAuthStatus("正在登录…", "info");
 
   const email = normalizeBankEmail(document.getElementById("bank-login-email")?.value);
   const password = document.getElementById("bank-login-password")?.value;
   const btn = document.getElementById("btn-bank-login-submit");
 
-  if (!email || !password) {
-    showBankLoginError("请填写商户邮箱和密码");
+  if (!email) {
+    showBankAuthStatus("");
+    showBankLoginError("请填写有效的商户邮箱");
+    return;
+  }
+  if (!password) {
+    showBankAuthStatus("");
+    showBankLoginError("请填写登录密码");
     return;
   }
 
   if (btn) {
     btn.disabled = true;
+    btn.classList.add("is-loading");
     btn.textContent = "登录中…";
   }
 
@@ -354,15 +373,18 @@ async function handleBankMerchantLogin(e) {
     if (data.company?.id) localStorage.setItem("pzhisen_company_id", data.company.id);
 
     await loadBankRevenueDashboard();
+    showBankAuthStatus("登录成功", "info");
 
     if (typeof bankRevenueStandalone === "undefined" || !bankRevenueStandalone) {
       document.getElementById("bank-revenue-hub")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   } catch (err) {
+    showBankAuthStatus("");
     showBankLoginError(err.message || "登录失败，请检查邮箱和密码");
   } finally {
     if (btn) {
       btn.disabled = false;
+      btn.classList.remove("is-loading");
       btn.textContent =
         typeof bankRevenueStandalone !== "undefined" && bankRevenueStandalone
           ? "登录查看收账数据"
@@ -371,14 +393,27 @@ async function handleBankMerchantLogin(e) {
   }
 }
 
-function setupBankRevenueLogin() {
+function bindBankAuthForms() {
+  if (window.__bankAuthFormsBound) return;
   const loginForm = document.getElementById("bank-revenue-login-form");
-  if (!loginForm || loginForm.dataset.bound === "1") return;
-  loginForm.dataset.bound = "1";
+  if (!loginForm) return;
+  window.__bankAuthFormsBound = true;
+
+  loginForm.setAttribute("novalidate", "novalidate");
   loginForm.addEventListener("submit", handleBankMerchantLogin);
 
-  document.getElementById("bank-revenue-register-form")?.addEventListener("submit", handleBankMerchantRegister);
-  document.getElementById("bank-revenue-otp-form")?.addEventListener("submit", handleBankOtpVerify);
+  const registerForm = document.getElementById("bank-revenue-register-form");
+  if (registerForm) {
+    registerForm.setAttribute("novalidate", "novalidate");
+    registerForm.addEventListener("submit", handleBankMerchantRegister);
+  }
+
+  const otpForm = document.getElementById("bank-revenue-otp-form");
+  if (otpForm) {
+    otpForm.setAttribute("novalidate", "novalidate");
+    otpForm.addEventListener("submit", handleBankOtpVerify);
+  }
+
   document.getElementById("btn-bank-otp-resend")?.addEventListener("click", handleBankResendOtp);
   document.getElementById("btn-bank-otp-back")?.addEventListener("click", () => {
     showBankOtpError("");
@@ -400,6 +435,10 @@ function setupBankRevenueLogin() {
   const regEmailInput = document.getElementById("bank-register-email");
   if (saved && emailInput && !emailInput.value) emailInput.value = saved;
   if (saved && regEmailInput && !regEmailInput.value) regEmailInput.value = saved;
+}
+
+function setupBankRevenueLogin() {
+  bindBankAuthForms();
 }
 
 async function handleBankMerchantRegister(e) {
