@@ -458,6 +458,7 @@ async function loadCompany() {
   loadMarketingDashboard();
   loadRealRevenueDashboard();
   loadContentMarketingDashboard();
+  loadLaunchCatalog();
 }
 
 async function runDaily() {
@@ -565,6 +566,7 @@ document.getElementById("btn-logout")?.addEventListener("click", async () => {
 renderAgentList();
 setupHistoryUi();
 setupMarketingDashboard();
+setupMarketingLaunch();
 setupRealRevenueDashboard();
 setupContentMarketingDashboard();
 loadConfig();

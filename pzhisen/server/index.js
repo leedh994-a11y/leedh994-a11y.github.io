@@ -55,6 +55,7 @@ import {
   setContentMarketingGoal,
   bumpContentMarketingActivity,
 } from "./content-marketing-dashboard.js";
+import { launchAllMarketing, getLaunchMethodsCatalog } from "./marketing-launch-all.js";
 import {
   registerHandler,
   verifyOtpHandler,
@@ -307,6 +308,51 @@ app.put("/api/companies/:id/content-marketing/goal", requireAuth, requireCompany
     success: true,
     contentMarketing: getContentMarketingDashboard(req.company.id, req.company),
   });
+});
+
+app.get("/api/companies/:id/marketing/launch-catalog", requireAuth, requireCompanyAccess, (_req, res) => {
+  res.json({ success: true, catalog: getLaunchMethodsCatalog() });
+});
+
+app.post("/api/companies/:id/marketing/launch-all", requireAuth, requireCompanyAccess, async (req, res) => {
+  try {
+    const company = req.company;
+    if (!requireSubscription(company, res)) return;
+
+    appendLog(company.id, {
+      agent: "System",
+      message: `🚀 一键启动全渠道推广 — 正在部署 ${getLaunchMethodsCatalog().total} 种零成本推广方式…`,
+    });
+
+    const result = await launchAllMarketing(company.id, company, { runAiAgents: true });
+
+    for (const r of result.launch.agentResults || []) {
+      appendLog(company.id, {
+        agent: r.agentName,
+        role: "agent",
+        type: "answer",
+        message: r.preview + (r.preview?.length >= 200 ? "…" : ""),
+        ai: r.ai,
+        etaDays: r.etaDays,
+      });
+    }
+
+    appendLog(company.id, {
+      agent: "System",
+      message: `✅ 全渠道推广已启动：${result.launch.methodsTotal} 种方式已部署，Marketing ${result.launch.marketingProgress}% · 内容营销 ${result.launch.contentMarketingProgress}%`,
+    });
+
+    company.lastRunAt = new Date().toISOString();
+    upsertCompany(company);
+
+    res.json({
+      success: true,
+      ...result,
+      logs: getLogs(company.id, 50),
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 function subscriptionPayload(email) {
