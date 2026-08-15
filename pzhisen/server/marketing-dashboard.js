@@ -2,6 +2,12 @@ import { loadJson, saveJson } from "./store.js";
 import { MARKETING_PLATFORMS } from "./platforms.js";
 import { ZERO_COST_MARKETING_CHANNELS } from "./marketing-policy.js";
 import { getSettlementAccounts } from "./settlement-accounts.js";
+import {
+  buildRealSalesBlock,
+  getCompanyMarketingActivity,
+  getRealOrderMetrics,
+  countdownFromDeadline,
+} from "./marketing-real-metrics.js";
 
 const STORE = "marketing-dashboards.json";
 
@@ -118,30 +124,10 @@ function daysBetween(a, b) {
 
 function syncTaskProgress(state) {
   const now = Date.now();
-  const start = new Date(state.campaignStartedAt).getTime();
-  const daysElapsed = daysBetween(start, now);
-  const tasks = state.tasks.map((t, i) => {
-    const dueMs = new Date(t.dueAt).getTime();
-    const overdue = now > dueMs;
-    let progress = t.progress || 0;
-    let status = t.status;
-
-    const autoAdvance = Math.min(daysElapsed * 8 + state.agentRuns * 5, 100);
-    const taskTarget = Math.min(100, Math.max(0, autoAdvance - i * 6));
-
-    if (status !== "completed") {
-      progress = Math.max(progress, taskTarget);
-      if (progress >= 100) {
-        progress = 100;
-        status = "completed";
-        t.completedAt = t.completedAt || new Date().toISOString();
-      } else if (progress > 0) {
-        status = "in_progress";
-      }
-    }
-    return { ...t, progress: Math.round(progress), status, overdue };
+  state.tasks = state.tasks.map((t) => {
+    const overdue = now > new Date(t.dueAt).getTime();
+    return { ...t, overdue };
   });
-  state.tasks = tasks;
   return state;
 }
 
@@ -153,7 +139,7 @@ function computeStepProgress(tasks) {
     const slice = tasks.filter((_, i) => i % CAMPAIGN_STEPS.length === idx);
     const prog = slice.length
       ? Math.round(slice.reduce((s, t) => s + t.progress, 0) / slice.length)
-      : Math.min(100, overall - idx * 15);
+      : 0;
     let status = "pending";
     if (prog >= 100) status = "done";
     else if (prog > 0) status = "active";
@@ -242,7 +228,7 @@ export function setRevenueGoal(companyId, company, { revenueTarget, targetDays, 
   return state;
 }
 
-export function getMarketingDashboard(companyId, company = null) {
+export function getMarketingDashboard(companyId, company = null, userEmail = null) {
   let state = getMarketingState(companyId, company);
   state = syncTaskProgress(state);
   saveMarketingState(state);
@@ -255,15 +241,30 @@ export function getMarketingDashboard(companyId, company = null) {
     ? Math.round(tasks.reduce((s, t) => s + t.progress, 0) / tasks.length)
     : 0;
 
-  const sales = computeSales(state);
+  const realSales = buildRealSalesBlock(state.goal, userEmail || company?.email);
+  const activity = getCompanyMarketingActivity(companyId);
+  const orders = getRealOrderMetrics();
   const steps = computeStepProgress(tasks);
-  const campaignCountdown = countdown(state.deadlineAt);
-  const revenueCountdown = countdown(state.deadlineAt);
+  const campaignCountdown = countdownFromDeadline(state.deadlineAt);
 
   const daysElapsed = daysBetween(new Date(state.campaignStartedAt).getTime(), Date.now()) + 1;
 
+  const sales = {
+    ...realSales,
+    countdown: campaignCountdown,
+    goal: state.goal,
+    daysToGoalEstimate:
+      realSales.progress > 0
+        ? Math.ceil((campaignCountdown.days || 1) * (1 - realSales.progress / 100))
+        : state.goal.targetDays,
+  };
+
   return {
     companyId,
+    dataSource: "real",
+    realDataNote: "收益来自真实客户付款订单；进度来自 AI 实际执行任务记录",
+    activity,
+    orders,
     campaign: {
       startedAt: state.campaignStartedAt,
       deadlineAt: state.deadlineAt,
@@ -272,6 +273,8 @@ export function getMarketingDashboard(companyId, company = null) {
       overallProgress,
       steps,
       countdown: campaignCountdown,
+      agentRunsToday: activity.agentRunsToday,
+      launchesToday: activity.launchesToday,
     },
     tasks: {
       items: tasks,
@@ -283,13 +286,7 @@ export function getMarketingDashboard(companyId, company = null) {
     },
     sales: {
       ...sales,
-      countdown: revenueCountdown,
-      goal: state.goal,
-      remaining: Math.max(0, sales.target - sales.total),
-      daysToGoalEstimate:
-        sales.progress > 0
-          ? Math.ceil((campaignCountdown.days || 1) * (1 - sales.progress / 100))
-          : state.goal.targetDays,
+      remaining: realSales.remaining,
     },
     settlement: getSettlementAccounts(),
     updatedAt: new Date().toISOString(),

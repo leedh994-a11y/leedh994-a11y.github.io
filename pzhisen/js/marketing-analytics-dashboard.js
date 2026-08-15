@@ -6,6 +6,11 @@ function fmtNum(n) {
   return Number(n || 0).toLocaleString();
 }
 
+function fmtMoney(amount, currency = "USD") {
+  const sym = currency === "CNY" ? "¥" : "$";
+  return `${sym}${Number(amount || 0).toLocaleString()}`;
+}
+
 function growthHtml(val, label) {
   const up = val > 0;
   const down = val < 0;
@@ -17,12 +22,13 @@ function growthHtml(val, label) {
 function renderTrend(trend) {
   const el = document.getElementById("analytics-trend");
   if (!el || !trend?.length) return;
-  const maxImp = Math.max(...trend.map((t) => t.impressions), 1);
+  const maxVal = Math.max(...trend.map((t) => t.revenueUsd || t.orders || 0), 1);
   el.innerHTML = trend
     .map((t) => {
-      const h = Math.round((t.impressions / maxImp) * 100);
+      const val = t.revenueUsd || t.orders || 0;
+      const h = Math.round((val / maxVal) * 100);
       const d = t.date.slice(5);
-      return `<div class="analytics-trend-bar" title="${d}: ${fmtNum(t.impressions)} 曝光, ${t.clicks} 点击">
+      return `<div class="analytics-trend-bar" title="${d}: $${val} 收益, ${t.orders || 0} 订单">
         <div class="analytics-trend-bar__fill" style="height:${h}%"></div>
         <span class="analytics-trend-bar__label">${d}</span>
       </div>`;
@@ -43,11 +49,11 @@ function renderAnalyticsDashboard(data) {
   set("analytics-date", data.date);
 
   const s = data.data?.summary || data.analysis?.totals || {};
-  set("kpi-impressions", fmtNum(s.impressions));
-  set("kpi-clicks", fmtNum(s.clicks));
-  set("kpi-engagement", fmtNum(s.engagement));
-  set("kpi-posts", fmtNum(s.posts));
-  set("kpi-emails", fmtNum(s.emails));
+  set("kpi-impressions", fmtNum(s.ordersToday));
+  set("kpi-clicks", fmtNum(s.agentRunsToday));
+  set("kpi-engagement", fmtNum(s.customersToday));
+  set("kpi-posts", fmtNum(s.agentExecutions));
+  set("kpi-emails", fmtNum(s.launchesToday));
   set("kpi-avg-progress", `${s.avgProgress || 0}%`);
 
   const tbody = document.getElementById("analytics-data-tbody");
@@ -65,11 +71,10 @@ function renderAnalyticsDashboard(data) {
           </div>
         </td>
         <td><span class="analytics-status analytics-status--${r.status === "已完成" ? "done" : r.status === "进行中" ? "active" : "start"}">${r.status}</span></td>
-        <td>${fmtNum(r.impressions)}</td>
-        <td>${fmtNum(r.clicks)}</td>
-        <td>${fmtNum(r.engagement)}</td>
-        <td>${r.ctr}%</td>
-        <td>${r.contentCreated || r.postsPublished}</td>
+        <td>${fmtNum(r.agentExecutions)}</td>
+        <td>${fmtNum(r.ordersToday)}</td>
+        <td>${fmtMoney(r.revenueToday, "USD")}</td>
+        <td>${fmtNum(r.customersToday)}</td>
         <td class="analytics-zero">$0</td>
       </tr>`
       )
@@ -80,8 +85,8 @@ function renderAnalyticsDashboard(data) {
   const growthEl = document.getElementById("analytics-growth");
   if (growthEl) {
     growthEl.innerHTML =
-      growthHtml(g.impressions, "曝光增长") +
-      growthHtml(g.clicks, "点击增长") +
+      growthHtml(g.orders, "订单增长") +
+      growthHtml(g.revenue, "收益增长") +
       `<div class="analytics-growth-item"><span>进度变化</span><strong>${g.progress >= 0 ? "+" : ""}${g.progress || 0}%</strong></div>`;
   }
 
@@ -92,8 +97,8 @@ function renderAnalyticsDashboard(data) {
         (c) => `
       <div class="analytics-cat-row">
         <strong>${c.category}</strong>
-        <span>${c.count} 种方式 · 进度 ${c.avgProgress}%</span>
-        <span>${fmtNum(c.impressions)} 曝光 · ${fmtNum(c.clicks)} 点击</span>
+        <span>${c.count} 种 · 进度 ${c.avgProgress}% · AI执行 ${c.agentExecutions} 次</span>
+        <span>全站今日 ${c.ordersToday || 0} 订单 · $${c.revenueToday || 0} 收益</span>
       </div>`
       )
       .join("");
@@ -102,14 +107,14 @@ function renderAnalyticsDashboard(data) {
   const topEl = document.getElementById("analytics-top");
   if (topEl) {
     topEl.innerHTML = (data.analysis?.topPerformers || [])
-      .map((t) => `<li><strong>${t.label}</strong> — ${t.clicks} 点击 · ${t.engagement} 互动 · ${t.progress}%</li>`)
-      .join("") || "<li>暂无数据</li>";
+      .map((t) => `<li><strong>${t.label}</strong> — AI执行 ${t.agentExecutions} 次 · 进度 ${t.progress}%</li>`)
+      .join("") || "<li>暂无执行记录，请点击一键启动</li>";
   }
 
   const attEl = document.getElementById("analytics-attention");
   if (attEl) {
     attEl.innerHTML = (data.analysis?.needsAttention || [])
-      .map((t) => `<li><strong>${t.label}</strong> — 进度仅 ${t.progress}%，建议加强</li>`)
+      .map((t) => `<li><strong>${t.label}</strong> — 进度仅 ${t.progress}%，建议一键启动</li>`)
       .join("") || "<li>所有渠道运行良好</li>";
   }
 

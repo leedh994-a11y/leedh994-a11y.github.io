@@ -191,8 +191,8 @@ app.post("/api/companies/:id/run-daily", requireAuth, requireCompanyAccess, asyn
       success: true,
       results,
       logs: getLogs(company.id, 50),
-      marketing: getMarketingDashboard(company.id, company),
-      contentMarketing: getContentMarketingDashboard(company.id, company),
+      marketing: getMarketingDashboard(company.id, company, req.user?.email),
+      contentMarketing: getContentMarketingDashboard(company.id, company, req.user?.email),
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -242,8 +242,8 @@ app.post("/api/companies/:id/agents/:agentId", requireAuth, requireCompanyAccess
     res.json({
       success: true,
       result: { ...result, content: answerText },
-      marketing: getMarketingDashboard(company.id, company),
-      contentMarketing: getContentMarketingDashboard(company.id, company),
+      marketing: getMarketingDashboard(company.id, company, req.user?.email),
+      contentMarketing: getContentMarketingDashboard(company.id, company, req.user?.email),
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -262,7 +262,7 @@ app.get("/api/companies/:id/logs", requireAuth, requireCompanyAccess, (req, res)
 app.get("/api/companies/:id/marketing/dashboard", requireAuth, requireCompanyAccess, (req, res) => {
   res.json({
     success: true,
-    marketing: getMarketingDashboard(req.company.id, req.company),
+    marketing: getMarketingDashboard(req.company.id, req.company, req.user?.email),
   });
 });
 
@@ -271,7 +271,7 @@ app.put("/api/companies/:id/marketing/goal", requireAuth, requireCompanyAccess, 
   setRevenueGoal(req.company.id, req.company, { revenueTarget, targetDays, currency });
   res.json({
     success: true,
-    marketing: getMarketingDashboard(req.company.id, req.company),
+    marketing: getMarketingDashboard(req.company.id, req.company, req.user?.email),
   });
 });
 
@@ -298,7 +298,7 @@ app.put("/api/companies/:id/revenue/goal", requireAuth, requireCompanyAccess, (r
 app.get("/api/companies/:id/content-marketing/dashboard", requireAuth, requireCompanyAccess, (req, res) => {
   res.json({
     success: true,
-    contentMarketing: getContentMarketingDashboard(req.company.id, req.company),
+    contentMarketing: getContentMarketingDashboard(req.company.id, req.company, req.user?.email),
   });
 });
 
@@ -307,7 +307,7 @@ app.put("/api/companies/:id/content-marketing/goal", requireAuth, requireCompany
   setContentMarketingGoal(req.company.id, req.company, { revenueTarget, targetDays, currency });
   res.json({
     success: true,
-    contentMarketing: getContentMarketingDashboard(req.company.id, req.company),
+    contentMarketing: getContentMarketingDashboard(req.company.id, req.company, req.user?.email),
   });
 });
 
@@ -318,7 +318,7 @@ app.get("/api/companies/:id/marketing/launch-catalog", requireAuth, requireCompa
 app.get("/api/companies/:id/marketing/analytics/daily", requireAuth, requireCompanyAccess, (req, res) => {
   res.json({
     success: true,
-    analytics: getMarketingAnalyticsDashboard(req.company.id, req.company),
+    analytics: getMarketingAnalyticsDashboard(req.company.id, req.company, req.user?.email),
   });
 });
 
@@ -356,7 +356,7 @@ app.post("/api/companies/:id/marketing/launch-all", requireAuth, requireCompanyA
     res.json({
       success: true,
       ...result,
-      analytics: getMarketingAnalyticsDashboard(company.id, company),
+      analytics: getMarketingAnalyticsDashboard(company.id, company, req.user?.email),
       logs: getLogs(company.id, 50),
     });
   } catch (err) {

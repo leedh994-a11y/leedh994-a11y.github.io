@@ -1,5 +1,11 @@
 import { loadJson, saveJson } from "./store.js";
 import { ZERO_COST_MARKETING_CHANNELS } from "./marketing-policy.js";
+import {
+  buildRealSalesBlock,
+  getCompanyMarketingActivity,
+  getRealOrderMetrics,
+  countdownFromDeadline,
+} from "./marketing-real-metrics.js";
 
 const STORE = "content-marketing-dashboards.json";
 
@@ -152,28 +158,14 @@ function countdown(deadlineIso) {
 
 function syncProgress(state) {
   const now = Date.now();
-  const start = new Date(state.startedAt).getTime();
-  const daysElapsed = daysBetween(start, now);
-  state.tasks = state.tasks.map((t, i) => {
+  state.tasks = state.tasks.map((t) => {
     const overdue = now > new Date(t.dueAt).getTime();
-    let progress = t.progress || 0;
-    let status = t.status;
-    const autoAdvance = Math.min(daysElapsed * 7 + state.agentRuns * 6, 100);
-    const taskTarget = Math.min(100, Math.max(0, autoAdvance - i * 4));
-    if (status !== "completed") {
-      progress = Math.max(progress, taskTarget);
-      if (progress >= 100) {
-        progress = 100;
-        status = "completed";
-        t.completedAt = t.completedAt || new Date().toISOString();
-      } else if (progress > 0) status = "in_progress";
-    }
-    return { ...t, progress: Math.round(progress), status, overdue };
+    return { ...t, overdue };
   });
   return state;
 }
 
-function computeDailyProgress(state) {
+function computeDailyProgress(state, activity) {
   const today = new Date().toISOString().slice(0, 10);
   const overall = state.tasks.length
     ? Math.round(state.tasks.reduce((s, t) => s + t.progress, 0) / state.tasks.length)
@@ -184,14 +176,17 @@ function computeDailyProgress(state) {
   const inProgressToday = state.tasks.filter((t) => t.status === "in_progress").length;
 
   let log = state.dailyLog || [];
-  const entry = log.find((d) => d.date === today);
-  if (entry) {
-    entry.overallProgress = overall;
-    entry.completedTasks = completedToday;
-    entry.inProgressTasks = inProgressToday;
-  } else {
-    log.push({ date: today, overallProgress: overall, completedTasks: completedToday, inProgressTasks: inProgressToday });
-  }
+  const entry = {
+    date: today,
+    overallProgress: overall,
+    completedTasks: completedToday,
+    inProgressTasks: inProgressToday,
+    agentRuns: activity.agentRunsToday,
+    orders: getRealOrderMetrics().orderCountToday,
+  };
+  const idx = log.findIndex((d) => d.date === today);
+  if (idx >= 0) log[idx] = entry;
+  else log.push(entry);
   state.dailyLog = log.slice(-60);
   return { today, overall, completedToday, inProgressToday, history: state.dailyLog };
 }
@@ -271,11 +266,13 @@ export function setContentMarketingGoal(companyId, company, { revenueTarget, tar
   return state;
 }
 
-export function getContentMarketingDashboard(companyId, company = null) {
+export function getContentMarketingDashboard(companyId, company = null, userEmail = null) {
   let state = getContentMarketingState(companyId, company);
   state = syncProgress(state);
-  const daily = computeDailyProgress(state);
-  const sales = computeSales(state);
+  const activity = getCompanyMarketingActivity(companyId);
+  const daily = computeDailyProgress(state, activity);
+  const realSales = buildRealSalesBlock(state.goal, userEmail || company?.email);
+  const orders = getRealOrderMetrics();
   saveState(state);
 
   const tasks = state.tasks;
@@ -285,11 +282,25 @@ export function getContentMarketingDashboard(companyId, company = null) {
     zeroCostPledge: "$0 / ¥0 媒体花费",
   }));
 
-  const cd = countdown(state.deadlineAt);
+  const cd = countdownFromDeadline(state.deadlineAt);
   const daysElapsed = daysBetween(new Date(state.startedAt).getTime(), Date.now()) + 1;
+
+  const sales = {
+    ...realSales,
+    countdown: cd,
+    goal: state.goal,
+    daysToGoalEstimate:
+      realSales.progress > 0
+        ? Math.ceil((cd.days || 1) * (1 - realSales.progress / 100))
+        : state.goal.targetDays,
+  };
 
   return {
     companyId,
+    dataSource: "real",
+    realDataNote: "收益来自真实客户付款订单；进度来自 AI 实际执行任务记录",
+    activity,
+    orders,
     zeroCostPolicy: "所有推广均采用零成本有机渠道，不购买任何广告",
     campaign: {
       startedAt: state.startedAt,
@@ -301,6 +312,8 @@ export function getContentMarketingDashboard(companyId, company = null) {
       todayProgress: daily.overall,
       completedToday: daily.completedToday,
       inProgressToday: daily.inProgressToday,
+      agentRunsToday: activity.agentRunsToday,
+      ordersToday: orders.orderCountToday,
     },
     pillars,
     tasks: {
@@ -313,10 +326,7 @@ export function getContentMarketingDashboard(companyId, company = null) {
     dailyLog: daily.history,
     sales: {
       ...sales,
-      countdown: cd,
-      goal: state.goal,
-      daysToGoalEstimate:
-        sales.progress > 0 ? Math.ceil((cd.days || 1) * (1 - sales.progress / 100)) : state.goal.targetDays,
+      remaining: realSales.remaining,
     },
     updatedAt: new Date().toISOString(),
   };
