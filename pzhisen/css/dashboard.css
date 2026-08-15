@@ -3350,3 +3350,402 @@
     font-size: 28px;
   }
 }
+
+/* ── Daily sales hero dashboard ── */
+.daily-sales-hero {
+  position: relative;
+  margin-bottom: 28px;
+  padding: 28px 28px 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 42%, #312e81 100%);
+  color: #f8fafc;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.daily-sales-hero__glow {
+  position: absolute;
+  top: -40%;
+  right: -10%;
+  width: 55%;
+  height: 140%;
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.35) 0%, transparent 68%);
+  pointer-events: none;
+}
+
+.daily-sales-hero__header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.daily-sales-hero__title {
+  margin: 0 0 6px;
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.daily-sales-hero__subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(226, 232, 240, 0.78);
+}
+
+.daily-sales-hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dsh-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.dsh-status-badge--idle {
+  background: rgba(148, 163, 184, 0.2);
+  color: #e2e8f0;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.dsh-status-badge--good {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.dsh-status-badge--warn {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.dsh-status-badge--done {
+  background: rgba(34, 197, 94, 0.22);
+  color: #86efac;
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.daily-sales-hero__layout {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.85fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.daily-sales-hero__main {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.daily-sales-hero__today-card {
+  padding: 22px 24px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+.daily-sales-hero__today-label {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(226, 232, 240, 0.72);
+  margin-bottom: 8px;
+}
+
+.daily-sales-hero__today-value {
+  font-size: clamp(2.5rem, 5vw, 3.75rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  background: linear-gradient(90deg, #fef08a, #fbbf24, #f97316);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.daily-sales-hero__today-meta {
+  margin-top: 10px;
+  font-size: 13px;
+  color: rgba(226, 232, 240, 0.7);
+}
+
+.dsh-progress-block {
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dsh-progress-block--primary {
+  padding: 20px 20px 18px;
+  background: rgba(15, 23, 42, 0.5);
+  border-color: rgba(129, 140, 248, 0.35);
+}
+
+.dsh-progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dsh-progress-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.dsh-progress-pct {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fef08a;
+}
+
+.dsh-progress-track {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.dsh-progress-track--md {
+  height: 14px;
+}
+
+.dsh-progress-track--xl {
+  height: 22px;
+}
+
+.dsh-progress-fill {
+  position: relative;
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  transition: width 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dsh-progress-fill--revenue {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24, #fde047);
+  box-shadow: 0 0 18px rgba(251, 191, 36, 0.55);
+}
+
+.dsh-progress-fill--time {
+  background: linear-gradient(90deg, #6366f1, #818cf8, #a5b4fc);
+}
+
+.dsh-progress-fill--pace {
+  background: linear-gradient(90deg, #10b981, #34d399, #6ee7b7);
+}
+
+.dsh-progress-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  animation: dsh-shimmer 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes dsh-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.dsh-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: rgba(226, 232, 240, 0.75);
+  flex-wrap: wrap;
+}
+
+.dsh-progress-meta strong {
+  color: #fef08a;
+  font-weight: 700;
+}
+
+.dsh-progress-meta--stack {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.dsh-progress-meta--stack small {
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.55);
+}
+
+.daily-sales-hero__footnote {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.5);
+}
+
+.daily-sales-hero__goal-panel {
+  padding: 22px 22px 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.2);
+}
+
+.dsh-goal-panel__title {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.dsh-goal-panel__desc {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.dsh-goal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dsh-goal-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px;
+  height: 56px;
+  border-radius: 14px;
+  border: 2px solid #c7d2fe;
+  background: #f8fafc;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.dsh-goal-input-wrap:focus-within {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+}
+
+.dsh-goal-currency {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #6366f1;
+}
+
+.dsh-goal-input-wrap input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+  outline: none;
+}
+
+.dsh-goal-suffix {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.dsh-goal-submit {
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+}
+
+.dsh-goal-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(79, 70, 229, 0.45);
+}
+
+.dsh-goal-submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.dsh-goal-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.dsh-goal-summary__item {
+  padding: 14px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dsh-goal-summary__item span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.dsh-goal-summary__item strong {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.dsh-goal-summary__item--highlight {
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+  border: 1px solid #c7d2fe;
+}
+
+.dsh-goal-summary__item--highlight strong {
+  color: #4f46e5;
+}
+
+.dsh-goal-panel__hint {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+@media (max-width: 960px) {
+  .daily-sales-hero__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .daily-sales-hero {
+    padding: 20px 16px;
+  }
+
+  .dsh-goal-summary {
+    grid-template-columns: 1fr;
+  }
+}

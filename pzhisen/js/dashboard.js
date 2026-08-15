@@ -499,6 +499,7 @@ async function loadCompany() {
 
   await refreshCompanySnapshot({ redirectOnFail: true });
   loadMarketingDashboard();
+  loadDailySalesHero();
   loadRealRevenueDashboard();
   loadBankRevenueDashboard();
   loadContentMarketingDashboard();
@@ -578,6 +579,7 @@ async function refreshAllDashboards() {
       refreshCompanySnapshot(),
       fetchLogs(),
       typeof loadMarketingDashboard === "function" ? loadMarketingDashboard({ refresh: true }) : null,
+      typeof loadDailySalesHero === "function" ? loadDailySalesHero({ refresh: true }) : null,
       typeof loadRealRevenueDashboard === "function" ? loadRealRevenueDashboard({ refresh: true }) : null,
       typeof loadBankRevenueDashboard === "function" ? loadBankRevenueDashboard({ refresh: true }) : null,
       typeof loadContentMarketingDashboard === "function" ? loadContentMarketingDashboard({ refresh: true }) : null,
@@ -729,6 +731,7 @@ setInterval(async () => {
 
 setInterval(fetchLogs, 15000);
 setInterval(loadMarketingDashboard, 45000);
+setInterval(loadDailySalesHero, 15000);
 setInterval(loadRealRevenueDashboard, 30000);
 setInterval(loadBankRevenueDashboard, 30000);
 setInterval(loadContentMarketingDashboard, 45000);

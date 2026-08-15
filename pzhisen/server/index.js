@@ -60,6 +60,7 @@ import {
 } from "./content-marketing-dashboard.js";
 import { launchAllMarketing, getLaunchMethodsCatalog } from "./marketing-launch-all.js";
 import { getMarketingAnalyticsDashboard } from "./marketing-analytics-dashboard.js";
+import { getDailySalesDashboard, setDailySalesGoal } from "./daily-sales-dashboard.js";
 import {
   registerHandler,
   verifyOtpHandler,
@@ -276,6 +277,26 @@ app.put("/api/companies/:id/marketing/goal", requireAuth, requireCompanyAccess, 
     success: true,
     marketing: getMarketingDashboard(req.company.id, req.company, req.user?.email),
   });
+});
+
+app.get("/api/companies/:id/marketing/daily-sales", requireAuth, requireCompanyAccess, (req, res) => {
+  res.json({
+    success: true,
+    dailySales: getDailySalesDashboard(req.company.id),
+  });
+});
+
+app.put("/api/companies/:id/marketing/daily-sales/goal", requireAuth, requireCompanyAccess, (req, res) => {
+  try {
+    const { dailyTargetUsd } = req.body || {};
+    setDailySalesGoal(req.company.id, { dailyTargetUsd });
+    res.json({
+      success: true,
+      dailySales: getDailySalesDashboard(req.company.id),
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
 });
 
 app.get("/api/billing/settlement-accounts", requireAuth, (_req, res) => {

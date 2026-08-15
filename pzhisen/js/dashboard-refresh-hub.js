@@ -57,6 +57,7 @@
       await run(btn, "全部仪表盘", async () => {
         await Promise.all([
           window.loadMarketingDashboard?.({ refresh: true }),
+          window.loadDailySalesHero?.({ refresh: true }),
           window.loadRealRevenueDashboard?.({ refresh: true }),
           window.loadBankRevenueDashboard?.({ refresh: true }),
           window.loadContentMarketingDashboard?.({ refresh: true }),
@@ -86,6 +87,8 @@
       run(btn, "内容营销", () => window.loadContentMarketingDashboard?.({ refresh: true })),
     "btn-analytics-refresh": (btn) =>
       run(btn, "推广数据分析", () => window.loadMarketingAnalytics?.({ refresh: true })),
+    "btn-dsh-refresh": (btn) =>
+      run(btn, "每日销售收益", () => window.loadDailySalesHero?.({ refresh: true })),
     "btn-marketing-refresh": (btn) =>
       run(btn, "AI 推广营销", () => window.loadMarketingDashboard?.({ refresh: true })),
   };

@@ -80,6 +80,108 @@
     </aside>
 
     <main class="main-panel">
+      <section class="daily-sales-hero" id="daily-sales-hero" aria-label="每日推广营销销售收益仪表盘">
+        <div class="daily-sales-hero__glow" aria-hidden="true"></div>
+        <header class="daily-sales-hero__header">
+          <div>
+            <h2 class="daily-sales-hero__title">📊 每日推广营销销售收益仪表盘</h2>
+            <p class="daily-sales-hero__subtitle">真实网站销售收益 · 美元 USD · 今日目标进度一目了然</p>
+          </div>
+          <div class="daily-sales-hero__actions">
+            <span class="dsh-status-badge dsh-status-badge--idle" id="dsh-status-badge">加载中…</span>
+            <span class="real-badge real-badge--live">真实数据</span>
+            <button type="button" class="history-btn history-btn--primary" id="btn-dsh-refresh">↻ 刷新</button>
+          </div>
+        </header>
+
+        <div class="daily-sales-hero__layout">
+          <div class="daily-sales-hero__main">
+            <div class="daily-sales-hero__today-card">
+              <div class="daily-sales-hero__today-label">今日此刻销售收益额</div>
+              <div class="daily-sales-hero__today-value" id="dsh-today-revenue">$0</div>
+              <div class="daily-sales-hero__today-meta" id="dsh-today-orders">0 笔订单 · 0 位客户</div>
+            </div>
+
+            <div class="dsh-progress-block dsh-progress-block--primary">
+              <div class="dsh-progress-row">
+                <span class="dsh-progress-label">今日销售收益进度</span>
+                <strong class="dsh-progress-pct" id="dsh-revenue-pct">0%</strong>
+              </div>
+              <div class="dsh-progress-track dsh-progress-track--xl">
+                <div class="dsh-progress-fill dsh-progress-fill--revenue" id="dsh-revenue-bar" style="width:0%"></div>
+                <div class="dsh-progress-glow" aria-hidden="true"></div>
+              </div>
+              <div class="dsh-progress-meta">
+                <span>每日目标 <strong id="dsh-target-display">$500</strong></span>
+                <span>距离目标还差 <strong id="dsh-remaining">$500</strong></span>
+              </div>
+            </div>
+
+            <div class="dsh-progress-block">
+              <div class="dsh-progress-row">
+                <span class="dsh-progress-label">今日时间进度（距今日结束）</span>
+                <strong class="dsh-progress-pct" id="dsh-time-pct">0%</strong>
+              </div>
+              <div class="dsh-progress-track dsh-progress-track--md">
+                <div class="dsh-progress-fill dsh-progress-fill--time" id="dsh-time-bar" style="width:0%"></div>
+              </div>
+              <div class="dsh-progress-meta">
+                <span>今日剩余时间 <strong id="dsh-eod-countdown">--</strong></span>
+              </div>
+            </div>
+
+            <div class="dsh-progress-block">
+              <div class="dsh-progress-row">
+                <span class="dsh-progress-label">达标预估进度（按当前增速）</span>
+                <strong class="dsh-progress-pct" id="dsh-pace-pct">0%</strong>
+              </div>
+              <div class="dsh-progress-track dsh-progress-track--md">
+                <div class="dsh-progress-fill dsh-progress-fill--pace" id="dsh-pace-bar" style="width:0%"></div>
+              </div>
+              <div class="dsh-progress-meta dsh-progress-meta--stack">
+                <span>预计还需 <strong id="dsh-hours-needed">—</strong> 小时完成今日目标</span>
+                <small id="dsh-pace-label">按当前销售增速估算达标时间</small>
+              </div>
+            </div>
+
+            <p class="daily-sales-hero__footnote" id="dsh-updated-at">数据来源：真实客户付款订单（USD）</p>
+          </div>
+
+          <aside class="daily-sales-hero__goal-panel">
+            <h3 class="dsh-goal-panel__title">🎯 设置每日目标销售收益</h3>
+            <p class="dsh-goal-panel__desc">输入推广营销网站每日希望达成的销售收益目标金额（美元 USD）</p>
+            <form class="dsh-goal-form" id="dsh-goal-form">
+              <label class="dsh-goal-input-wrap" for="dsh-goal-input">
+                <span class="dsh-goal-currency">$</span>
+                <input
+                  type="number"
+                  id="dsh-goal-input"
+                  min="1"
+                  step="1"
+                  value="500"
+                  required
+                  inputmode="decimal"
+                  aria-label="每日目标销售收益额（美元）"
+                >
+                <span class="dsh-goal-suffix">USD / 天</span>
+              </label>
+              <button type="submit" class="dsh-goal-submit" id="dsh-goal-submit">保存每日目标</button>
+            </form>
+            <div class="dsh-goal-summary">
+              <div class="dsh-goal-summary__item">
+                <span>您设定的每日目标</span>
+                <strong id="dsh-goal-current">$500</strong>
+              </div>
+              <div class="dsh-goal-summary__item dsh-goal-summary__item--highlight">
+                <span>今日已完成</span>
+                <strong id="dsh-today-revenue-side">$0</strong>
+              </div>
+            </div>
+            <p class="dsh-goal-panel__hint">保存后上方进度条将实时显示今日销售收益与目标的差距、剩余时间及预计达标小时数。</p>
+          </aside>
+        </div>
+      </section>
+
       <section class="company-card" id="company-card">
         <h1 id="company-name">Loading…</h1>
         <p class="idea" id="company-idea"></p>
@@ -726,6 +828,7 @@
   </div>
 
   <script src="js/daily-quota-ticker.js"></script>
+  <script src="js/daily-sales-hero.js"></script>
   <script src="js/marketing-launch.js"></script>
   <script src="js/marketing-analytics-dashboard.js"></script>
   <script src="js/real-revenue-dashboard.js"></script>
