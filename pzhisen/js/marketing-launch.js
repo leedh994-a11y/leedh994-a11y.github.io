@@ -59,17 +59,23 @@ function renderMethodChips(methods) {
     (more > 0 ? `<span class="launch-chip launch-chip--more">+${more} 更多方式</span>` : "");
 }
 
-async function loadLaunchCatalog() {
-  if (!companyId) return;
+async function loadLaunchCatalog(options = {}) {
+  const id = window.getCompanyId?.() || window.companyId || companyId;
+  if (!id) return false;
   try {
-    const res = await api(`/api/companies/${companyId}/marketing/launch-catalog`);
+    const suffix = options.refresh ? `?_=${Date.now()}` : "";
+    const res = await api(`/api/companies/${id}/marketing/launch-catalog${suffix}`, {
+      cache: options.refresh ? "no-store" : "default",
+    });
     const data = await res.json();
     if (data.success && data.catalog) {
       launchCatalog = data.catalog;
       renderMethodChips(data.catalog.methods);
+      return true;
     }
+    return false;
   } catch (_) {
-    /* ignore */
+    return false;
   }
 }
 

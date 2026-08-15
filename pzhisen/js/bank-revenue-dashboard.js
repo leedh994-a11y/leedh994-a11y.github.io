@@ -35,11 +35,12 @@ function fmtDate(iso) {
 }
 
 function bankRevenueApiPath(cacheBust = false) {
+  const id = window.getCompanyId?.() || window.companyId || companyId;
   let path;
   if (typeof bankRevenueStandalone !== "undefined" && bankRevenueStandalone) {
     path = "/api/revenue/bank";
-  } else if (companyId) {
-    path = `/api/companies/${companyId}/revenue/bank`;
+  } else if (id) {
+    path = `/api/companies/${id}/revenue/bank`;
   } else {
     path = "/api/revenue/bank";
   }
@@ -122,6 +123,12 @@ function showBankAuthStatus(msg, type = "info") {
   el.hidden = !msg;
   el.textContent = msg || "";
   el.className = `bank-revenue-auth-status bank-revenue-auth-status--${type}`;
+}
+
+function syncCompanyId(id) {
+  if (!id) return;
+  window.companyId = id;
+  if (typeof window.setCompanyId === "function") window.setCompanyId(id);
 }
 
 function normalizeBankEmail(email) {
@@ -385,7 +392,7 @@ async function loadBankRevenueDashboard(options = {}) {
             });
             const retryData = await retry.json();
             if (retryData.success && retryData.bankRevenue?.isMerchant) {
-              if (retryData.bankRevenue.companyId) window.companyId = retryData.bankRevenue.companyId;
+              if (retryData.bankRevenue.companyId) syncCompanyId(retryData.bankRevenue.companyId);
               renderBankRevenueDashboard(retryData.bankRevenue);
               return;
             }
@@ -393,7 +400,7 @@ async function loadBankRevenueDashboard(options = {}) {
         }
       }
     }
-    if (data.bankRevenue.companyId) window.companyId = data.bankRevenue.companyId;
+    if (data.bankRevenue.companyId) syncCompanyId(data.bankRevenue.companyId);
     renderBankRevenueDashboard(data.bankRevenue);
   } catch (_) {
     const msg = "加载收账数据失败，请稍后重试。";
@@ -464,7 +471,7 @@ async function handleBankMerchantLogin(e) {
 
     await claimBankMerchantAccess();
 
-    if (data.company?.id) window.companyId = data.company.id;
+    if (data.company?.id) syncCompanyId(data.company.id);
     localStorage.setItem("pzhisen_email", email);
     if (data.company?.id) localStorage.setItem("pzhisen_company_id", data.company.id);
 
@@ -668,7 +675,8 @@ async function handleBankResendOtp() {
 
 function setupBankRevenueDashboard() {
   const refreshBtn = document.getElementById("btn-bank-revenue-refresh");
-  if (refreshBtn && !refreshBtn.dataset.bound) {
+  const isStandalone = typeof bankRevenueStandalone !== "undefined" && bankRevenueStandalone;
+  if (isStandalone && refreshBtn && !refreshBtn.dataset.bound) {
     refreshBtn.dataset.bound = "1";
     refreshBtn.type = "button";
     refreshBtn.addEventListener("click", refreshBankRevenueDashboard);

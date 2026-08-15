@@ -16,6 +16,12 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/quota-banner.css">
   <link rel="stylesheet" href="css/dashboard.css">
+  <script>
+    window.companyId = new URLSearchParams(location.search).get("company");
+    window.api = window.api || function (path, options) {
+      return fetch(path, { credentials: "include", ...options });
+    };
+  </script>
 </head>
 <body class="dashboard-body">
   <header class="dashboard-nav">
@@ -28,6 +34,7 @@
       <a href="/" class="btn-primary" style="height:40px;padding:0 16px;font-size:13px">Home</a>
     </div>
   </header>
+  <div id="dashboard-refresh-toast" class="dashboard-refresh-toast" hidden role="status" aria-live="polite"></div>
 
   <div class="daily-quota-banner daily-quota-banner--dashboard" id="daily-quota-banner" role="status" aria-live="polite">
     <div class="daily-quota-banner__stats">

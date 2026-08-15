@@ -227,6 +227,62 @@
   to { transform: rotate(360deg); }
 }
 
+.dashboard-refresh-toast {
+  position: fixed;
+  top: 84px;
+  right: 24px;
+  z-index: 1200;
+  max-width: min(360px, calc(100vw - 48px));
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #1e40af;
+  box-shadow: 0 8px 24px rgba(30, 64, 175, 0.35);
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.dashboard-refresh-toast--success {
+  background: #047857;
+}
+
+.dashboard-refresh-toast--error {
+  background: #b91c1c;
+}
+
+.dashboard-refresh-toast--loading {
+  background: #7c3aed;
+}
+
+.history-btn.is-refreshing,
+.dashboard-refresh-btn.is-refreshing {
+  opacity: 0.8;
+  cursor: wait;
+}
+
+.history-btn.is-refreshing::before,
+.dashboard-refresh-btn.is-refreshing::before {
+  content: "⟳ ";
+  display: inline-block;
+  animation: dashboard-refresh-spin 0.8s linear infinite;
+}
+
+.history-btn,
+.dashboard-refresh-btn,
+#btn-dashboard-refresh,
+#btn-real-revenue-refresh,
+#btn-bank-revenue-refresh,
+#btn-cm-refresh,
+#btn-analytics-refresh,
+#btn-marketing-refresh {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 .log-terminal {
   background: #0f172a;
   border-radius: 0 0 16px 16px;

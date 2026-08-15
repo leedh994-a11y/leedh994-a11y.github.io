@@ -168,19 +168,28 @@ function countdown(deadlineIso) {
   };
 }
 
-async function loadContentMarketingDashboard() {
-  if (!companyId) return;
+async function loadContentMarketingDashboard(options = {}) {
+  const id = window.getCompanyId?.() || window.companyId || companyId;
+  if (!id) return false;
   try {
-    const res = await api(`/api/companies/${companyId}/content-marketing/dashboard`);
+    const suffix = options.refresh ? `?_=${Date.now()}` : "";
+    const res = await api(`/api/companies/${id}/content-marketing/dashboard${suffix}`, {
+      cache: options.refresh ? "no-store" : "default",
+      headers: options.refresh ? { "Cache-Control": "no-cache", Pragma: "no-cache" } : undefined,
+    });
     const data = await res.json();
-    if (data.success && data.contentMarketing) renderContentMarketingDashboard(data.contentMarketing);
-  } catch (_) {
-    /* ignore */
+    if (data.success && data.contentMarketing) {
+      renderContentMarketingDashboard(data.contentMarketing);
+      return true;
+    }
+    throw new Error(data.errorZh || data.error || "加载失败");
+  } catch (err) {
+    if (options.refresh) throw err;
+    return false;
   }
 }
 
 function setupContentMarketingDashboard() {
-  document.getElementById("btn-cm-refresh")?.addEventListener("click", loadContentMarketingDashboard);
   const dialog = document.getElementById("cm-goal-dialog");
   const form = document.getElementById("cm-goal-form");
 

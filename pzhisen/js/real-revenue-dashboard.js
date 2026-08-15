@@ -94,20 +94,28 @@ function renderRealRevenueDashboard(data) {
   }
 }
 
-async function loadRealRevenueDashboard() {
-  if (!companyId) return;
+async function loadRealRevenueDashboard(options = {}) {
+  const id = window.getCompanyId?.() || window.companyId || companyId;
+  if (!id) return false;
   try {
-    const res = await api(`/api/companies/${companyId}/revenue/real`);
+    const suffix = options.refresh ? `?_=${Date.now()}` : "";
+    const res = await api(`/api/companies/${id}/revenue/real${suffix}`, {
+      cache: options.refresh ? "no-store" : "default",
+      headers: options.refresh ? { "Cache-Control": "no-cache", Pragma: "no-cache" } : undefined,
+    });
     const data = await res.json();
-    if (data.success && data.revenue) renderRealRevenueDashboard(data.revenue);
-  } catch (_) {
-    /* ignore */
+    if (data.success && data.revenue) {
+      renderRealRevenueDashboard(data.revenue);
+      return true;
+    }
+    throw new Error(data.errorZh || data.error || "加载失败");
+  } catch (err) {
+    if (options.refresh) throw err;
+    return false;
   }
 }
 
 function setupRealRevenueDashboard() {
-  document.getElementById("btn-real-revenue-refresh")?.addEventListener("click", loadRealRevenueDashboard);
-
   const dialog = document.getElementById("real-goal-dialog");
   const form = document.getElementById("real-goal-form");
 

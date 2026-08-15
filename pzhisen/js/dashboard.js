@@ -1,8 +1,68 @@
 const params = new URLSearchParams(location.search);
-let companyId = params.get("company");
+let companyId = params.get("company") || window.companyId;
+window.companyId = companyId;
 
 const api = (path, options = {}) => fetch(path, { credentials: "include", ...options });
 window.api = api;
+
+function getCompanyId() {
+  return window.companyId || companyId || new URLSearchParams(location.search).get("company");
+}
+
+function setCompanyId(id) {
+  companyId = id;
+  window.companyId = id;
+}
+
+let refreshToastTimer = null;
+
+function showDashboardRefreshToast(message, type = "info") {
+  const el = document.getElementById("dashboard-refresh-toast");
+  if (!el || !message) return;
+  el.hidden = false;
+  el.textContent = message;
+  el.className = `dashboard-refresh-toast dashboard-refresh-toast--${type}`;
+  if (refreshToastTimer) clearTimeout(refreshToastTimer);
+  if (type !== "loading") {
+    refreshToastTimer = setTimeout(() => {
+      el.hidden = true;
+    }, 2800);
+  }
+}
+
+function setPanelRefreshLoading(buttonId, loading) {
+  const btn = document.getElementById(buttonId);
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.classList.toggle("is-refreshing", loading);
+  btn.setAttribute("aria-busy", loading ? "true" : "false");
+  if (loading) {
+    btn.dataset.defaultLabel = btn.dataset.defaultLabel || btn.textContent;
+    btn.textContent = "刷新中…";
+  } else {
+    btn.textContent = btn.dataset.defaultLabel || "↻ 刷新";
+  }
+}
+
+async function runPanelRefresh(buttonId, label, loader) {
+  const id = getCompanyId();
+  if (!id) {
+    showDashboardRefreshToast("缺少公司 ID，请从仪表盘链接进入", "error");
+    return false;
+  }
+  setPanelRefreshLoading(buttonId, true);
+  showDashboardRefreshToast(`正在刷新${label}…`, "loading");
+  try {
+    const ok = await loader({ refresh: true });
+    showDashboardRefreshToast(`${label}已刷新`, "success");
+    return ok !== false;
+  } catch (err) {
+    showDashboardRefreshToast(err.message || `${label}刷新失败`, "error");
+    return false;
+  } finally {
+    setPanelRefreshLoading(buttonId, false);
+  }
+}
 
 const AGENTS = [
   { id: "ceo", name: "CEO Agent", icon: "◆" },
@@ -324,8 +384,11 @@ function escapeHtml(s) {
 }
 
 async function fetchLogs() {
-  if (!companyId) return;
-  const res = await api(`/api/companies/${companyId}/logs?limit=500`);
+  const id = getCompanyId();
+  if (!id) return;
+  const res = await api(`/api/companies/${id}/logs?limit=500&_=${Date.now()}`, {
+    cache: "no-store",
+  });
   const data = await res.json();
   if (data.success) renderLogs(data.logs);
 }
@@ -427,10 +490,12 @@ async function loadCompany() {
     window.location.replace(`/dashboard.html?company=${me.company.id}`);
     return;
   }
-  if (!companyId) {
+  if (!getCompanyId()) {
     window.location.href = "/login.html";
     return;
   }
+
+  setCompanyId(getCompanyId());
 
   await refreshCompanySnapshot({ redirectOnFail: true });
   loadMarketingDashboard();
@@ -458,9 +523,10 @@ function setDashboardRefreshLoading(loading) {
 }
 
 async function refreshCompanySnapshot({ redirectOnFail = false } = {}) {
-  if (!companyId) return false;
+  const id = getCompanyId();
+  if (!id) return false;
 
-  const res = await api(`/api/companies/${companyId}?_=${Date.now()}`, {
+  const res = await api(`/api/companies/${id}?_=${Date.now()}`, {
     cache: "no-store",
     headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
   });
@@ -478,6 +544,7 @@ async function refreshCompanySnapshot({ redirectOnFail = false } = {}) {
   }
 
   company = data.company;
+  setCompanyId(company.id);
   if (data.checkoutUrl) checkoutUrl = data.checkoutUrl;
   document.getElementById("company-name").textContent = company.name;
   document.getElementById("company-idea").textContent = company.idea;
@@ -496,33 +563,81 @@ async function refreshCompanySnapshot({ redirectOnFail = false } = {}) {
 }
 
 async function refreshAllDashboards() {
-  if (dashboardRefreshing || !companyId) return;
+  const id = getCompanyId();
+  if (dashboardRefreshing || !id) {
+    if (!id) showDashboardRefreshToast("缺少公司 ID，无法刷新", "error");
+    return;
+  }
   dashboardRefreshing = true;
   setDashboardRefreshLoading(true);
+  showDashboardRefreshToast("正在刷新全部仪表盘数据…", "loading");
 
   try {
     await Promise.all([
       loadConfig(),
       refreshCompanySnapshot(),
       fetchLogs(),
-      loadMarketingDashboard(),
-      loadRealRevenueDashboard(),
-      loadBankRevenueDashboard({ refresh: true }),
-      loadContentMarketingDashboard(),
-      loadLaunchCatalog(),
-      loadMarketingAnalytics(),
+      typeof loadMarketingDashboard === "function" ? loadMarketingDashboard({ refresh: true }) : null,
+      typeof loadRealRevenueDashboard === "function" ? loadRealRevenueDashboard({ refresh: true }) : null,
+      typeof loadBankRevenueDashboard === "function" ? loadBankRevenueDashboard({ refresh: true }) : null,
+      typeof loadContentMarketingDashboard === "function" ? loadContentMarketingDashboard({ refresh: true }) : null,
+      typeof loadLaunchCatalog === "function" ? loadLaunchCatalog({ refresh: true }) : null,
+      typeof loadMarketingAnalytics === "function" ? loadMarketingAnalytics({ refresh: true }) : null,
     ]);
     const btn = document.getElementById("btn-dashboard-refresh");
     if (btn) {
       const time = new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
       btn.title = `刷新全部仪表盘数据 · 最后更新 ${time}`;
     }
+    showDashboardRefreshToast("全部仪表盘数据已刷新", "success");
   } catch (err) {
-    alert(err.message || "刷新失败，请稍后重试");
+    showDashboardRefreshToast(err.message || "刷新失败，请稍后重试", "error");
   } finally {
     dashboardRefreshing = false;
     setDashboardRefreshLoading(false);
   }
+}
+
+function initDashboardRefreshHub() {
+  const panelRefreshMap = {
+    "btn-real-revenue-refresh": ["真实收益", () => loadRealRevenueDashboard({ refresh: true })],
+    "btn-cm-refresh": ["内容营销", () => loadContentMarketingDashboard({ refresh: true })],
+    "btn-analytics-refresh": ["推广数据分析", () => loadMarketingAnalytics({ refresh: true })],
+    "btn-marketing-refresh": ["AI 推广营销", () => loadMarketingDashboard({ refresh: true })],
+  };
+
+  document.addEventListener(
+    "click",
+    (e) => {
+      const btn = e.target.closest("button[id]");
+      if (!btn || btn.disabled) return;
+
+      if (btn.id === "btn-dashboard-refresh") {
+        e.preventDefault();
+        e.stopPropagation();
+        refreshAllDashboards();
+        return;
+      }
+
+      if (btn.id === "btn-bank-revenue-refresh") {
+        e.preventDefault();
+        e.stopPropagation();
+        showDashboardRefreshToast("正在刷新中国银行收账…", "loading");
+        refreshBankRevenueDashboard(e).then(() => {
+          showDashboardRefreshToast("中国银行收账已刷新", "success");
+        });
+        return;
+      }
+
+      const entry = panelRefreshMap[btn.id];
+      if (!entry) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const [label, loader] = entry;
+      runPanelRefresh(btn.id, label, loader);
+    },
+    true
+  );
 }
 
 async function runDaily() {
@@ -629,7 +744,10 @@ document.getElementById("btn-logout")?.addEventListener("click", async () => {
   location.href = "/login.html";
 });
 
-document.getElementById("btn-dashboard-refresh")?.addEventListener("click", refreshAllDashboards);
+window.getCompanyId = getCompanyId;
+window.setCompanyId = setCompanyId;
+window.showDashboardRefreshToast = showDashboardRefreshToast;
+window.runPanelRefresh = runPanelRefresh;
 window.refreshAllDashboards = refreshAllDashboards;
 
 renderAgentList();
@@ -640,12 +758,14 @@ setupMarketingAnalytics();
 setupRealRevenueDashboard();
 setupBankRevenueDashboard();
 setupContentMarketingDashboard();
+initDashboardRefreshHub();
 loadConfig();
 loadCompany();
 
 setInterval(async () => {
-  if (!companyId) return;
-  const res = await api(`/api/companies/${companyId}`);
+  const id = getCompanyId();
+  if (!id) return;
+  const res = await api(`/api/companies/${id}`);
   const data = await res.json();
   if (data.success) updateSubscriptionUi(Boolean(data.subscriptionActive), data.subscription);
 }, 10000);

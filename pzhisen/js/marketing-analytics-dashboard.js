@@ -126,19 +126,28 @@ function renderAnalyticsDashboard(data) {
   }
 }
 
-async function loadMarketingAnalytics() {
-  if (!companyId) return;
+async function loadMarketingAnalytics(options = {}) {
+  const id = window.getCompanyId?.() || window.companyId || companyId;
+  if (!id) return false;
   try {
-    const res = await api(`/api/companies/${companyId}/marketing/analytics/daily`);
+    const suffix = options.refresh ? `?_=${Date.now()}` : "";
+    const res = await api(`/api/companies/${id}/marketing/analytics/daily${suffix}`, {
+      cache: options.refresh ? "no-store" : "default",
+      headers: options.refresh ? { "Cache-Control": "no-cache", Pragma: "no-cache" } : undefined,
+    });
     const data = await res.json();
-    if (data.success && data.analytics) renderAnalyticsDashboard(data.analytics);
-  } catch (_) {
-    /* ignore */
+    if (data.success && data.analytics) {
+      renderAnalyticsDashboard(data.analytics);
+      return true;
+    }
+    throw new Error(data.errorZh || data.error || "加载失败");
+  } catch (err) {
+    if (options.refresh) throw err;
+    return false;
   }
 }
 
 function setupMarketingAnalytics() {
-  document.getElementById("btn-analytics-refresh")?.addEventListener("click", loadMarketingAnalytics);
 }
 
 window.loadMarketingAnalytics = loadMarketingAnalytics;

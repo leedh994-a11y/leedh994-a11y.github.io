@@ -209,22 +209,28 @@ function countdown(deadlineIso) {
   };
 }
 
-async function loadMarketingDashboard() {
-  if (!companyId) return;
+async function loadMarketingDashboard(options = {}) {
+  const id = window.getCompanyId?.() || window.companyId || companyId;
+  if (!id) return false;
   try {
-    const res = await api(`/api/companies/${companyId}/marketing/dashboard`);
+    const suffix = options.refresh ? `?_=${Date.now()}` : "";
+    const res = await api(`/api/companies/${id}/marketing/dashboard${suffix}`, {
+      cache: options.refresh ? "no-store" : "default",
+      headers: options.refresh ? { "Cache-Control": "no-cache", Pragma: "no-cache" } : undefined,
+    });
     const data = await res.json();
     if (data.success && data.marketing) {
       renderMarketingDashboard(data.marketing);
+      return true;
     }
-  } catch (_) {
-    /* ignore */
+    throw new Error(data.errorZh || data.error || "加载失败");
+  } catch (err) {
+    if (options.refresh) throw err;
+    return false;
   }
 }
 
 function setupMarketingDashboard() {
-  document.getElementById("btn-marketing-refresh")?.addEventListener("click", loadMarketingDashboard);
-
   const dialog = document.getElementById("mkt-goal-dialog");
   const form = document.getElementById("mkt-goal-form");
 
