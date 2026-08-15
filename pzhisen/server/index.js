@@ -349,7 +349,7 @@ app.post("/api/revenue/bank/claim-merchant", requireAuth, (req, res) => {
   const email = req.user?.email;
   if (!email) return res.status(401).json({ success: false, error: "请先登录" });
 
-  if (isMerchantUser(email)) {
+  if (isMerchantUser(email) || isEnvMerchant(email)) {
     grantMerchantOwner(email);
     return res.json({ success: true, granted: true, email });
   }
