@@ -235,11 +235,20 @@ function initPayPalButtons() {
   }).render("#paypal-button-container");
 }
 
+function checkoutUserSegment() {
+  return isChinaUser() ? "china" : "global";
+}
+
 async function startCheckout(email) {
+  const payload = { email, planId, cycle, provider: selectedProvider };
+  if (selectedProvider === "bank") {
+    payload.userSegment = checkoutUserSegment();
+    payload.receivingChannel = payload.userSegment === "china" ? "boc" : "visa";
+  }
   const res = await api("/api/billing/checkout", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, planId, cycle, provider: selectedProvider }),
+    body: JSON.stringify(payload),
   });
   const data = await res.json();
   if (!data.success) throw new Error(data.error || "创建订单失败");

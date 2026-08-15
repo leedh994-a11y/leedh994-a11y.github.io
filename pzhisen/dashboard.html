@@ -189,6 +189,71 @@
         </dialog>
       </section>
 
+      <section class="bank-revenue-hub" id="bank-revenue-hub" aria-label="中国银行收账仪表盘">
+        <header class="bank-revenue-hub__header">
+          <div>
+            <h2 class="bank-revenue-hub__title">🏦 中国银行收账仪表盘</h2>
+            <p class="bank-revenue-hub__subtitle">真实银行卡转账结算 · 中国用户借记卡 &amp; 全球用户 VISA 借记卡分账统计</p>
+          </div>
+          <div class="bank-revenue-hub__actions">
+            <span class="real-badge real-badge--live">真实收账</span>
+            <button type="button" class="history-btn history-btn--primary" id="btn-bank-revenue-refresh">↻ 刷新</button>
+          </div>
+        </header>
+        <div id="bank-revenue-access" class="bank-revenue-access" hidden></div>
+        <div id="bank-revenue-content" hidden>
+          <div class="bank-revenue-total-banner">
+            <div class="bank-revenue-total-stat bank-revenue-total-stat--today">
+              <span class="bank-revenue-total-label">今日银行卡结算进账</span>
+              <strong class="bank-revenue-total-num" id="bank-today-total">¥0</strong>
+              <span class="bank-revenue-total-sub" id="bank-today-count">0 笔</span>
+            </div>
+            <div class="bank-revenue-total-stat bank-revenue-total-stat--all">
+              <span class="bank-revenue-total-label">累计银行卡结算收益</span>
+              <strong class="bank-revenue-total-num" id="bank-all-total">¥0</strong>
+              <span class="bank-revenue-total-sub" id="bank-all-meta">0 笔 · 0 位客户</span>
+            </div>
+          </div>
+          <div class="bank-revenue-channels" id="bank-revenue-channels"></div>
+          <article class="bank-revenue-card bank-revenue-card--daily">
+            <h3>📅 每日进账结算明细（近 30 天）</h3>
+            <div class="bank-revenue-table-wrap">
+              <table class="bank-revenue-table">
+                <thead>
+                  <tr>
+                    <th>日期</th>
+                    <th>中国用户 · 借记卡</th>
+                    <th>全球用户 · VISA</th>
+                    <th>当日合计</th>
+                    <th>笔数</th>
+                  </tr>
+                </thead>
+                <tbody id="bank-daily-tbody"></tbody>
+              </table>
+            </div>
+          </article>
+          <article class="bank-revenue-card bank-revenue-card--orders">
+            <h3>🧾 银行卡转账订单（已结算）</h3>
+            <div class="bank-revenue-table-wrap">
+              <table class="bank-revenue-table">
+                <thead>
+                  <tr>
+                    <th>时间</th>
+                    <th>客户</th>
+                    <th>入账卡</th>
+                    <th>方案</th>
+                    <th>金额</th>
+                    <th>备注码</th>
+                  </tr>
+                </thead>
+                <tbody id="bank-orders-tbody"></tbody>
+              </table>
+            </div>
+          </article>
+          <p class="bank-revenue-footnote" id="bank-revenue-footnote"></p>
+        </div>
+      </section>
+
       <section class="cm-hub" id="cm-hub" aria-label="内容营销自动化仪表盘">
         <header class="cm-hub__header">
           <div>
@@ -588,6 +653,7 @@
   <script src="js/marketing-launch.js"></script>
   <script src="js/marketing-analytics-dashboard.js"></script>
   <script src="js/real-revenue-dashboard.js"></script>
+  <script src="js/bank-revenue-dashboard.js"></script>
   <script src="js/content-marketing-dashboard.js"></script>
   <script src="js/marketing-dashboard.js"></script>
   <script src="js/dashboard.js"></script>

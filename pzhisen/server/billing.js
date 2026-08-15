@@ -181,8 +181,22 @@ export async function checkoutHandler(req, res) {
         });
       }
       const { amount, currency } = getAmount(planId, cycle, "cny");
+      const { userSegment, receivingChannel } = req.body || {};
+      let channel = receivingChannel;
+      if (!channel && userSegment) {
+        channel = userSegment === "china" || userSegment === "cn" ? "boc" : "visa";
+      }
       const order = createPendingOrder({
-        email, planId, cycle, amount, currency, provider: "bankcard",
+        email,
+        planId,
+        cycle,
+        amount,
+        currency,
+        provider: "bankcard",
+        meta: {
+          userSegment: userSegment || (channel === "boc" ? "china" : "global"),
+          receivingChannel: channel || "boc",
+        },
       });
       const transferCode = makeTransferCode(order.id);
       const updated = updateOrder(order.id, { status: "awaiting_transfer", transferCode });

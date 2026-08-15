@@ -457,6 +457,7 @@ async function loadCompany() {
   });
   loadMarketingDashboard();
   loadRealRevenueDashboard();
+  loadBankRevenueDashboard();
   loadContentMarketingDashboard();
   loadLaunchCatalog();
   loadMarketingAnalytics();
@@ -572,6 +573,7 @@ setupMarketingDashboard();
 setupMarketingLaunch();
 setupMarketingAnalytics();
 setupRealRevenueDashboard();
+setupBankRevenueDashboard();
 setupContentMarketingDashboard();
 loadConfig();
 loadCompany();
@@ -586,5 +588,6 @@ setInterval(async () => {
 setInterval(fetchLogs, 15000);
 setInterval(loadMarketingDashboard, 45000);
 setInterval(loadRealRevenueDashboard, 30000);
+setInterval(loadBankRevenueDashboard, 30000);
 setInterval(loadContentMarketingDashboard, 45000);
 setInterval(loadMarketingAnalytics, 60000);

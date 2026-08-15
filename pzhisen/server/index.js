@@ -50,6 +50,7 @@ import {
   getRealRevenueDashboard,
   setRealRevenueGoal,
 } from "./real-revenue-dashboard.js";
+import { getBankRevenueDashboard } from "./bank-revenue-dashboard.js";
 import {
   getContentMarketingDashboard,
   setContentMarketingGoal,
@@ -292,6 +293,13 @@ app.put("/api/companies/:id/revenue/goal", requireAuth, requireCompanyAccess, (r
   res.json({
     success: true,
     revenue: getRealRevenueDashboard(req.company.id, req.company, req.user?.email),
+  });
+});
+
+app.get("/api/companies/:id/revenue/bank", requireAuth, requireCompanyAccess, (req, res) => {
+  res.json({
+    success: true,
+    bankRevenue: getBankRevenueDashboard(req.company.id, req.company, req.user?.email),
   });
 });
 
