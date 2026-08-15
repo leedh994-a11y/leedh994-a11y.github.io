@@ -34,12 +34,56 @@ function fmtDate(iso) {
   });
 }
 
-function bankRevenueApiPath() {
+function bankRevenueApiPath(cacheBust = false) {
+  let path;
   if (typeof bankRevenueStandalone !== "undefined" && bankRevenueStandalone) {
-    return "/api/revenue/bank";
+    path = "/api/revenue/bank";
+  } else if (companyId) {
+    path = `/api/companies/${companyId}/revenue/bank`;
+  } else {
+    path = "/api/revenue/bank";
   }
-  if (companyId) return `/api/companies/${companyId}/revenue/bank`;
-  return "/api/revenue/bank";
+  return cacheBust ? `${path}?_=${Date.now()}` : path;
+}
+
+let bankRevenueRefreshing = false;
+let bankRevenueMerchantView = false;
+
+function setBankRefreshLoading(loading) {
+  const refreshBtn = document.getElementById("btn-bank-revenue-refresh");
+  if (!refreshBtn) return;
+  refreshBtn.disabled = loading;
+  refreshBtn.classList.toggle("is-refreshing", loading);
+  refreshBtn.setAttribute("aria-busy", loading ? "true" : "false");
+  if (loading) {
+    refreshBtn.dataset.defaultLabel = refreshBtn.dataset.defaultLabel || refreshBtn.textContent;
+    refreshBtn.textContent = "刷新中…";
+  } else {
+    refreshBtn.textContent = refreshBtn.dataset.defaultLabel || "↻ 刷新";
+  }
+}
+
+function updateBankRevenueLastRefreshed(iso, statusText) {
+  let el = document.getElementById("bank-revenue-last-refreshed");
+  const hub = document.getElementById("bank-revenue-hub");
+  if (!el && hub) {
+    el = document.createElement("p");
+    el.id = "bank-revenue-last-refreshed";
+    el.className = "bank-revenue-last-refreshed";
+    hub.querySelector(".bank-revenue-hub__header")?.appendChild(el);
+  }
+  if (!el) return;
+  if (statusText) {
+    el.hidden = false;
+    el.textContent = statusText;
+    el.classList.add("bank-revenue-last-refreshed--status");
+    return;
+  }
+  el.classList.remove("bank-revenue-last-refreshed--status");
+  el.hidden = !iso;
+  if (iso) {
+    el.textContent = `最后更新：${fmtDateTime(iso)}`;
+  }
 }
 
 function showBankLoginError(msg) {
@@ -109,9 +153,14 @@ function showBankLoginPanel(message) {
   const logoutBtn = document.getElementById("btn-bank-logout");
   const loggedAs = document.getElementById("bank-revenue-logged-as");
 
+  bankRevenueMerchantView = false;
   if (access) access.hidden = false;
   if (content) content.hidden = true;
-  if (refreshBtn) refreshBtn.hidden = true;
+  if (refreshBtn) {
+    refreshBtn.hidden = true;
+    refreshBtn.disabled = false;
+    refreshBtn.classList.remove("is-refreshing");
+  }
   if (logoutBtn) logoutBtn.hidden = true;
   if (loggedAs) loggedAs.hidden = true;
 
@@ -130,9 +179,13 @@ function showBankDashboardPanel(userEmail) {
   const logoutBtn = document.getElementById("btn-bank-logout");
   const loggedAs = document.getElementById("bank-revenue-logged-as");
 
+  bankRevenueMerchantView = true;
   if (access) access.hidden = true;
   if (content) content.hidden = false;
-  if (refreshBtn) refreshBtn.hidden = false;
+  if (refreshBtn) {
+    refreshBtn.hidden = false;
+    refreshBtn.disabled = false;
+  }
   if (logoutBtn) logoutBtn.hidden = false;
   if (loggedAs && userEmail) {
     loggedAs.hidden = false;
@@ -265,6 +318,8 @@ function renderBankRevenueDashboard(data) {
       ? "数据来源：真实银行卡转账订单（orders.json）。中国用户与全球用户可能共用同一张双标卡入账，系统按用户类型分账统计。新订单在结账时会记录入账通道；历史订单按邮箱域名自动归类。"
       : "数据来源：真实银行卡转账订单（orders.json）。中国用户入账至中国银行借记卡，全球用户入账至 VISA 借记卡。新订单在结账时记录入账通道；历史订单按邮箱域名自动归类。";
   }
+
+  updateBankRevenueLastRefreshed(data.updatedAt || new Date().toISOString());
 }
 
 async function claimBankMerchantAccess() {
@@ -281,41 +336,82 @@ async function claimBankMerchantAccess() {
   }
 }
 
-async function loadBankRevenueDashboard() {
+async function loadBankRevenueDashboard(options = {}) {
+  const { refresh = false } = options;
+  if (bankRevenueRefreshing) return;
+  bankRevenueRefreshing = true;
+
+  const keepDashboard = refresh && bankRevenueMerchantView;
+  if (refresh) {
+    setBankRefreshLoading(true);
+    if (keepDashboard) updateBankRevenueLastRefreshed(null, "正在刷新收账数据…");
+  }
+
   try {
-    const res = await api(bankRevenueApiPath());
+    const res = await api(bankRevenueApiPath(refresh), {
+      cache: refresh ? "no-store" : "default",
+      headers: refresh ? { "Cache-Control": "no-cache", Pragma: "no-cache" } : undefined,
+    });
     if (res.status === 401) {
-      showBankLoginPanel("请使用商户邮箱和密码登录，或注册新商户账户。");
-      showBankAuthStatus("");
+      if (!keepDashboard) {
+        showBankLoginPanel("请使用商户邮箱和密码登录，或注册新商户账户。");
+        showBankAuthStatus("");
+      } else {
+        updateBankRevenueLastRefreshed(null, "登录已过期，请重新登录后再刷新。");
+      }
       return;
     }
     const data = await res.json();
-    if (data.success && data.bankRevenue) {
-      if (!data.bankRevenue.isMerchant) {
-        const meRes = await api("/api/auth/me");
-        if (meRes.ok) {
-          const me = await meRes.json();
-          if (me.user?.email) {
-            data.bankRevenue.loggedInEmail = me.user.email;
-            const granted = await claimBankMerchantAccess();
-            if (granted) {
-              const retry = await api(bankRevenueApiPath());
-              const retryData = await retry.json();
-              if (retryData.success && retryData.bankRevenue?.isMerchant) {
-                if (retryData.bankRevenue.companyId) window.companyId = retryData.bankRevenue.companyId;
-                renderBankRevenueDashboard(retryData.bankRevenue);
-                return;
-              }
+    if (!data.success || !data.bankRevenue) {
+      const msg = data.error || "加载收账数据失败，请稍后重试。";
+      if (keepDashboard) {
+        updateBankRevenueLastRefreshed(null, msg);
+      } else {
+        showBankLoginPanel(msg);
+      }
+      return;
+    }
+
+    if (!data.bankRevenue.isMerchant) {
+      const meRes = await api("/api/auth/me");
+      if (meRes.ok) {
+        const me = await meRes.json();
+        if (me.user?.email) {
+          data.bankRevenue.loggedInEmail = me.user.email;
+          const granted = await claimBankMerchantAccess();
+          if (granted) {
+            const retry = await api(bankRevenueApiPath(refresh), {
+              cache: refresh ? "no-store" : "default",
+            });
+            const retryData = await retry.json();
+            if (retryData.success && retryData.bankRevenue?.isMerchant) {
+              if (retryData.bankRevenue.companyId) window.companyId = retryData.bankRevenue.companyId;
+              renderBankRevenueDashboard(retryData.bankRevenue);
+              return;
             }
           }
         }
       }
-      if (data.bankRevenue.companyId) window.companyId = data.bankRevenue.companyId;
-      renderBankRevenueDashboard(data.bankRevenue);
     }
+    if (data.bankRevenue.companyId) window.companyId = data.bankRevenue.companyId;
+    renderBankRevenueDashboard(data.bankRevenue);
   } catch (_) {
-    showBankLoginPanel("加载收账数据失败，请稍后重试。");
+    const msg = "加载收账数据失败，请稍后重试。";
+    if (keepDashboard) {
+      updateBankRevenueLastRefreshed(null, msg);
+    } else {
+      showBankLoginPanel(msg);
+    }
+  } finally {
+    bankRevenueRefreshing = false;
+    if (refresh) setBankRefreshLoading(false);
   }
+}
+
+async function refreshBankRevenueDashboard(e) {
+  e?.preventDefault?.();
+  e?.stopPropagation?.();
+  await loadBankRevenueDashboard({ refresh: true });
 }
 
 async function handleBankMerchantLogin(e) {
@@ -571,11 +667,17 @@ async function handleBankResendOtp() {
 }
 
 function setupBankRevenueDashboard() {
-  document.getElementById("btn-bank-revenue-refresh")?.addEventListener("click", loadBankRevenueDashboard);
+  const refreshBtn = document.getElementById("btn-bank-revenue-refresh");
+  if (refreshBtn && !refreshBtn.dataset.bound) {
+    refreshBtn.dataset.bound = "1";
+    refreshBtn.type = "button";
+    refreshBtn.addEventListener("click", refreshBankRevenueDashboard);
+  }
   setupBankRevenueLogin();
 }
 
 window.loadBankRevenueDashboard = loadBankRevenueDashboard;
+window.refreshBankRevenueDashboard = refreshBankRevenueDashboard;
 window.renderBankRevenueDashboard = renderBankRevenueDashboard;
 window.setupBankRevenueDashboard = setupBankRevenueDashboard;
 window.setupBankRevenueLogin = setupBankRevenueLogin;

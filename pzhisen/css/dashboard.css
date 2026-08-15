@@ -1377,6 +1377,31 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  position: relative;
+  z-index: 2;
+}
+
+#btn-bank-revenue-refresh {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+#btn-bank-revenue-refresh.is-refreshing {
+  opacity: 0.85;
+  cursor: wait;
+}
+
+.bank-revenue-last-refreshed {
+  margin: 8px 0 0;
+  width: 100%;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b45309;
+}
+
+.bank-revenue-last-refreshed--status {
+  color: #991b1b;
 }
 
 .bank-revenue-access {
