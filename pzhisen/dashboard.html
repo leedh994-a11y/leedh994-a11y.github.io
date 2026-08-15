@@ -164,6 +164,122 @@
         </dialog>
       </section>
 
+      <section class="cm-hub" id="cm-hub" aria-label="内容营销自动化仪表盘">
+        <header class="cm-hub__header">
+          <div>
+            <h2 class="cm-hub__title">🎯 内容营销自动化仪表盘</h2>
+            <p class="cm-hub__subtitle">SEO · 免费渠道 · 自动化外联 · 零媒体花费 $0/¥0</p>
+          </div>
+          <div class="cm-hub__actions">
+            <span class="cm-zero-badge">零广告费承诺</span>
+            <button type="button" class="history-btn history-btn--primary" id="btn-cm-refresh">↻ 刷新</button>
+          </div>
+        </header>
+
+        <div class="cm-daily-banner" id="cm-daily-banner">
+          <div class="cm-daily-banner__day">
+            <span>今日推广进程</span>
+            <strong id="cm-today-progress">0%</strong>
+          </div>
+          <div class="cm-daily-banner__countdown">
+            <span>目标截止倒计时</span>
+            <div class="cm-countdown-digits">
+              <span><strong id="cm-cd-days">--</strong><small>天</small></span>
+              <span><strong id="cm-cd-hours">--</strong><small>时</small></span>
+              <span><strong id="cm-cd-mins">--</strong><small>分</small></span>
+            </div>
+          </div>
+          <div class="cm-daily-banner__stats">
+            <span>第 <strong id="cm-day-num">1</strong> 天 / 共 <strong id="cm-target-days">30</strong> 天</span>
+            <span>整体进度 <strong id="cm-overall-pct">0%</strong></span>
+          </div>
+        </div>
+
+        <div class="cm-pillars" id="cm-pillars"></div>
+
+        <div class="cm-grid">
+          <article class="cm-card cm-card--tasks">
+            <header class="cm-card__head">
+              <h3>📋 推广营销任务清单</h3>
+              <div class="cm-task-stats">
+                <span class="cm-stat"><strong id="cm-task-total">0</strong> 总任务</span>
+                <span class="cm-stat cm-stat--done"><strong id="cm-task-done">0</strong> 已完成</span>
+                <span class="cm-stat cm-stat--active"><strong id="cm-task-active">0</strong> 进行中</span>
+                <span class="cm-stat cm-stat--pending"><strong id="cm-task-pending">0</strong> 待开始</span>
+              </div>
+            </header>
+            <div class="cm-table-wrap">
+              <table class="cm-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>板块</th>
+                    <th>任务</th>
+                    <th>方式</th>
+                    <th>产出</th>
+                    <th>进度</th>
+                    <th>状态</th>
+                    <th>截止倒计时</th>
+                  </tr>
+                </thead>
+                <tbody id="cm-task-tbody"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="cm-card cm-card--revenue">
+            <header class="cm-card__head">
+              <h3>💰 内容营销目标收益</h3>
+              <button type="button" class="cm-goal-btn" id="btn-cm-goal-edit">设置目标</button>
+            </header>
+            <div class="cm-revenue-hero">
+              <div class="cm-revenue-today">
+                <span>今日 AI 推广收益</span>
+                <strong id="cm-today-revenue">$0</strong>
+              </div>
+              <div class="cm-revenue-target">
+                <span>您布置的目标收益额</span>
+                <strong id="cm-target-revenue">$5,000</strong>
+              </div>
+            </div>
+            <div class="cm-revenue-progress">
+              <div class="cm-revenue-row">
+                <span>目标完成进度 <strong id="cm-revenue-pct">0%</strong></span>
+                <span>累计 <strong id="cm-total-revenue">$0</strong> · 还差 <strong id="cm-remaining-revenue">$5,000</strong></span>
+              </div>
+              <div class="cm-bar cm-bar--revenue"><div class="cm-bar__fill" id="cm-revenue-bar" style="width:0%"></div></div>
+            </div>
+            <div class="cm-countdown-block">
+              <span>预计完成目标收益还需</span>
+              <div class="cm-countdown-digits cm-countdown-digits--lg">
+                <span><strong id="cm-rev-days">--</strong><small>天</small></span>
+                <span><strong id="cm-rev-hours">--</strong><small>时</small></span>
+                <span><strong id="cm-rev-mins">--</strong><small>分</small></span>
+              </div>
+              <p id="cm-days-estimate">按当前进度估算约需 30 天</p>
+            </div>
+          </article>
+        </div>
+
+        <dialog class="cm-goal-dialog" id="cm-goal-dialog">
+          <form class="cm-goal-form" id="cm-goal-form">
+            <h3>设置内容营销目标收益</h3>
+            <label>目标收益额 <input type="number" id="cm-goal-amount" min="100" step="100" required></label>
+            <label>目标天数 <input type="number" id="cm-goal-days" min="7" max="365" required></label>
+            <label>货币
+              <select id="cm-goal-currency">
+                <option value="USD">USD ($)</option>
+                <option value="CNY">CNY (¥)</option>
+              </select>
+            </label>
+            <div class="cm-goal-actions">
+              <button type="button" class="history-btn" id="btn-cm-goal-cancel">取消</button>
+              <button type="submit" class="history-btn history-btn--primary">保存</button>
+            </div>
+          </form>
+        </dialog>
+      </section>
+
       <section class="marketing-hub" id="marketing-hub" aria-label="AI 推广营销仪表盘">
         <header class="marketing-hub__header">
           <div>
@@ -364,6 +480,7 @@
 
   <script src="js/daily-quota-ticker.js"></script>
   <script src="js/real-revenue-dashboard.js"></script>
+  <script src="js/content-marketing-dashboard.js"></script>
   <script src="js/marketing-dashboard.js"></script>
   <script src="js/dashboard.js"></script>
 </body>

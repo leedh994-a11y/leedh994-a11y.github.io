@@ -51,6 +51,11 @@ import {
   setRealRevenueGoal,
 } from "./real-revenue-dashboard.js";
 import {
+  getContentMarketingDashboard,
+  setContentMarketingGoal,
+  bumpContentMarketingActivity,
+} from "./content-marketing-dashboard.js";
+import {
   registerHandler,
   verifyOtpHandler,
   resendOtpHandler,
@@ -177,12 +182,15 @@ app.post("/api/companies/:id/run-daily", requireAuth, requireCompanyAccess, asyn
 
     bumpMarketingActivity(company.id, company, { agentId: "marketing" });
     bumpMarketingActivity(company.id, company, { agentId: "ads" });
+    bumpContentMarketingActivity(company.id, company, { agentId: "marketing" });
+    bumpContentMarketingActivity(company.id, company, { agentId: "ads" });
 
     res.json({
       success: true,
       results,
       logs: getLogs(company.id, 50),
       marketing: getMarketingDashboard(company.id, company),
+      contentMarketing: getContentMarketingDashboard(company.id, company),
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -227,11 +235,13 @@ app.post("/api/companies/:id/agents/:agentId", requireAuth, requireCompanyAccess
     });
 
     bumpMarketingActivity(company.id, company, { agentId: req.params.agentId });
+    bumpContentMarketingActivity(company.id, company, { agentId: req.params.agentId });
 
     res.json({
       success: true,
       result: { ...result, content: answerText },
       marketing: getMarketingDashboard(company.id, company),
+      contentMarketing: getContentMarketingDashboard(company.id, company),
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -280,6 +290,22 @@ app.put("/api/companies/:id/revenue/goal", requireAuth, requireCompanyAccess, (r
   res.json({
     success: true,
     revenue: getRealRevenueDashboard(req.company.id, req.company, req.user?.email),
+  });
+});
+
+app.get("/api/companies/:id/content-marketing/dashboard", requireAuth, requireCompanyAccess, (req, res) => {
+  res.json({
+    success: true,
+    contentMarketing: getContentMarketingDashboard(req.company.id, req.company),
+  });
+});
+
+app.put("/api/companies/:id/content-marketing/goal", requireAuth, requireCompanyAccess, (req, res) => {
+  const { revenueTarget, targetDays, currency } = req.body || {};
+  setContentMarketingGoal(req.company.id, req.company, { revenueTarget, targetDays, currency });
+  res.json({
+    success: true,
+    contentMarketing: getContentMarketingDashboard(req.company.id, req.company),
   });
 });
 
