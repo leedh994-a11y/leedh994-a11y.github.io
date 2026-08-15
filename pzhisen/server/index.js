@@ -45,6 +45,7 @@ import {
   setRevenueGoal,
   bumpMarketingActivity,
 } from "./marketing-dashboard.js";
+import { getSettlementAccounts } from "./settlement-accounts.js";
 import {
   registerHandler,
   verifyOtpHandler,
@@ -256,6 +257,10 @@ app.put("/api/companies/:id/marketing/goal", requireAuth, requireCompanyAccess, 
     success: true,
     marketing: getMarketingDashboard(req.company.id, req.company),
   });
+});
+
+app.get("/api/billing/settlement-accounts", requireAuth, (_req, res) => {
+  res.json({ success: true, settlement: getSettlementAccounts() });
 });
 
 function subscriptionPayload(email) {

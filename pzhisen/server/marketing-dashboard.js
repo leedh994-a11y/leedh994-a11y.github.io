@@ -1,6 +1,7 @@
 import { loadJson, saveJson } from "./store.js";
 import { MARKETING_PLATFORMS } from "./platforms.js";
 import { ZERO_COST_MARKETING_CHANNELS } from "./marketing-policy.js";
+import { getSettlementAccounts } from "./settlement-accounts.js";
 
 const STORE = "marketing-dashboards.json";
 
@@ -290,6 +291,7 @@ export function getMarketingDashboard(companyId, company = null) {
           ? Math.ceil((campaignCountdown.days || 1) * (1 - sales.progress / 100))
           : state.goal.targetDays,
     },
+    settlement: getSettlementAccounts(),
     updatedAt: new Date().toISOString(),
   };
 }

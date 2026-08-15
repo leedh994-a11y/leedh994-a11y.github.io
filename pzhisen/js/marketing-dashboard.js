@@ -136,6 +136,46 @@ function renderMarketingDashboard(data) {
     const days = sales.daysToGoalEstimate ?? campaign.targetDays;
     est.textContent = `按当前进度估算约需 ${days} 天完成目标收益`;
   }
+
+  renderSettlement(data.settlement);
+}
+
+function renderSettlement(settlement) {
+  const list = document.getElementById("mkt-settlement-list");
+  const disclaimer = document.getElementById("mkt-settlement-disclaimer");
+  const status = document.getElementById("mkt-settlement-status");
+  if (!list || !settlement) return;
+
+  if (disclaimer) disclaimer.textContent = settlement.disclaimerZh || "";
+
+  if (status) {
+    status.textContent = settlement.ready
+      ? `已接入 ${settlement.configuredCount}/${settlement.totalCount} 个账户`
+      : "待配置收款账户";
+    status.className = settlement.ready ? "mkt-badge mkt-badge--live" : "mkt-badge mkt-badge--warn";
+  }
+
+  list.innerHTML = (settlement.accounts || [])
+    .map((a) => {
+      const icon = a.type === "paypal" ? "💳" : "🏦";
+      const detail =
+        a.type === "paypal"
+          ? `<div class="mkt-settle-detail">${a.emailMask ? `账户：${a.emailMask}` : "PayPal API 已配置"}${a.mode ? ` · ${a.mode === "live" ? "正式环境" : "沙盒"}` : ""}</div>`
+          : `<div class="mkt-settle-detail">${a.bankName || ""} ${a.accountNumberMask || ""} · ${a.accountName || ""}</div>`;
+      const channels = (a.channels || []).map((c) => `<span class="mkt-settle-tag">${c}</span>`).join("");
+      return `
+      <div class="mkt-settle-item ${a.configured ? "mkt-settle-item--ok" : "mkt-settle-item--pending"}">
+        <div class="mkt-settle-item__head">
+          <span class="mkt-settle-item__icon">${icon}</span>
+          <strong>${a.label}</strong>
+          <span class="mkt-status ${a.configured ? "mkt-status--done" : "mkt-status--pending"}">${a.configured ? "已接入" : "未配置"}</span>
+        </div>
+        ${detail}
+        <div class="mkt-settle-tags">${channels}</div>
+        <p class="mkt-settle-note">${a.settlementNote || ""}</p>
+      </div>`;
+    })
+    .join("");
 }
 
 function tickLocalCountdowns() {
