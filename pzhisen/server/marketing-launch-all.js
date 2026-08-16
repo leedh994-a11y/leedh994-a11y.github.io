@@ -1,9 +1,8 @@
 import { loadJson, saveJson } from "./store.js";
 import { ZERO_COST_MARKETING_CHANNELS } from "./marketing-policy.js";
 import { MARKETING_PLATFORMS } from "./platforms.js";
-import { bumpMarketingActivity, getMarketingDashboard } from "./marketing-dashboard.js";
+import { getMarketingDashboard } from "./marketing-dashboard.js";
 import {
-  bumpContentMarketingActivity,
   getContentMarketingDashboard,
 } from "./content-marketing-dashboard.js";
 import { runAgent } from "./agents.js";
@@ -70,19 +69,9 @@ function recordLaunch(companyId, summary) {
   saveLog(data);
 }
 
-function kickstartDashboards(companyId, company) {
-  for (const agentId of LAUNCH_AGENTS) {
-    for (let i = 0; i < 6; i++) {
-      bumpMarketingActivity(companyId, company, { agentId });
-      bumpContentMarketingActivity(companyId, company, { agentId });
-    }
-  }
-}
-
 export async function launchAllMarketing(companyId, company, { runAiAgents = true, websiteUrl = null } = {}) {
   const startedAt = new Date().toISOString();
   const targetUrl = websiteUrl || company.websiteUrl || null;
-  kickstartDashboards(companyId, company);
 
   const agentResults = [];
   if (runAiAgents) {

@@ -40,6 +40,14 @@ function renderTrend(trend) {
     .join("");
 }
 
+function fmtAttributed(n) {
+  return n == null ? "—" : fmtNum(n);
+}
+
+function fmtAttributedMoney(amount, currency = "USD") {
+  return amount == null ? "—" : fmtMoney(amount, currency);
+}
+
 function renderAnalyticsDashboard(data) {
   if (!data) return;
   analyticsData = data;
@@ -53,7 +61,8 @@ function renderAnalyticsDashboard(data) {
   set("analytics-date", data.date);
 
   const s = data.data?.summary || data.analysis?.totals || {};
-  set("kpi-impressions", fmtNum(s.ordersToday));
+  const site = data.siteOrders || data.orders || {};
+  set("kpi-impressions", fmtNum(site.ordersToday ?? s.ordersToday));
   set("kpi-clicks", fmtNum(s.agentRunsToday));
   set("kpi-engagement", fmtNum(s.customersToday));
   set("kpi-posts", fmtNum(s.agentExecutions));
@@ -76,9 +85,9 @@ function renderAnalyticsDashboard(data) {
         </td>
         <td><span class="analytics-status analytics-status--${r.status === "已完成" ? "done" : r.status === "进行中" ? "active" : "start"}">${r.status}</span></td>
         <td>${fmtNum(r.agentExecutions)}</td>
-        <td>${fmtNum(r.ordersToday)}</td>
-        <td>${fmtMoney(r.revenueToday, "USD")}</td>
-        <td>${fmtNum(r.customersToday)}</td>
+        <td>${fmtAttributed(r.ordersToday)}</td>
+        <td>${fmtAttributedMoney(r.revenueToday, "USD")}</td>
+        <td>${fmtAttributed(r.customersToday)}</td>
         <td class="analytics-zero">$0</td>
       </tr>`
       )
@@ -102,7 +111,7 @@ function renderAnalyticsDashboard(data) {
       <div class="analytics-cat-row">
         <strong>${c.category}</strong>
         <span>${c.count} 种 · 进度 ${c.avgProgress}% · AI执行 ${c.agentExecutions} 次</span>
-        <span>全站今日 ${c.ordersToday || 0} 订单 · $${c.revenueToday || 0} 收益</span>
+        <span>全站今日 ${site.ordersToday ?? 0} 订单 · $${site.revenueTodayUsd ?? 0} 收益（各渠道行不可归因）</span>
       </div>`
       )
       .join("");

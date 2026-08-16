@@ -193,5 +193,7 @@ export function getRealRevenueDashboard(companyId, company, userEmail) {
     byDay,
     orders,
     updatedAt: new Date().toISOString(),
+    isReal: true,
+    dataSource: "payment_orders",
   };
 }

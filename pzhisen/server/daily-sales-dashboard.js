@@ -108,8 +108,8 @@ function estimateHoursToComplete(remainingUsd, todayUsd, launchContext = null) {
     };
   }
 
-  if (launchContext?.launchedToday) {
-    const marketingProgress = Math.max(5, launchContext.marketingProgress || 15);
+  if (launchContext?.launchedToday && (launchContext.agentRunsToday > 0 || launchContext.methodsTotal > 0)) {
+    const marketingProgress = Math.max(0, launchContext.marketingProgress || 0);
     const hoursSinceLaunch = Math.max(
       0.25,
       (Date.now() - new Date(launchContext.launchedAt).getTime()) / 3600000
@@ -157,7 +157,7 @@ function getTodayLaunchInfo(companyId, dailyTargetUsd) {
     latest?.marketingProgress ??
     (tasks.length
       ? Math.round(tasks.reduce((s, t) => s + (t.progress || 0), 0) / tasks.length)
-      : 15);
+      : 0);
 
   return {
     launchedToday: true,

@@ -119,6 +119,64 @@ export function buildRealSalesBlock(goal, userEmail) {
   };
 }
 
+const MARKETING_LOG_PATTERN = /marketing|growth|ads|ceo|推广|营销|seo|外联|内容|launch|启动/i;
+
+/** Search terms for matching a dashboard task to activity logs. */
+export function taskActivityTerms(task) {
+  return [
+    task.method,
+    task.platform,
+    task.platformId,
+    task.channel,
+    task.title,
+    task.output,
+    task.pillarTitle,
+    task.pillarId,
+  ]
+    .filter(Boolean)
+    .map((t) => String(t).toLowerCase());
+}
+
+/** Count company log entries that relate to a specific marketing task. */
+export function countTaskLogMatches(logs, task) {
+  const terms = taskActivityTerms(task);
+  return (logs || []).filter((l) => {
+    const text = `${l.agent || ""} ${l.message || ""} ${l.question || ""}`.toLowerCase();
+    if (!MARKETING_LOG_PATTERN.test(text) && l.agent !== "System") return false;
+    return terms.some((t) => t.length > 2 && text.includes(t));
+  }).length;
+}
+
+/** Derive task progress purely from real log activity counts. */
+export function deriveTaskProgressFromActivity(logCount) {
+  if (logCount <= 0) return { progress: 0, status: "scheduled" };
+  if (logCount >= 5) return { progress: 100, status: "completed" };
+  const progress = Math.min(99, logCount * 20);
+  return { progress, status: "in_progress" };
+}
+
+/** Sync all marketing/content tasks from real company activity logs. */
+export function syncTasksFromRealActivity(tasks, logs) {
+  return (tasks || []).map((task) => {
+    const logCount = countTaskLogMatches(logs, task);
+    const { progress, status } = deriveTaskProgressFromActivity(logCount);
+    const updated = {
+      ...task,
+      progress,
+      status,
+      realLogMatches: logCount,
+      progressSource: logCount > 0 ? "activity_logs" : "none",
+    };
+    if (status === "completed" && !task.completedAt) {
+      updated.completedAt = new Date().toISOString();
+    } else if (status !== "completed") {
+      updated.completedAt = task.completedAt || null;
+    }
+    if (logCount > 0) updated.updatedAt = new Date().toISOString();
+    return updated;
+  });
+}
+
 /** Count log entries related to a marketing method today. */
 export function countMethodActivity(logs, method, date) {
   const todayLogs = logs.filter((l) => (l.at || "").slice(0, 10) === date);

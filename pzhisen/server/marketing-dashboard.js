@@ -2,11 +2,13 @@ import { loadJson, saveJson } from "./store.js";
 import { MARKETING_PLATFORMS } from "./platforms.js";
 import { ZERO_COST_MARKETING_CHANNELS } from "./marketing-policy.js";
 import { getSettlementAccounts } from "./settlement-accounts.js";
+import { getLogs } from "./store.js";
 import {
   buildRealSalesBlock,
   getCompanyMarketingActivity,
   getRealOrderMetrics,
   countdownFromDeadline,
+  syncTasksFromRealActivity,
 } from "./marketing-real-metrics.js";
 
 const STORE = "marketing-dashboards.json";
@@ -29,12 +31,6 @@ const CAMPAIGN_STEPS = [
   { id: "outreach", title: "邮件/社区外联", weight: 20 },
   { id: "optimize", title: "数据优化与转化", weight: 20 },
 ];
-
-function hashStr(s) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
 
 function loadStore() {
   return loadJson(STORE, { companies: {} });
@@ -70,8 +66,8 @@ function buildDefaultTasks(companyId, startAt) {
       platform: p.nameZh || p.name,
       method,
       channel: ZERO_COST_MARKETING_CHANNELS[i % ZERO_COST_MARKETING_CHANNELS.length],
-      status: i === 0 ? "in_progress" : "scheduled",
-      progress: i === 0 ? 35 : 0,
+      status: "scheduled",
+      progress: 0,
       dueAt: due.toISOString(),
       createdAt: startAt,
       updatedAt: startAt,
@@ -147,39 +143,6 @@ function computeStepProgress(tasks) {
   });
 }
 
-function computeSales(state) {
-  const tasks = state.tasks;
-  const overall =
-    tasks.length ? tasks.reduce((s, t) => s + (t.progress || 0), 0) / tasks.length / 100 : 0;
-  const target = state.goal.revenueTarget || 5000;
-  const today = new Date().toISOString().slice(0, 10);
-  const seed = hashStr(`${state.companyId}-${today}`);
-  const todayFactor = 0.012 + (seed % 25) / 1000;
-  const todayRevenue = Math.round(target * overall * todayFactor * (1 + state.agentRuns * 0.02));
-
-  let history = state.salesHistory || [];
-  const existing = history.find((h) => h.date === today);
-  if (existing) {
-    existing.amount = Math.max(existing.amount, todayRevenue);
-  } else {
-    history.push({ date: today, amount: todayRevenue });
-  }
-  history = history.slice(-60);
-  state.salesHistory = history;
-
-  const totalRevenue = history.reduce((s, h) => s + h.amount, 0);
-  const revenueProgress = Math.min(100, Math.round((totalRevenue / target) * 100));
-
-  return {
-    today: existing?.amount ?? todayRevenue,
-    total: totalRevenue,
-    target,
-    currency: state.goal.currency || "USD",
-    progress: revenueProgress,
-    history,
-  };
-}
-
 function countdown(deadlineIso) {
   const ms = new Date(deadlineIso).getTime() - Date.now();
   if (ms <= 0) return { expired: true, days: 0, hours: 0, minutes: 0, label: "已到期" };
@@ -198,18 +161,11 @@ function countdown(deadlineIso) {
 
 export function bumpMarketingActivity(companyId, company, { agentId } = {}) {
   const state = getMarketingState(companyId, company);
-  if (agentId === "marketing" || agentId === "ads" || agentId === "ceo") {
-    state.agentRuns = (state.agentRuns || 0) + 1;
-    const task = state.tasks.find((t) => t.status === "in_progress" || t.status === "scheduled");
-    if (task && task.status !== "completed") {
-      task.status = "in_progress";
-      task.progress = Math.min(100, (task.progress || 0) + 12);
-      if (task.progress >= 100) {
-        task.status = "completed";
-        task.completedAt = new Date().toISOString();
-      }
-      task.updatedAt = new Date().toISOString();
-    }
+  if (["marketing", "ads", "ceo"].includes(agentId)) {
+    const logs = getLogs(companyId, 500);
+    state.tasks = syncTasksFromRealActivity(state.tasks, logs);
+    const activity = getCompanyMarketingActivity(companyId);
+    state.agentRuns = activity.agentRunsTotal;
     saveMarketingState(state);
   }
   return state;
@@ -230,7 +186,11 @@ export function setRevenueGoal(companyId, company, { revenueTarget, targetDays, 
 
 export function getMarketingDashboard(companyId, company = null, userEmail = null) {
   let state = getMarketingState(companyId, company);
+  const logs = getLogs(companyId, 500);
+  state.tasks = syncTasksFromRealActivity(state.tasks, logs);
   state = syncTaskProgress(state);
+  const activity = getCompanyMarketingActivity(companyId);
+  state.agentRuns = activity.agentRunsTotal;
   saveMarketingState(state);
 
   const tasks = state.tasks;
@@ -242,7 +202,6 @@ export function getMarketingDashboard(companyId, company = null, userEmail = nul
     : 0;
 
   const realSales = buildRealSalesBlock(state.goal, userEmail || company?.email);
-  const activity = getCompanyMarketingActivity(companyId);
   const orders = getRealOrderMetrics();
   const steps = computeStepProgress(tasks);
   const campaignCountdown = countdownFromDeadline(state.deadlineAt);

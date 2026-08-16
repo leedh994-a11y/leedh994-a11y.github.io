@@ -439,9 +439,12 @@ app.post("/api/companies/:id/marketing/launch-all", requireAuth, requireCompanyA
       });
     }
 
+    bumpMarketingActivity(company.id, company, { agentId: "marketing" });
+    bumpContentMarketingActivity(company.id, company, { agentId: "marketing" });
+
     appendLog(company.id, {
       agent: "System",
-      message: `✅ 全渠道推广已启动：${result.launch.methodsTotal} 种方式已部署，Marketing ${result.launch.marketingProgress}% · 内容营销 ${result.launch.contentMarketingProgress}%`,
+      message: `✅ 全渠道推广已启动：${result.launch.methodsTotal} 种方式已部署，Marketing ${getMarketingDashboard(company.id, company, req.user?.email).campaign?.overallProgress}% · 内容营销 ${getContentMarketingDashboard(company.id, company, req.user?.email).campaign?.overallProgress}%`,
     });
 
     company.lastRunAt = new Date().toISOString();
@@ -450,6 +453,8 @@ app.post("/api/companies/:id/marketing/launch-all", requireAuth, requireCompanyA
     res.json({
       success: true,
       ...result,
+      marketing: getMarketingDashboard(company.id, company, req.user?.email),
+      contentMarketing: getContentMarketingDashboard(company.id, company, req.user?.email),
       dailySales: getDailySalesDashboard(company.id),
       analytics: getMarketingAnalyticsDashboard(company.id, company, req.user?.email),
       operations: getMarketingOperationsDashboard(company.id, company, req.user?.email),

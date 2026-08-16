@@ -1,10 +1,11 @@
-import { loadJson, saveJson } from "./store.js";
+import { loadJson, saveJson, getLogs } from "./store.js";
 import { ZERO_COST_MARKETING_CHANNELS } from "./marketing-policy.js";
 import {
   buildRealSalesBlock,
   getCompanyMarketingActivity,
   getRealOrderMetrics,
   countdownFromDeadline,
+  syncTasksFromRealActivity,
 } from "./marketing-real-metrics.js";
 
 const STORE = "content-marketing-dashboards.json";
@@ -60,12 +61,6 @@ const TASK_TEMPLATES = {
   ],
 };
 
-function hashStr(s) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-
 function loadStore() {
   return loadJson(STORE, { companies: {} });
 }
@@ -102,8 +97,8 @@ function buildTasks(companyId, startAt) {
         output: tpl.output,
         channel: ZERO_COST_MARKETING_CHANNELS[globalIdx % ZERO_COST_MARKETING_CHANNELS.length],
         mediaSpend: 0,
-        status: globalIdx === 0 ? "in_progress" : "scheduled",
-        progress: globalIdx === 0 ? 28 : 0,
+        status: "scheduled",
+        progress: 0,
         dueAt: due.toISOString(),
         createdAt: startAt,
         updatedAt: startAt,
@@ -191,35 +186,6 @@ function computeDailyProgress(state, activity) {
   return { today, overall, completedToday, inProgressToday, history: state.dailyLog };
 }
 
-function computeSales(state) {
-  const overall =
-    state.tasks.length ? state.tasks.reduce((s, t) => s + t.progress, 0) / state.tasks.length / 100 : 0;
-  const target = state.goal.revenueTarget || 5000;
-  const today = new Date().toISOString().slice(0, 10);
-  const seed = hashStr(`cm-${state.companyId}-${today}`);
-  const todayFactor = 0.01 + (seed % 30) / 1000;
-  const todayRevenue = Math.round(target * overall * todayFactor * (1 + state.agentRuns * 0.025));
-
-  let history = state.salesHistory || [];
-  const existing = history.find((h) => h.date === today);
-  if (existing) existing.amount = Math.max(existing.amount, todayRevenue);
-  else history.push({ date: today, amount: todayRevenue });
-  state.salesHistory = history.slice(-60);
-
-  const total = history.reduce((s, h) => s + h.amount, 0);
-  const progress = Math.min(100, Math.round((total / target) * 100));
-
-  return {
-    today: existing?.amount ?? todayRevenue,
-    total,
-    target,
-    currency: state.goal.currency || "USD",
-    progress,
-    remaining: Math.max(0, target - total),
-    history,
-  };
-}
-
 function pillarStats(tasks, pillarId) {
   const items = tasks.filter((t) => t.pillarId === pillarId);
   return {
@@ -237,17 +203,10 @@ function pillarStats(tasks, pillarId) {
 export function bumpContentMarketingActivity(companyId, company, { agentId } = {}) {
   const state = getContentMarketingState(companyId, company);
   if (["marketing", "ads", "ceo"].includes(agentId)) {
-    state.agentRuns = (state.agentRuns || 0) + 1;
-    const task = state.tasks.find((t) => t.status === "in_progress" || t.status === "scheduled");
-    if (task && task.status !== "completed") {
-      task.status = "in_progress";
-      task.progress = Math.min(100, (task.progress || 0) + 10);
-      if (task.progress >= 100) {
-        task.status = "completed";
-        task.completedAt = new Date().toISOString();
-      }
-      task.updatedAt = new Date().toISOString();
-    }
+    const logs = getLogs(companyId, 500);
+    state.tasks = syncTasksFromRealActivity(state.tasks, logs);
+    const activity = getCompanyMarketingActivity(companyId);
+    state.agentRuns = activity.agentRunsTotal;
     saveState(state);
   }
   return state;
@@ -268,13 +227,15 @@ export function setContentMarketingGoal(companyId, company, { revenueTarget, tar
 
 export function getContentMarketingDashboard(companyId, company = null, userEmail = null) {
   let state = getContentMarketingState(companyId, company);
+  const logs = getLogs(companyId, 500);
+  state.tasks = syncTasksFromRealActivity(state.tasks, logs);
   state = syncProgress(state);
   const activity = getCompanyMarketingActivity(companyId);
+  state.agentRuns = activity.agentRunsTotal;
   const daily = computeDailyProgress(state, activity);
   const realSales = buildRealSalesBlock(state.goal, userEmail || company?.email);
   const orders = getRealOrderMetrics();
   saveState(state);
-
   const tasks = state.tasks;
   const pillars = PILLARS.map((p) => ({
     ...p,

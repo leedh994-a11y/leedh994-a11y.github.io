@@ -56,7 +56,7 @@ function statusZh(status, progress) {
   return "待启动";
 }
 
-function buildDailyRows(companyId, date, marketing, contentMarketing, logs, orders) {
+function buildDailyRows(companyId, date, marketing, contentMarketing, logs) {
   return ALL_MARKETING_METHODS.map((method) => {
     const task = findTaskProgress(method, marketing, contentMarketing);
     const agentExecutions = countMethodActivity(logs, method, date);
@@ -71,11 +71,13 @@ function buildDailyRows(companyId, date, marketing, contentMarketing, logs, orde
       mediaSpend: 0,
       currency: "USD",
       agentExecutions,
-      ordersToday: orders.orderCountToday,
-      revenueToday: orders.todayUsd,
-      revenueTodayCny: orders.todayCny,
-      customersToday: orders.customersToday,
+      ordersToday: null,
+      revenueToday: null,
+      revenueTodayCny: null,
+      customersToday: null,
+      ordersAttributed: false,
       isReal: true,
+      dataSource: "activity_logs",
     };
   });
 }
@@ -113,8 +115,6 @@ function aggregateAnalysis(rows, history, orders, activity) {
   const categories = Object.values(byCategory).map((c) => ({
     ...c,
     avgProgress: c.count ? Math.round(c.progress / c.count) : 0,
-    ordersToday: orders.orderCountToday,
-    revenueToday: orders.todayUsd,
   }));
 
   const topPerformers = [...today]
@@ -166,7 +166,7 @@ export function getMarketingAnalyticsDashboard(companyId, company = null, userEm
   const logs = getLogs(companyId, 500);
   const orders = getRealOrderMetrics();
   const activity = getCompanyMarketingActivity(companyId);
-  const rows = buildDailyRows(companyId, today, marketing, contentMarketing, logs, orders);
+  const rows = buildDailyRows(companyId, today, marketing, contentMarketing, logs);
 
   const state = getState(companyId);
   const totals = {
@@ -198,6 +198,18 @@ export function getMarketingAnalyticsDashboard(companyId, company = null, userEm
     date: today,
     methodsTotal: ALL_MARKETING_METHODS.length,
     dataSource: "real",
+    isReal: true,
+    realDataNote: "收益为全站真实付款订单汇总；各渠道订单无法按方式归因，仅显示 AI 执行次数与任务进度",
+    siteOrders: {
+      ordersToday: orders.orderCountToday,
+      revenueTodayUsd: orders.todayUsd,
+      revenueTodayCny: orders.todayCny,
+      customersToday: orders.customersToday,
+      ordersPaid: orders.orderCountPaid,
+      revenueTotalUsd: orders.totalUsd,
+      isReal: true,
+      source: "payment_orders",
+    },
     zeroCostNote: "真实数据：收益=客户付款订单，执行次数=AI活动日志，进度=实际任务状态",
     orders,
     activity,
