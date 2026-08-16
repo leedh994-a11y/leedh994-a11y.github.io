@@ -232,6 +232,70 @@
         <div class="launch-all-result" id="launch-all-result" hidden></div>
       </section>
 
+      <section class="ops-hub" id="marketing-ops-hub" aria-label="全渠道推广运营超级仪表盘">
+        <header class="ops-hub__header">
+          <div>
+            <h2 class="ops-hub__title">🛰️ 全渠道推广运营超级仪表盘</h2>
+            <p class="ops-hub__subtitle">
+              真实数据 · 全部 <strong id="ops-methods-total">33</strong> 种零成本推广方式 ·
+              SEO / 博客 / 落地页 / 社媒 / 冷邮件 / 目录提交 / 外联 — 每日自动生成发布内容与完整历史记录
+            </p>
+          </div>
+          <div class="ops-hub__actions">
+            <span class="real-badge real-badge--live">真实数据</span>
+            <button type="button" class="history-btn history-btn--primary" id="btn-ops-refresh">↻ 刷新</button>
+          </div>
+        </header>
+
+        <div class="ops-kpi-row">
+          <div class="ops-kpi"><strong id="ops-deliverables-total">0</strong><span>内容记录总数</span></div>
+          <div class="ops-kpi"><strong id="ops-running-total">0</strong><span>执行中任务</span></div>
+          <div class="ops-kpi"><strong id="ops-launches-total">0</strong><span>一键启动次数</span></div>
+          <div class="ops-kpi"><strong id="ops-agent-runs">0</strong><span>今日 AI 执行</span></div>
+          <div class="ops-kpi"><strong id="ops-orders-today">0</strong><span>今日真实订单</span></div>
+          <div class="ops-kpi"><strong id="ops-revenue-today">$0</strong><span>今日真实收益</span></div>
+          <div class="ops-kpi ops-kpi--progress"><strong id="ops-avg-progress">0%</strong><span>平均进度</span></div>
+        </div>
+        <p class="ops-updated">最后更新：<span id="ops-updated-at">—</span> · 自动每 30 秒刷新</p>
+
+        <div class="ops-toolbar">
+          <div class="ops-tabs" role="tablist">
+            <button type="button" class="ops-tab active" data-panel="all">📋 全部内容流</button>
+            <button type="button" class="ops-tab" data-panel="methods">🎯 33 种方式</button>
+            <button type="button" class="ops-tab" data-panel="running">⚡ 执行中</button>
+            <button type="button" class="ops-tab" data-panel="timeline">🕐 操作时间线</button>
+            <button type="button" class="ops-tab" data-panel="launches">🚀 启动历史</button>
+          </div>
+          <div class="ops-filters">
+            <select id="ops-method-filter" class="ops-select" aria-label="筛选推广方式"></select>
+            <input type="search" id="ops-search" class="ops-search" placeholder="搜索内容、方式、类型…" spellcheck="false">
+          </div>
+        </div>
+
+        <div class="ops-categories" id="ops-categories"></div>
+
+        <div class="ops-panel" data-panel="all">
+          <h3 class="ops-panel__title">📰 全部自动生成 / 发布 / 优化内容（真实记录）</h3>
+          <div class="ops-content-feed" id="ops-content-feed"></div>
+        </div>
+        <div class="ops-panel" data-panel="methods" hidden>
+          <h3 class="ops-panel__title">🎯 33 种推广方式 · 每日内容与执行状态</h3>
+          <div class="ops-methods-grid" id="ops-methods-grid"></div>
+        </div>
+        <div class="ops-panel" data-panel="running" hidden>
+          <h3 class="ops-panel__title">⚡ 正在执行的任务与进度</h3>
+          <div class="ops-running-list" id="ops-running-list"></div>
+        </div>
+        <div class="ops-panel" data-panel="timeline" hidden>
+          <h3 class="ops-panel__title">🕐 全部操作时间线（AI 日志 + 一键启动）</h3>
+          <div class="ops-timeline" id="ops-timeline"></div>
+        </div>
+        <div class="ops-panel" data-panel="launches" hidden>
+          <h3 class="ops-panel__title">🚀 一键启动全部推广 · 历史记录与 AI 输出</h3>
+          <div class="ops-launch-history" id="ops-launch-history"></div>
+        </div>
+      </section>
+
       <section class="real-revenue-hub" id="real-revenue-hub" aria-label="网站真实收益仪表盘">
         <header class="real-revenue-hub__header">
           <div>
@@ -831,6 +895,7 @@
   <script src="js/daily-quota-ticker.js"></script>
   <script src="js/marketing-launch.js"></script>
   <script src="js/marketing-analytics-dashboard.js"></script>
+  <script src="js/marketing-operations-dashboard.js"></script>
   <script src="js/real-revenue-dashboard.js"></script>
   <script src="js/bank-revenue-dashboard.js"></script>
   <script src="js/content-marketing-dashboard.js"></script>

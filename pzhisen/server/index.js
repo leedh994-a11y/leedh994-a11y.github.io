@@ -62,6 +62,7 @@ import {
 } from "./content-marketing-dashboard.js";
 import { launchAllMarketing, getLaunchMethodsCatalog } from "./marketing-launch-all.js";
 import { getMarketingAnalyticsDashboard } from "./marketing-analytics-dashboard.js";
+import { getMarketingOperationsDashboard } from "./marketing-operations-dashboard.js";
 import { getDailySalesDashboard, setDailySalesGoal } from "./daily-sales-dashboard.js";
 import {
   registerHandler,
@@ -396,6 +397,13 @@ app.get("/api/companies/:id/marketing/analytics/daily", requireAuth, requireComp
   });
 });
 
+app.get("/api/companies/:id/marketing/operations", requireAuth, requireCompanyAccess, (req, res) => {
+  res.json({
+    success: true,
+    operations: getMarketingOperationsDashboard(req.company.id, req.company, req.user?.email),
+  });
+});
+
 app.post("/api/companies/:id/marketing/launch-all", requireAuth, requireCompanyAccess, async (req, res) => {
   try {
     const company = req.company;
@@ -425,7 +433,7 @@ app.post("/api/companies/:id/marketing/launch-all", requireAuth, requireCompanyA
         agent: r.agentName,
         role: "agent",
         type: "answer",
-        message: r.preview + (r.preview?.length >= 200 ? "…" : ""),
+        message: (r.content || r.preview || "").slice(0, 8000),
         ai: r.ai,
         etaDays: r.etaDays,
       });
@@ -444,6 +452,7 @@ app.post("/api/companies/:id/marketing/launch-all", requireAuth, requireCompanyA
       ...result,
       dailySales: getDailySalesDashboard(company.id),
       analytics: getMarketingAnalyticsDashboard(company.id, company, req.user?.email),
+      operations: getMarketingOperationsDashboard(company.id, company, req.user?.email),
       logs: getLogs(company.id, 50),
     });
   } catch (err) {

@@ -153,6 +153,11 @@ async function launchAllMarketing() {
     if (data.marketing) renderMarketingDashboard(data.marketing);
     if (data.contentMarketing) renderContentMarketingDashboard(data.contentMarketing);
     if (data.analytics) renderAnalyticsDashboard(data.analytics);
+    if (data.operations && typeof window.renderMarketingOperationsDashboard === "function") {
+      window.renderMarketingOperationsDashboard(data.operations);
+    } else if (typeof window.loadMarketingOperationsDashboard === "function") {
+      await window.loadMarketingOperationsDashboard({ refresh: true });
+    }
     if (data.logs) renderLogs(data.logs);
     else await fetchLogs();
 

@@ -81,6 +81,7 @@
           window.loadBankRevenueDashboard?.({ refresh: true }),
           window.loadContentMarketingDashboard?.({ refresh: true }),
           window.loadMarketingAnalytics?.({ refresh: true }),
+          window.loadMarketingOperationsDashboard?.({ refresh: true }),
         ]);
       });
     },
@@ -110,6 +111,8 @@
       run(btn, "每日销售收益", () => window.loadDailySalesHero?.({ refresh: true })),
     "btn-marketing-refresh": (btn) =>
       run(btn, "AI 推广营销", () => window.loadMarketingDashboard?.({ refresh: true })),
+    "btn-ops-refresh": (btn) =>
+      run(btn, "推广运营超级仪表盘", () => window.loadMarketingOperationsDashboard?.({ refresh: true })),
   };
 
   function bind(btn) {

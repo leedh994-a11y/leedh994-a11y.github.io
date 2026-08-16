@@ -549,6 +549,7 @@ async function loadCompany() {
   loadContentMarketingDashboard();
   loadLaunchCatalog();
   loadMarketingAnalytics();
+  loadMarketingOperationsDashboard();
 }
 
 let dashboardRefreshing = false;
@@ -631,6 +632,7 @@ async function refreshAllDashboards() {
       typeof loadContentMarketingDashboard === "function" ? loadContentMarketingDashboard({ refresh: true }) : null,
       typeof loadLaunchCatalog === "function" ? loadLaunchCatalog({ refresh: true }) : null,
       typeof loadMarketingAnalytics === "function" ? loadMarketingAnalytics({ refresh: true }) : null,
+      typeof loadMarketingOperationsDashboard === "function" ? loadMarketingOperationsDashboard({ refresh: true }) : null,
     ]);
     const btn = document.getElementById("btn-dashboard-refresh");
     if (btn) {
@@ -764,6 +766,7 @@ setupMarketingAnalytics();
 setupRealRevenueDashboard();
 setupBankRevenueDashboard();
 setupContentMarketingDashboard();
+setupMarketingOperationsDashboard();
 loadConfig();
 loadCompany();
 
@@ -782,3 +785,4 @@ setInterval(loadRealRevenueDashboard, 30000);
 setInterval(loadBankRevenueDashboard, 30000);
 setInterval(loadContentMarketingDashboard, 45000);
 setInterval(loadMarketingAnalytics, 60000);
+setInterval(() => window.loadMarketingOperationsDashboard?.(), 30000);

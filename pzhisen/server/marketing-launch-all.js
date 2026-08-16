@@ -116,6 +116,7 @@ export async function launchAllMarketing(companyId, company, { runAiAgents = tru
       agentId: r.agentId,
       agentName: r.agentName,
       ai: r.ai,
+      content: r.content || "",
       preview: (r.content || "").slice(0, 200),
       etaDays: r.etaDays || null,
     })),
